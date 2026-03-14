@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { calculateSetNtu } from '@/lib/movementPatterns';
-import { Search, Plus, Check, ChevronDown, ChevronUp, Dumbbell } from 'lucide-react';
+import { Search, Plus, ChevronDown, ChevronUp, Dumbbell, ListChecks } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ExerciseRow {
@@ -28,6 +28,13 @@ interface SessionExercise {
   isPr: boolean;
 }
 
+interface Programme {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+}
+
 export const LogTab = () => {
   const { user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -38,9 +45,32 @@ export const LogTab = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [finished, setFinished] = useState(false);
   const [summaryData, setSummaryData] = useState<{
-    date: string; duration: string; totalNtu: number; prsHit: number; exercisesDone: number;
+    date: string; duration: string; totalNtu: number; prsHit: number; exercisesDone: number; programmeName?: string;
   } | null>(null);
   const [timer, setTimer] = useState('00:00');
+
+  // Programme state
+  const [programmes, setProgrammes] = useState<Programme[]>([]);
+  const [activeProgramme, setActiveProgramme] = useState<Programme | null>(null);
+  const [selectedProgrammeId, setSelectedProgrammeId] = useState<string | null>(null);
+  const [showProgrammeSelector, setShowProgrammeSelector] = useState(false);
+
+  // Load programmes
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from('training_programmes')
+        .select('id, name, description, is_active')
+        .eq('user_id', user.id)
+        .order('is_active', { ascending: false });
+      const progs = (data as Programme[]) || [];
+      setProgrammes(progs);
+      const active = progs.find(p => p.is_active) || null;
+      setActiveProgramme(active);
+      setSelectedProgrammeId(active?.id || null);
+    })();
+  }, [user]);
 
   // Timer
   useEffect(() => {
@@ -80,7 +110,12 @@ export const LogTab = () => {
     if (!user) return;
     const { data, error } = await supabase
       .from('training_sessions')
-      .insert({ user_id: user.id, completed: false, date: new Date().toISOString().split('T')[0] })
+      .insert({
+        user_id: user.id,
+        completed: false,
+        date: new Date().toISOString().split('T')[0],
+        programme_id: selectedProgrammeId || null,
+      })
       .select('id')
       .single();
     if (data && !error) {
@@ -176,6 +211,7 @@ export const LogTab = () => {
       totalNtu: Math.round(totalNtu),
       prsHit,
       exercisesDone: exercises.length,
+      programmeName: activeProgramme?.name,
     });
     setFinished(true);
   };
@@ -184,12 +220,60 @@ export const LogTab = () => {
   if (!sessionId && !finished) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        <div className="w-full bg-vault-bg2 border border-primary/20 rounded-2xl p-8 text-center" style={{boxShadow:'0 0 30px hsl(192 91% 54% / 0.06)'}}>
+        <div className="w-full bg-card border border-primary/20 rounded-2xl p-8 text-center" style={{ boxShadow: '0 0 30px hsl(192 91% 54% / 0.06)' }}>
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
             <Dumbbell size={28} className="text-primary" />
           </div>
           <h2 className="font-display text-4xl tracking-[2px] mb-2">START WORKOUT</h2>
-          <p className="font-mono text-[10px] text-vault-dim mb-7 uppercase tracking-widest">Log your training session</p>
+          <p className="font-mono text-[10px] text-muted-foreground mb-5 uppercase tracking-widest">Log your training session</p>
+
+          {/* Programme selector */}
+          {programmes.length > 0 && (
+            <div className="mb-5">
+              <button
+                onClick={() => setShowProgrammeSelector(!showProgrammeSelector)}
+                className="w-full flex items-center justify-between bg-secondary border border-border rounded-xl px-4 py-3 text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <ListChecks size={14} className="text-primary" />
+                  <span className="font-mono text-xs text-foreground">
+                    {selectedProgrammeId
+                      ? programmes.find(p => p.id === selectedProgrammeId)?.name
+                      : 'No Programme'}
+                  </span>
+                </div>
+                <ChevronDown size={14} className="text-muted-foreground" />
+              </button>
+
+              {showProgrammeSelector && (
+                <div className="mt-1 bg-card border border-border rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => { setSelectedProgrammeId(null); setShowProgrammeSelector(false); }}
+                    className={`w-full text-left px-4 py-3 font-mono text-xs border-b border-border transition-colors ${
+                      !selectedProgrammeId ? 'text-primary bg-primary/5' : 'text-foreground hover:bg-secondary'
+                    }`}
+                  >
+                    No Programme (Free Session)
+                  </button>
+                  {programmes.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => { setSelectedProgrammeId(p.id); setShowProgrammeSelector(false); }}
+                      className={`w-full text-left px-4 py-3 font-mono text-xs border-b border-border last:border-b-0 transition-colors ${
+                        selectedProgrammeId === p.id ? 'text-primary bg-primary/5' : 'text-foreground hover:bg-secondary'
+                      }`}
+                    >
+                      <span>{p.name}</span>
+                      {p.is_active && (
+                        <span className="ml-2 text-[8px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-full border border-primary/20">ACTIVE</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <button onClick={startSession} className="w-full bg-primary text-primary-foreground font-bold text-xs py-4 rounded-xl uppercase tracking-widest">Begin Session →</button>
         </div>
       </div>
@@ -200,8 +284,13 @@ export const LogTab = () => {
   if (finished && summaryData) {
     return (
       <div className="max-w-lg mx-auto px-4 space-y-4">
-        <div className="bg-vault-bg2 border border-primary/20 rounded-2xl p-5 space-y-4">
-          <h3 className="font-mono text-[10px] text-vault-dim uppercase tracking-widest">SESSION COMPLETE</h3>
+        <div className="bg-card border border-primary/20 rounded-2xl p-5 space-y-4">
+          <h3 className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">SESSION COMPLETE</h3>
+          {summaryData.programmeName && (
+            <p className="font-mono text-[9px] text-primary bg-primary/10 px-2 py-1 rounded-lg border border-primary/20 inline-block">
+              {summaryData.programmeName}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-4">
             {[
               { label: 'Date', value: summaryData.date },
@@ -210,7 +299,7 @@ export const LogTab = () => {
               { label: 'PRs Hit', value: String(summaryData.prsHit), gold: true },
             ].map((item) => (
               <div key={item.label}>
-                <p className="font-mono text-[8px] text-vault-dim uppercase">{item.label}</p>
+                <p className="font-mono text-[8px] text-muted-foreground uppercase">{item.label}</p>
                 <p className={`font-mono text-sm ${item.primary ? 'text-primary' : item.gold ? 'text-vault-gold' : 'text-foreground'}`}>
                   {item.value}
                 </p>
@@ -219,7 +308,7 @@ export const LogTab = () => {
           </div>
           <button
             onClick={() => { setSessionId(null); setExercises([]); setFinished(false); setSummaryData(null); setTimer('00:00'); }}
-            className="w-full bg-vault-bg3 border border-vault-border text-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs"
+            className="w-full bg-secondary border border-border text-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs"
           >
             New Session
           </button>
@@ -232,12 +321,15 @@ export const LogTab = () => {
   return (
     <div className="max-w-lg mx-auto px-4 space-y-4">
       {/* Session header */}
-      <div className="rounded-2xl p-4 border border-primary/20 bg-vault-bg2 flex items-center justify-between" style={{boxShadow:'0 0 20px hsl(192 91% 54% / 0.06)'}}>
+      <div className="rounded-2xl p-4 border border-primary/20 bg-card flex items-center justify-between" style={{ boxShadow: '0 0 20px hsl(192 91% 54% / 0.06)' }}>
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           <div>
             <p className="font-mono text-2xl text-primary leading-none">{timer}</p>
-            <p className="font-mono text-[9px] text-vault-dim mt-0.5">{exercises.length} exercise{exercises.length !== 1 ? 's' : ''} · {Math.round(totalNtu)} NTU</p>
+            <p className="font-mono text-[9px] text-muted-foreground mt-0.5">
+              {activeProgramme ? activeProgramme.name + ' · ' : ''}
+              {exercises.length} exercise{exercises.length !== 1 ? 's' : ''} · {Math.round(totalNtu)} NTU
+            </p>
           </div>
         </div>
         <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest">FINISH</button>
@@ -251,12 +343,8 @@ export const LogTab = () => {
           : null;
 
         return (
-          <div key={exIdx} className="bg-vault-bg2 border border-vault-border rounded-2xl p-4 space-y-3">
-            {/* Exercise header */}
-            <button
-              onClick={() => toggleExpand(exIdx)}
-              className="w-full flex items-center justify-between text-left"
-            >
+          <div key={exIdx} className="bg-card border border-border rounded-2xl p-4 space-y-3">
+            <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center justify-between text-left">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-semibold text-sm text-foreground">{ex.exercise.name}</p>
                 <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
@@ -274,24 +362,21 @@ export const LogTab = () => {
                     PR ↑
                   </span>
                 )}
-                {ex.expanded ? <ChevronUp size={14} className="text-vault-dim" /> : <ChevronDown size={14} className="text-vault-dim" />}
+                {ex.expanded ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
               </div>
             </button>
 
-            {/* Expanded set table */}
             {ex.expanded && (
               <div>
-                {/* Headers */}
                 <div className="grid grid-cols-4 gap-2 mb-2">
                   {['SET', 'KG', 'REPS', 'RIR'].map((h) => (
-                    <span key={h} className="font-mono text-[8px] text-vault-dim uppercase text-center">{h}</span>
+                    <span key={h} className="font-mono text-[8px] text-muted-foreground uppercase text-center">{h}</span>
                   ))}
                 </div>
 
-                {/* Set rows */}
                 {ex.sets.map((set, setIdx) => (
                   <div key={setIdx} className="grid grid-cols-4 gap-2 items-center mb-1.5">
-                    <span className="font-mono text-xs text-vault-dim text-center">{set.set_num}</span>
+                    <span className="font-mono text-xs text-muted-foreground text-center">{set.set_num}</span>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -299,8 +384,8 @@ export const LogTab = () => {
                       value={set.weight_kg ?? ''}
                       onChange={(e) => updateSet(exIdx, setIdx, 'weight_kg', e.target.value ? parseFloat(e.target.value) : null)}
                       disabled={set.completed}
-                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2.5 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
-                        set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-vault-border text-foreground'
+                      className={`w-full bg-secondary border rounded-lg px-2 py-2.5 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
+                        set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-border text-foreground'
                       }`}
                     />
                     <input
@@ -310,8 +395,8 @@ export const LogTab = () => {
                       value={set.reps ?? ''}
                       onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
                       disabled={set.completed}
-                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2.5 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
-                        set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-vault-border text-foreground'
+                      className={`w-full bg-secondary border rounded-lg px-2 py-2.5 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
+                        set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-border text-foreground'
                       }`}
                     />
                     <input
@@ -323,14 +408,13 @@ export const LogTab = () => {
                       value={set.rir ?? ''}
                       onChange={(e) => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
                       disabled={set.completed}
-                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2.5 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
-                        set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-vault-border text-foreground'
+                      className={`w-full bg-secondary border rounded-lg px-2 py-2.5 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
+                        set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-border text-foreground'
                       }`}
                     />
                   </div>
                 ))}
 
-                {/* Action buttons */}
                 <div className="flex gap-2 mt-2">
                   {ex.sets.some(s => !s.completed && s.reps && s.weight_kg) && (
                     <button
@@ -360,29 +444,29 @@ export const LogTab = () => {
       {!showSearch ? (
         <button
           onClick={() => setShowSearch(true)}
-          className="w-full py-3 rounded-2xl text-xs font-medium flex items-center justify-center gap-2 border-2 border-dashed border-vault-border2 text-vault-dim bg-transparent"
+          className="w-full py-3 rounded-2xl text-xs font-medium flex items-center justify-center gap-2 border-2 border-dashed border-border text-muted-foreground bg-transparent"
         >
           <Plus size={14} /> Add Exercise
         </button>
       ) : (
         <div className="space-y-1">
           <div className="relative">
-            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-vault-dim" />
+            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               autoFocus
               placeholder="Search exercises..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full bg-vault-bg3 border border-vault-border2 rounded-xl px-4 py-3 pl-10 font-mono text-sm text-foreground placeholder:text-vault-dim focus:outline-none focus:border-primary"
+              className="w-full bg-secondary border border-input rounded-xl px-4 py-3 pl-10 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
             />
           </div>
           {searchResults.length > 0 && (
-            <div className="bg-vault-bg2 border border-vault-border rounded-xl overflow-hidden">
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
               {searchResults.map(ex => (
                 <button
                   key={ex.id}
                   onClick={() => addExercise(ex)}
-                  className="w-full flex items-center justify-between px-4 py-3 text-left border-b border-vault-border last:border-b-0 text-foreground hover:bg-vault-bg3 cursor-pointer font-mono text-sm transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 text-left border-b border-border last:border-b-0 text-foreground hover:bg-secondary cursor-pointer font-mono text-sm transition-colors"
                 >
                   <span>{ex.name}</span>
                   <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
