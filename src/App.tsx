@@ -7,7 +7,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { TrendingUp, BookOpen, Users } from "lucide-react";
+import { BookOpen, Users } from "lucide-react";
 
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
