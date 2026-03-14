@@ -40,8 +40,10 @@ export const BottomNav = () => {
     setSheetOpen(false);
   }, []);
 
+  const showNav = VISIBLE_ROUTES.includes(location.pathname);
+  if (!showNav) return null;
+
   return (
-    <>
       {/* Bottom sheet overlay */}
       {sheetOpen && (
         <div
