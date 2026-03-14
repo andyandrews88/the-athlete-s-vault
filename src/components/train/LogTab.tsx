@@ -35,6 +35,13 @@ interface Programme {
   is_active: boolean;
 }
 
+interface ProgrammeWorkout {
+  id: string;
+  day_number: number;
+  name: string;
+  prescribed_exercises: Array<{ name: string; sets: number; reps: string; notes: string }>;
+}
+
 export const LogTab = () => {
   const { user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -54,6 +61,11 @@ export const LogTab = () => {
   const [activeProgramme, setActiveProgramme] = useState<Programme | null>(null);
   const [selectedProgrammeId, setSelectedProgrammeId] = useState<string | null>(null);
   const [showProgrammeSelector, setShowProgrammeSelector] = useState(false);
+
+  // Workout day state
+  const [workouts, setWorkouts] = useState<ProgrammeWorkout[]>([]);
+  const [selectedWorkout, setSelectedWorkout] = useState<ProgrammeWorkout | null>(null);
+  const [showWorkoutPicker, setShowWorkoutPicker] = useState(false);
 
   // Load programmes
   useEffect(() => {
