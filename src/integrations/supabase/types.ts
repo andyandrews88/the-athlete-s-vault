@@ -227,6 +227,82 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_sets: {
+        Row: {
+          completed: boolean | null
+          id: string
+          is_pr: boolean | null
+          reps: number | null
+          session_exercise_id: string
+          set_num: number
+          weight_kg: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          id?: string
+          is_pr?: boolean | null
+          reps?: number | null
+          session_exercise_id: string
+          set_num: number
+          weight_kg?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          id?: string
+          is_pr?: boolean | null
+          reps?: number | null
+          session_exercise_id?: string
+          set_num?: number
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_sets_session_exercise_id_fkey"
+            columns: ["session_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "session_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercises: {
+        Row: {
+          category: string | null
+          created_by: string | null
+          difficulty_coefficient: number | null
+          id: string
+          is_custom: boolean | null
+          movement_pattern: string | null
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          created_by?: string | null
+          difficulty_coefficient?: number | null
+          id?: string
+          is_custom?: boolean | null
+          movement_pattern?: string | null
+          name: string
+        }
+        Update: {
+          category?: string | null
+          created_by?: string | null
+          difficulty_coefficient?: number | null
+          id?: string
+          is_custom?: boolean | null
+          movement_pattern?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercises_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
           created_at: string | null
@@ -259,6 +335,58 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      personal_records: {
+        Row: {
+          achieved_at: string | null
+          exercise_id: string
+          id: string
+          reps: number | null
+          session_id: string | null
+          user_id: string
+          weight_kg: number
+        }
+        Insert: {
+          achieved_at?: string | null
+          exercise_id: string
+          id?: string
+          reps?: number | null
+          session_id?: string | null
+          user_id: string
+          weight_kg: number
+        }
+        Update: {
+          achieved_at?: string | null
+          exercise_id?: string
+          id?: string
+          reps?: number | null
+          session_id?: string | null
+          user_id?: string
+          weight_kg?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personal_records_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personal_records_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "training_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personal_records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -313,6 +441,45 @@ export type Database = {
           tier?: string | null
         }
         Relationships: []
+      }
+      session_exercises: {
+        Row: {
+          display_order: number | null
+          exercise_id: string
+          id: string
+          session_id: string
+          superset_group: string | null
+        }
+        Insert: {
+          display_order?: number | null
+          exercise_id: string
+          id?: string
+          session_id: string
+          superset_group?: string | null
+        }
+        Update: {
+          display_order?: number | null
+          exercise_id?: string
+          id?: string
+          session_id?: string
+          superset_group?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_exercises_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "training_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       training_sessions: {
         Row: {
