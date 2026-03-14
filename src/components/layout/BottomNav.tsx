@@ -26,9 +26,6 @@ export const BottomNav = () => {
   const navigate = useNavigate();
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const showNav = VISIBLE_ROUTES.includes(location.pathname);
-  if (!showNav) return null;
-
   const handleMoreTap = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setSheetOpen(prev => !prev);
