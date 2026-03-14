@@ -373,33 +373,48 @@ export type Database = {
       }
       exercise_sets: {
         Row: {
+          calories: number | null
           completed: boolean | null
+          distance_m: number | null
+          duration_secs: number | null
           id: string
           is_pr: boolean | null
           reps: number | null
           rir: number | null
+          rpe: number | null
           session_exercise_id: string
           set_num: number
+          set_type: string
           weight_kg: number | null
         }
         Insert: {
+          calories?: number | null
           completed?: boolean | null
+          distance_m?: number | null
+          duration_secs?: number | null
           id?: string
           is_pr?: boolean | null
           reps?: number | null
           rir?: number | null
+          rpe?: number | null
           session_exercise_id: string
           set_num: number
+          set_type?: string
           weight_kg?: number | null
         }
         Update: {
+          calories?: number | null
           completed?: boolean | null
+          distance_m?: number | null
+          duration_secs?: number | null
           id?: string
           is_pr?: boolean | null
           reps?: number | null
           rir?: number | null
+          rpe?: number | null
           session_exercise_id?: string
           set_num?: number
+          set_type?: string
           weight_kg?: number | null
         }
         Relationships: [
@@ -417,28 +432,34 @@ export type Database = {
           category: string | null
           created_by: string | null
           difficulty_coefficient: number | null
+          exercise_type: string
           id: string
           is_custom: boolean | null
           movement_pattern: string | null
           name: string
+          video_url: string | null
         }
         Insert: {
           category?: string | null
           created_by?: string | null
           difficulty_coefficient?: number | null
+          exercise_type?: string
           id?: string
           is_custom?: boolean | null
           movement_pattern?: string | null
           name: string
+          video_url?: string | null
         }
         Update: {
           category?: string | null
           created_by?: string | null
           difficulty_coefficient?: number | null
+          exercise_type?: string
           id?: string
           is_custom?: boolean | null
           movement_pattern?: string | null
           name?: string
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -753,8 +774,10 @@ export type Database = {
           id: string
           onboarding_complete: boolean | null
           referral_code: string | null
+          rest_timer_secs: number
           role: string | null
           tier: string | null
+          weight_unit: string
         }
         Insert: {
           audit_score?: number | null
@@ -770,8 +793,10 @@ export type Database = {
           id: string
           onboarding_complete?: boolean | null
           referral_code?: string | null
+          rest_timer_secs?: number
           role?: string | null
           tier?: string | null
+          weight_unit?: string
         }
         Update: {
           audit_score?: number | null
@@ -787,8 +812,10 @@ export type Database = {
           id?: string
           onboarding_complete?: boolean | null
           referral_code?: string | null
+          rest_timer_secs?: number
           role?: string | null
           tier?: string | null
+          weight_unit?: string
         }
         Relationships: []
       }
@@ -859,6 +886,7 @@ export type Database = {
           display_order: number | null
           exercise_id: string
           id: string
+          notes: string | null
           session_id: string
           superset_group: string | null
         }
@@ -866,6 +894,7 @@ export type Database = {
           display_order?: number | null
           exercise_id: string
           id?: string
+          notes?: string | null
           session_id: string
           superset_group?: string | null
         }
@@ -873,6 +902,7 @@ export type Database = {
           display_order?: number | null
           exercise_id?: string
           id?: string
+          notes?: string | null
           session_id?: string
           superset_group?: string | null
         }
@@ -936,6 +966,7 @@ export type Database = {
           session_type: string | null
           total_ntu: number | null
           user_id: string
+          workout_notes: string | null
         }
         Insert: {
           completed?: boolean | null
@@ -946,6 +977,7 @@ export type Database = {
           session_type?: string | null
           total_ntu?: number | null
           user_id: string
+          workout_notes?: string | null
         }
         Update: {
           completed?: boolean | null
@@ -956,6 +988,7 @@ export type Database = {
           session_type?: string | null
           total_ntu?: number | null
           user_id?: string
+          workout_notes?: string | null
         }
         Relationships: [
           {
