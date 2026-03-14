@@ -147,8 +147,8 @@ export const LogTab = () => {
 
         await supabase.from('exercise_sets').insert({
           session_exercise_id: seData.id, set_num: set.set_num,
-          reps: set.reps, weight_kg: set.weight_kg, completed: true, is_pr: isPr,
-        });
+          reps: set.reps, weight_kg: set.weight_kg, rir: set.rir, completed: true, is_pr: isPr,
+        } as any);
 
         if (isPr) {
           prsHit++;
