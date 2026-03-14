@@ -33,7 +33,7 @@ export const TopBar = () => {
           borderBottom: '1px solid hsl(var(--border))',
         }}
       >
-        <img src={logo} alt="The Vault" className="h-6 w-auto" />
+        <img src={logo} alt="The Vault" className="h-6 w-auto brightness-0 invert" />
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="w-[30px] h-[30px] rounded-full bg-vault-bg3 border border-vault-border2 flex items-center justify-center font-mono text-[10px] text-primary"
