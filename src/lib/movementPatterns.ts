@@ -1,15 +1,15 @@
 export const MOVEMENT_COEFFICIENTS: Record<string, number> = {
-  Squat: 1.4,
   Hinge: 1.5,
+  Squat: 1.4,
   Push: 1.2,
   Pull: 1.3,
+  'Single Leg': 1.3,
+  Core: 1.0,
   Carry: 1.1,
-  Lunge: 1.2,
-  Rotation: 1.0,
-  Jump: 1.6,
-  Sprint: 1.8,
-  Swim: 1.4,
-  Row: 1.3,
+  Olympic: 1.6,
+  Isolation: 1.0,
+  Plyometric: 1.6,
+  Rotational: 1.0,
 };
 
 export const ALL_PATTERNS = Object.keys(MOVEMENT_COEFFICIENTS);
