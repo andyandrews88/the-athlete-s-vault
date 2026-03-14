@@ -16,10 +16,26 @@ export type Database = {
     Tables: {
       audit_responses: {
         Row: {
+          age: number | null
           back_squat_1rm: number | null
+          back_squat_est_reps: number | null
+          back_squat_est_wt: number | null
+          biological_sex: string | null
+          body_weight: number | null
+          cardio_benchmark: string | null
+          cardio_time_min: number | null
+          cardio_time_sec: number | null
           created_at: string | null
           days_per_week: number | null
+          dead_hang_seconds: number | null
           deadlift_1rm: number | null
+          deadlift_est_reps: number | null
+          deadlift_est_wt: number | null
+          deep_squat_hold: string | null
+          front_squat_1rm: number | null
+          front_squat_est_reps: number | null
+          front_squat_est_wt: number | null
+          height_cm: number | null
           hip_flexion: number | null
           id: string
           injuries: string | null
@@ -28,21 +44,46 @@ export type Database = {
           max_pullups: number | null
           nutrition_consistency: number | null
           overhead_press_1rm: number | null
+          overhead_reach: string | null
+          pistol_squat: string | null
+          primary_goal: string | null
           primary_sport: string | null
           recovery_quality: number | null
           run_400m_seconds: number | null
           shoulder_flexion: number | null
+          sleep_category: string | null
           sleep_quality: number | null
           stress_level: number | null
+          strict_press_1rm: number | null
+          strict_press_est_reps: number | null
+          strict_press_est_wt: number | null
           thoracic_rotation: number | null
+          training_experience: string | null
           user_id: string
+          weight_unit: string | null
           years_training: number | null
         }
         Insert: {
+          age?: number | null
           back_squat_1rm?: number | null
+          back_squat_est_reps?: number | null
+          back_squat_est_wt?: number | null
+          biological_sex?: string | null
+          body_weight?: number | null
+          cardio_benchmark?: string | null
+          cardio_time_min?: number | null
+          cardio_time_sec?: number | null
           created_at?: string | null
           days_per_week?: number | null
+          dead_hang_seconds?: number | null
           deadlift_1rm?: number | null
+          deadlift_est_reps?: number | null
+          deadlift_est_wt?: number | null
+          deep_squat_hold?: string | null
+          front_squat_1rm?: number | null
+          front_squat_est_reps?: number | null
+          front_squat_est_wt?: number | null
+          height_cm?: number | null
           hip_flexion?: number | null
           id?: string
           injuries?: string | null
@@ -51,21 +92,46 @@ export type Database = {
           max_pullups?: number | null
           nutrition_consistency?: number | null
           overhead_press_1rm?: number | null
+          overhead_reach?: string | null
+          pistol_squat?: string | null
+          primary_goal?: string | null
           primary_sport?: string | null
           recovery_quality?: number | null
           run_400m_seconds?: number | null
           shoulder_flexion?: number | null
+          sleep_category?: string | null
           sleep_quality?: number | null
           stress_level?: number | null
+          strict_press_1rm?: number | null
+          strict_press_est_reps?: number | null
+          strict_press_est_wt?: number | null
           thoracic_rotation?: number | null
+          training_experience?: string | null
           user_id: string
+          weight_unit?: string | null
           years_training?: number | null
         }
         Update: {
+          age?: number | null
           back_squat_1rm?: number | null
+          back_squat_est_reps?: number | null
+          back_squat_est_wt?: number | null
+          biological_sex?: string | null
+          body_weight?: number | null
+          cardio_benchmark?: string | null
+          cardio_time_min?: number | null
+          cardio_time_sec?: number | null
           created_at?: string | null
           days_per_week?: number | null
+          dead_hang_seconds?: number | null
           deadlift_1rm?: number | null
+          deadlift_est_reps?: number | null
+          deadlift_est_wt?: number | null
+          deep_squat_hold?: string | null
+          front_squat_1rm?: number | null
+          front_squat_est_reps?: number | null
+          front_squat_est_wt?: number | null
+          height_cm?: number | null
           hip_flexion?: number | null
           id?: string
           injuries?: string | null
@@ -74,15 +140,63 @@ export type Database = {
           max_pullups?: number | null
           nutrition_consistency?: number | null
           overhead_press_1rm?: number | null
+          overhead_reach?: string | null
+          pistol_squat?: string | null
+          primary_goal?: string | null
           primary_sport?: string | null
           recovery_quality?: number | null
           run_400m_seconds?: number | null
           shoulder_flexion?: number | null
+          sleep_category?: string | null
           sleep_quality?: number | null
           stress_level?: number | null
+          strict_press_1rm?: number | null
+          strict_press_est_reps?: number | null
+          strict_press_est_wt?: number | null
           thoracic_rotation?: number | null
+          training_experience?: string | null
           user_id?: string
+          weight_unit?: string | null
           years_training?: number | null
+        }
+        Relationships: []
+      }
+      audit_results: {
+        Row: {
+          conditioning_score: number
+          created_at: string | null
+          id: string
+          lifestyle_score: number
+          mobility_score: number
+          raw_data: Json | null
+          score: number
+          strength_score: number
+          tier: string
+          user_id: string
+        }
+        Insert: {
+          conditioning_score?: number
+          created_at?: string | null
+          id?: string
+          lifestyle_score?: number
+          mobility_score?: number
+          raw_data?: Json | null
+          score?: number
+          strength_score?: number
+          tier?: string
+          user_id: string
+        }
+        Update: {
+          conditioning_score?: number
+          created_at?: string | null
+          id?: string
+          lifestyle_score?: number
+          mobility_score?: number
+          raw_data?: Json | null
+          score?: number
+          strength_score?: number
+          tier?: string
+          user_id?: string
         }
         Relationships: []
       }
