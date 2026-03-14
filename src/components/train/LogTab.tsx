@@ -67,7 +67,7 @@ export const LogTab = () => {
   const [selectedWorkout, setSelectedWorkout] = useState<ProgrammeWorkout | null>(null);
   const [showWorkoutPicker, setShowWorkoutPicker] = useState(false);
 
-  // Load programmes
+  // Load programmes + workouts
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -81,6 +81,18 @@ export const LogTab = () => {
       const active = progs.find(p => p.is_active) || null;
       setActiveProgramme(active);
       setSelectedProgrammeId(active?.id || null);
+
+      // Load workouts for active programme
+      if (active) {
+        const { data: wkData } = await supabase
+          .from('programme_workouts')
+          .select('id, day_number, name, prescribed_exercises')
+          .eq('programme_id', active.id)
+          .order('day_number');
+        if (wkData && wkData.length > 0) {
+          setWorkouts(wkData as ProgrammeWorkout[]);
+        }
+      }
     })();
   }, [user]);
 
