@@ -79,6 +79,10 @@ export default {
           pgb: "hsl(192 91% 54% / 0.08)",
         },
       },
+      boxShadow: {
+        glow: "0 0 40px hsl(192 91% 54% / 0.15)",
+        "glow-lg": "0 0 60px hsl(192 91% 54% / 0.25)",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
