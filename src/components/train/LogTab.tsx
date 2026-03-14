@@ -369,71 +369,78 @@ export const LogTab = () => {
     const isTimed = isTimedOrConditioning(ex.exercise.exercise_type);
     const isConditioning = ex.exercise.exercise_type === 'conditioning';
     const canComplete = setHasData(set, ex.exercise.exercise_type);
-    const inputCls = (completed: boolean) =>
-      `w-full bg-secondary border rounded-lg px-1.5 py-2 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
-        completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-border text-foreground'
-      }`;
+
+    const completedCls = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
+    const normalCls = 'bg-secondary border-border text-foreground';
+    const inputCls = (done: boolean) =>
+      `w-full rounded-lg px-1.5 py-2.5 font-mono text-xs text-center border focus:border-primary focus:outline-none disabled:opacity-100 ${done ? completedCls : normalCls}`;
 
     return (
-      <div key={setIdx} className="flex items-center gap-1.5 mb-1.5">
-        {/* Set type toggle */}
-        <button
-          onClick={() => updateSet(exIdx, setIdx, 'set_type', set.set_type === 'warmup' ? 'working' : 'warmup')}
-          disabled={set.completed}
-          className={`font-mono text-[8px] w-7 h-8 rounded-md flex items-center justify-center shrink-0 border transition-colors ${
-            set.set_type === 'warmup'
-              ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
-              : 'bg-secondary text-muted-foreground border-border'
-          }`}
-          title={set.set_type === 'warmup' ? 'Warmup set' : 'Working set'}
-        >
-          {set.set_type === 'warmup' ? 'W' : set.set_num}
-        </button>
+      <div key={setIdx} className="flex items-center gap-2 mb-1.5">
+        {/* Set label */}
+        <span className={`font-mono text-[10px] w-7 text-center shrink-0 ${
+          set.set_type === 'warmup' ? 'text-amber-500' : 'text-muted-foreground'
+        }`}>
+          {set.set_type === 'warmup' ? 'W' : `S${set.set_num}`}
+        </span>
 
-        {/* Weight / Duration based on type */}
+        {/* Weight / Duration */}
         {isTimed ? (
-          <input
-            type="number" inputMode="numeric" placeholder="sec"
-            value={set.duration_secs ?? ''} disabled={set.completed}
-            onChange={e => updateSet(exIdx, setIdx, 'duration_secs', e.target.value ? parseInt(e.target.value) : null)}
-            className={inputCls(set.completed) + ' flex-1'}
-          />
+          <div className="flex-1 relative">
+            <input
+              type="number" inputMode="numeric" placeholder="sec"
+              value={set.duration_secs ?? ''} disabled={set.completed}
+              onChange={e => updateSet(exIdx, setIdx, 'duration_secs', e.target.value ? parseInt(e.target.value) : null)}
+              className={inputCls(set.completed)}
+            />
+            {set.completed && <Check size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-400" />}
+          </div>
         ) : (
-          <input
-            type="number" inputMode="decimal"
-            placeholder={weightUnit === 'lbs' ? 'lbs' : 'kg'}
-            value={toDisplay(set.weight_kg) ?? ''}
-            onChange={e => updateSet(exIdx, setIdx, 'weight_kg', toKg(e.target.value ? parseFloat(e.target.value) : null))}
-            disabled={set.completed}
-            className={inputCls(set.completed) + ' flex-1'}
-          />
+          <div className="flex-1 relative">
+            <input
+              type="number" inputMode="decimal"
+              placeholder={weightUnit === 'lbs' ? 'lbs' : 'kg'}
+              value={toDisplay(set.weight_kg) ?? ''}
+              onChange={e => updateSet(exIdx, setIdx, 'weight_kg', toKg(e.target.value ? parseFloat(e.target.value) : null))}
+              disabled={set.completed}
+              className={inputCls(set.completed)}
+            />
+            {set.completed && <Check size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-400" />}
+          </div>
         )}
 
         {/* Reps */}
         {!isTimed && (
-          <input
-            type="number" inputMode="numeric" placeholder="reps"
-            value={set.reps ?? ''} disabled={set.completed}
-            onChange={e => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
-            className={inputCls(set.completed) + ' flex-1'}
-          />
+          <div className="flex-1 relative">
+            <input
+              type="number" inputMode="numeric" placeholder="reps"
+              value={set.reps ?? ''} disabled={set.completed}
+              onChange={e => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
+              className={inputCls(set.completed)}
+            />
+            {set.completed && <Check size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-400" />}
+          </div>
         )}
 
         {/* Conditioning extras */}
         {isConditioning && (
           <>
-            <input
-              type="number" inputMode="decimal" placeholder="m"
-              value={set.distance_m ?? ''} disabled={set.completed}
-              onChange={e => updateSet(exIdx, setIdx, 'distance_m', e.target.value ? parseFloat(e.target.value) : null)}
-              className={inputCls(set.completed) + ' flex-1'}
-            />
-            <input
-              type="number" inputMode="numeric" placeholder="cal"
-              value={set.calories ?? ''} disabled={set.completed}
-              onChange={e => updateSet(exIdx, setIdx, 'calories', e.target.value ? parseInt(e.target.value) : null)}
-              className={inputCls(set.completed) + ' flex-1'}
-            />
+            <div className="flex-1 relative">
+              <input
+                type="number" inputMode="decimal" placeholder="m"
+                value={set.distance_m ?? ''} disabled={set.completed}
+                onChange={e => updateSet(exIdx, setIdx, 'distance_m', e.target.value ? parseFloat(e.target.value) : null)}
+                className={inputCls(set.completed)}
+              />
+            </div>
+            <div className="flex-1 relative">
+              <input
+                type="number" inputMode="numeric" placeholder="cal"
+                value={set.calories ?? ''} disabled={set.completed}
+                onChange={e => updateSet(exIdx, setIdx, 'calories', e.target.value ? parseInt(e.target.value) : null)}
+                className={inputCls(set.completed)}
+              />
+            </div>
           </>
         )}
 
@@ -445,24 +452,16 @@ export const LogTab = () => {
           className={inputCls(set.completed) + ' w-12 shrink-0'}
         />
 
-        {/* RPE */}
-        <input
-          type="number" inputMode="decimal" min={1} max={10} placeholder="RPE"
-          value={set.rpe ?? ''} disabled={set.completed}
-          onChange={e => updateSet(exIdx, setIdx, 'rpe', e.target.value ? parseFloat(e.target.value) : null)}
-          className={inputCls(set.completed) + ' w-12 shrink-0'}
-        />
-
         {/* Per-set completion button */}
         <button
           onClick={() => set.completed ? uncompleteSet(exIdx, setIdx) : (canComplete ? completeSet(exIdx, setIdx) : null)}
           disabled={!set.completed && !canComplete}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${
+          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
             set.completed
-              ? 'bg-primary text-primary-foreground border-primary'
+              ? 'bg-emerald-500 text-white'
               : canComplete
-                ? 'bg-secondary text-muted-foreground border-border hover:border-primary hover:text-primary'
-                : 'bg-secondary text-muted-foreground/30 border-border/50 cursor-not-allowed'
+                ? 'border border-border text-muted-foreground hover:border-primary hover:text-primary'
+                : 'text-muted-foreground/20 cursor-not-allowed'
           }`}
         >
           <Check size={12} />
@@ -473,91 +472,75 @@ export const LogTab = () => {
 
   const renderExerciseCard = (ex: SessionExercise, exIdx: number) => {
     const completedSets = ex.sets.filter(s => s.completed);
-    const avgRir = completedSets.length > 0
-      ? Math.round(completedSets.reduce((sum, s) => sum + (s.rir ?? 0), 0) / completedSets.length) : null;
     const isTimed = isTimedOrConditioning(ex.exercise.exercise_type);
-    const isConditioning = ex.exercise.exercise_type === 'conditioning';
 
-    // Superset visual indicator
+    // Summary line: "4 × 8 · Hinge"
+    const firstReps = ex.sets[0]?.reps;
+    const summaryLine = isTimed
+      ? `${ex.sets.length} set${ex.sets.length > 1 ? 's' : ''} · ${ex.exercise.movement_pattern || ''}`
+      : `${ex.sets.length} × ${firstReps ?? '–'} · ${ex.exercise.movement_pattern || ''}`;
+
     const ssColor = ex.supersetGroup ? 'border-l-2 border-l-amber-500' : '';
 
     return (
-      <div key={exIdx} className={`bg-card border border-border rounded-2xl p-4 space-y-3 ${ssColor}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <button onClick={() => toggleExpand(exIdx)} className="flex items-center gap-2 flex-wrap min-w-0 flex-1 text-left">
-            <p className="font-semibold text-sm text-foreground truncate">{ex.exercise.name}</p>
-            <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-              {ex.exercise.movement_pattern}
-            </span>
-            {ex.exercise.exercise_type && ex.exercise.exercise_type !== 'strength' && (
-              <span className="font-mono text-[8px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border">
-                {ex.exercise.exercise_type}
-              </span>
-            )}
-          </button>
+      <div key={exIdx} className={`bg-card border border-border rounded-2xl overflow-hidden ${ssColor}`}>
+        {/* Header — tap to expand */}
+        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center justify-between px-4 py-3 text-left">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-sm text-foreground truncate">{ex.exercise.name}</p>
+              {ex.supersetGroup && (
+                <span className="font-mono text-[8px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">SS</span>
+              )}
+            </div>
+            <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{summaryLine}</p>
+          </div>
           <div className="flex items-center gap-2 shrink-0">
-            {avgRir !== null && (
-              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">RIR {avgRir}</span>
+            {completedSets.length > 0 && (
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                {completedSets.length}/{ex.sets.length}
+              </span>
             )}
             {ex.isPr && (
               <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">PR ↑</span>
             )}
-            {ex.supersetGroup && (
-              <span className="font-mono text-[8px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">SS</span>
-            )}
-            <button
-              onClick={() => removeExercise(exIdx)}
-              className="w-7 h-7 rounded-md flex items-center justify-center text-destructive/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
-              title="Remove exercise"
-            >
-              <Trash2 size={12} />
-            </button>
-            <button onClick={() => toggleExpand(exIdx)}>
-              {ex.expanded ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
-            </button>
           </div>
-        </div>
+        </button>
 
         {ex.expanded && (
-          <div>
+          <div className="px-4 pb-4 space-y-2">
             {/* Column headers */}
-            <div className="flex items-center gap-1.5 mb-2">
-              <span className="font-mono text-[7px] text-muted-foreground uppercase w-7 text-center shrink-0">Type</span>
-              {isTimed ? (
-                <span className="font-mono text-[7px] text-muted-foreground uppercase flex-1 text-center">Secs</span>
-              ) : (
-                <span className="font-mono text-[7px] text-muted-foreground uppercase flex-1 text-center">{weightUnit.toUpperCase()}</span>
-              )}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-mono text-[7px] text-muted-foreground uppercase w-7 text-center shrink-0">Set</span>
+              <span className="font-mono text-[7px] text-muted-foreground uppercase flex-1 text-center">
+                {isTimed ? 'Secs' : weightUnit.toUpperCase()}
+              </span>
               {!isTimed && <span className="font-mono text-[7px] text-muted-foreground uppercase flex-1 text-center">Reps</span>}
-              {isConditioning && (
+              {ex.exercise.exercise_type === 'conditioning' && (
                 <>
                   <span className="font-mono text-[7px] text-muted-foreground uppercase flex-1 text-center">Dist</span>
                   <span className="font-mono text-[7px] text-muted-foreground uppercase flex-1 text-center">Cal</span>
                 </>
               )}
               <span className="font-mono text-[7px] text-muted-foreground uppercase w-12 text-center shrink-0">RIR</span>
-              <span className="font-mono text-[7px] text-muted-foreground uppercase w-12 text-center shrink-0">RPE</span>
-              <span className="w-8 shrink-0" /> {/* spacer for check button */}
+              <span className="w-8 shrink-0" />
             </div>
 
             {/* Sets */}
             {ex.sets.map((set, setIdx) => renderSetRow(ex, exIdx, set, setIdx))}
 
-            {/* Action row */}
-            <div className="flex gap-2 mt-2 flex-wrap">
-              <button onClick={() => addSet(exIdx)} className="flex-1 font-mono text-[9px] text-primary border border-primary/20 bg-primary/5 rounded-lg px-3 py-2">
-                + Add Set
-              </button>
-            </div>
+            {/* Add Set */}
+            <button onClick={() => addSet(exIdx)} className="w-full font-mono text-[10px] text-primary py-2 rounded-lg border border-dashed border-primary/20 hover:bg-primary/5 transition-colors">
+              + Set
+            </button>
 
-            {/* Exercise notes */}
-            <div className="mt-3">
+            {/* Notes toggle */}
+            <div>
               <button
                 onClick={() => toggleNotesVisibility(exIdx)}
-                className={`flex items-center gap-1.5 font-mono text-[8px] uppercase tracking-wider transition-colors ${
+                className={`flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider transition-colors ${
                   ex.showNotes ? 'text-primary' : 'text-muted-foreground'
-                } ${ex.showNotes ? 'mb-1' : ''}`}
+                }`}
               >
                 <StickyNote size={10} /> {ex.showNotes ? 'Hide Notes' : 'Notes'}
               </button>
@@ -567,37 +550,36 @@ export const LogTab = () => {
                   onChange={e => updateNotes(exIdx, e.target.value)}
                   placeholder="Exercise notes..."
                   rows={2}
-                  className="w-full bg-secondary border border-border rounded-lg px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none resize-none"
+                  className="w-full mt-1 bg-secondary border border-border rounded-lg px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none resize-none"
                 />
               )}
             </div>
 
-            {/* Move & Superset actions */}
-            <div className="flex gap-1.5 mt-2">
+            {/* Overflow actions — compact row */}
+            <div className="flex items-center gap-2 pt-1 border-t border-border/50">
+              <button
+                onClick={() => removeExercise(exIdx)}
+                className="font-mono text-[8px] text-destructive/60 hover:text-destructive flex items-center gap-1 transition-colors"
+              >
+                <Trash2 size={10} /> Remove
+              </button>
+              <span className="text-border">|</span>
               {ex.section !== 'warmup' && (
-                <button onClick={() => moveExercise(exIdx, 'warmup')} className="font-mono text-[7px] text-muted-foreground border border-border rounded-md px-2 py-1 hover:bg-secondary">
-                  → Warm Up
-                </button>
+                <button onClick={() => moveExercise(exIdx, 'warmup')} className="font-mono text-[8px] text-muted-foreground hover:text-foreground transition-colors">→ Warm Up</button>
               )}
               {ex.section !== 'exercises' && (
-                <button onClick={() => moveExercise(exIdx, 'exercises')} className="font-mono text-[7px] text-muted-foreground border border-border rounded-md px-2 py-1 hover:bg-secondary">
-                  → Exercises
-                </button>
+                <button onClick={() => moveExercise(exIdx, 'exercises')} className="font-mono text-[8px] text-muted-foreground hover:text-foreground transition-colors">→ Main</button>
               )}
               {ex.section !== 'cooldown' && (
-                <button onClick={() => moveExercise(exIdx, 'cooldown')} className="font-mono text-[7px] text-muted-foreground border border-border rounded-md px-2 py-1 hover:bg-secondary">
-                  → Cool Down
-                </button>
+                <button onClick={() => moveExercise(exIdx, 'cooldown')} className="font-mono text-[8px] text-muted-foreground hover:text-foreground transition-colors">→ Cool Down</button>
               )}
               <button
                 onClick={() => handleSupersetLink(exIdx)}
-                className={`font-mono text-[7px] border rounded-md px-2 py-1 flex items-center gap-1 ${
-                  linkingSuperset === exIdx
-                    ? 'text-amber-500 border-amber-500/40 bg-amber-500/10'
-                    : 'text-muted-foreground border-border hover:bg-secondary'
+                className={`font-mono text-[8px] flex items-center gap-1 transition-colors ${
+                  linkingSuperset === exIdx ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <Link2 size={8} /> {linkingSuperset === exIdx ? 'Select pair...' : 'Superset'}
+                <Link2 size={8} /> {linkingSuperset === exIdx ? 'Pick pair…' : 'SS'}
               </button>
             </div>
           </div>
@@ -606,25 +588,37 @@ export const LogTab = () => {
     );
   };
 
-  const renderSection = (title: string, sectionKey: WorkoutSection, items: { ex: SessionExercise; globalIdx: number }[]) => (
-    <Collapsible
-      open={sectionsOpen[sectionKey]}
-      onOpenChange={open => setSectionsOpen(prev => ({ ...prev, [sectionKey]: open }))}
-    >
-      <CollapsibleTrigger className="w-full flex items-center justify-between py-2 px-1">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest">{title}</span>
-          <span className="font-mono text-[8px] text-muted-foreground">{items.length}</span>
-        </div>
-        {sectionsOpen[sectionKey]
-          ? <ChevronUp size={12} className="text-muted-foreground" />
-          : <ChevronDown size={12} className="text-muted-foreground" />}
-      </CollapsibleTrigger>
-      <CollapsibleContent className="space-y-3">
-        {items.map(({ ex, globalIdx }) => renderExerciseCard(ex, globalIdx))}
-      </CollapsibleContent>
-    </Collapsible>
-  );
+  const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; bgCls: string; textCls: string; borderCls: string }> = {
+    warmup:    { label: 'WARM UP',        emoji: '🔥', bgCls: 'bg-amber-500/10', textCls: 'text-amber-500', borderCls: 'border-amber-500/20' },
+    exercises: { label: 'MAIN EXERCISES', emoji: '⚡', bgCls: 'bg-primary/10',   textCls: 'text-primary',   borderCls: 'border-primary/20' },
+    cooldown:  { label: 'COOL DOWN',      emoji: '🧊', bgCls: 'bg-sky-500/10',   textCls: 'text-sky-500',   borderCls: 'border-sky-500/20' },
+  };
+
+  const renderSection = (sectionKey: WorkoutSection, items: { ex: SessionExercise; globalIdx: number }[]) => {
+    const cfg = sectionConfig[sectionKey];
+    return (
+      <Collapsible
+        open={sectionsOpen[sectionKey]}
+        onOpenChange={open => setSectionsOpen(prev => ({ ...prev, [sectionKey]: open }))}
+      >
+        <CollapsibleTrigger className={`w-full flex items-center justify-between py-2.5 px-4 rounded-xl border ${cfg.bgCls} ${cfg.borderCls} mb-2`}>
+          <div className="flex items-center gap-2">
+            <span className="text-sm">{cfg.emoji}</span>
+            <span className={`font-mono text-[10px] ${cfg.textCls} uppercase tracking-widest font-semibold`}>{cfg.label}</span>
+            {items.length > 0 && (
+              <span className={`font-mono text-[9px] ${cfg.textCls} opacity-60`}>{items.length}</span>
+            )}
+          </div>
+          {sectionsOpen[sectionKey]
+            ? <ChevronUp size={14} className={cfg.textCls} />
+            : <ChevronDown size={14} className={cfg.textCls} />}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 mb-4">
+          {items.map(({ ex, globalIdx }) => renderExerciseCard(ex, globalIdx))}
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  };
 
   /* ═══════════════════════════════════════════
      STATE 1 — No active session
