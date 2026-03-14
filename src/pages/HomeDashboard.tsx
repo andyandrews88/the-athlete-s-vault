@@ -138,57 +138,75 @@ const HomeDashboard = () => {
     if (data) setGoals(data.map(g => ({ ...g, current_value: Number(g.current_value) || 0, target_value: Number(g.target_value) || 0 })));
   };
 
-  return (
-    <div className="min-h-screen bg-vault-bg pt-12 pb-[80px]">
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
+  const dayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
 
-        {/* Greeting */}
+  return (
+    <div className="min-h-screen bg-vault-bg pt-12 pb-24">
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+
+        {/* SECTION 1 - Greeting */}
         <div>
-          <h1 className="font-display text-5xl tracking-[2px] text-foreground">
-            {getGreeting()}, {firstName.toUpperCase()}
-          </h1>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="font-mono text-[11px] text-vault-dim">{todayFormatted}</span>
+          <p className="font-mono text-[10px] text-vault-dim uppercase tracking-[2px] mb-1">{dayLabel} · TODAY</p>
+          <h1 className="font-display text-5xl tracking-[2px] leading-none">{getGreeting()}, {firstName.toUpperCase()}</h1>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-vault-dim text-xs font-mono">{todayFormatted}</span>
             {profile?.audit_tier && (
-              <span className={`font-mono text-[10px] px-2 py-0.5 rounded ${getTierColor(profile.audit_tier)}`}>
-                {profile.audit_tier.toUpperCase()}
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full border border-primary/30 bg-primary/10 text-primary uppercase tracking-wider">
+                {profile.audit_tier}
               </span>
             )}
           </div>
         </div>
 
-        {/* Today's Focus */}
-        <div
-          className="bg-vault-bg2 border border-primary/20 rounded-2xl p-5"
-          style={{ boxShadow: '0 0 30px hsl(192 91% 54% / 0.08)' }}
-        >
-          <p className="font-mono text-[10px] text-primary tracking-[2px] uppercase mb-2">TODAY'S FOCUS</p>
-          <p className="text-sm text-vault-mid leading-relaxed mb-4">
-            Complete your first training session and daily check-in to start building your performance profile.
-          </p>
-          <button
-            onClick={() => navigate('/train')}
-            className="w-full bg-primary text-primary-foreground font-bold text-xs py-3.5 rounded-xl uppercase tracking-widest"
-          >
-            View Today's Session
-          </button>
+        {/* SECTION 2 - Readiness */}
+        <div className="rounded-2xl p-5 border border-primary/20 bg-vault-bg2" style={{ boxShadow: '0 0 30px hsl(192 91% 54% / 0.06)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-mono text-[10px] text-primary uppercase tracking-[2px]">READINESS</p>
+            <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-vault-bg3 text-vault-dim">TODAY</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="relative w-16 h-16 flex-shrink-0">
+              <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
+                <circle cx="32" cy="32" r="26" fill="none" stroke="hsl(192,91%,54%)" strokeWidth="4" strokeDasharray="163" strokeDashoffset="30" strokeLinecap="round" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="font-mono text-base font-bold text-primary">82</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 flex-1">
+              <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">SLEEP</p><p className="font-mono text-sm text-foreground">7.5h</p></div>
+              <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">ENERGY</p><p className="font-mono text-sm text-primary">4/5</p></div>
+              <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">STRESS</p><p className="font-mono text-sm text-vault-ok">2/5</p></div>
+              <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">DRIVE</p><p className="font-mono text-sm text-primary">5/5</p></div>
+            </div>
+          </div>
+          <button onClick={() => navigate('/lifestyle')} className="w-full mt-4 py-2.5 border border-primary/20 bg-vault-bg3 rounded-xl font-mono text-[10px] text-primary uppercase tracking-widest">Log Today's Check-In →</button>
         </div>
 
-        {/* Quick Stats */}
+        {/* SECTION 3 - Today's Focus */}
+        <div className="rounded-2xl p-5 border border-vault-border2 bg-vault-bg2">
+          <p className="font-mono text-[10px] text-primary uppercase tracking-[2px] mb-2">TODAY'S FOCUS</p>
+          <p className="text-sm text-vault-mid leading-relaxed mb-4">Complete your first training session and daily check-in to start building your performance profile.</p>
+          <button onClick={() => navigate('/train')} className="w-full bg-primary text-primary-foreground font-bold text-xs py-3.5 rounded-xl uppercase tracking-widest">View Today's Session →</button>
+        </div>
+
+        {/* SECTION 4 - Quick Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'STREAK', value: streak, unit: 'days' },
             { label: 'THIS WEEK', value: completedThisWeek, unit: 'sessions' },
             { label: 'TOTAL PRS', value: 0, unit: 'logged' },
           ].map(s => (
-            <div key={s.label} className="bg-vault-bg3 border border-vault-border rounded-xl p-4 text-center">
-              <p className="font-mono text-3xl text-primary">{s.value}</p>
-              <p className="font-mono text-[9px] text-vault-dim uppercase tracking-widest mt-1">{s.unit}<br />{s.label}</p>
+            <div key={s.label} className="bg-vault-bg3 border border-vault-border rounded-2xl p-3 text-center">
+              <p className="font-mono text-3xl text-primary leading-none">{s.value}</p>
+              <p className="font-mono text-[8px] text-vault-dim uppercase tracking-widest mt-1">{s.unit}</p>
+              <p className="font-mono text-[8px] text-vault-dim uppercase tracking-widest">{s.label}</p>
             </div>
           ))}
         </div>
 
-        {/* Week Strip */}
+        {/* SECTION 5 - Week Strip */}
         <div>
           <p className="font-mono text-[10px] text-vault-dim uppercase tracking-widest mb-3">THIS WEEK</p>
           <div className="flex justify-between">
@@ -196,26 +214,18 @@ const HomeDashboard = () => {
               const dateStr = d.toISOString().split('T')[0];
               const isToday = dateStr === today;
               const completed = completedDates.has(dateStr);
-              const planned = plannedDates.has(dateStr);
               return (
                 <div key={i} className="flex flex-col items-center gap-1.5">
                   <span className="font-mono text-[9px] text-vault-dim">{DAY_LABELS[i]}</span>
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-mono ${
-                    isToday ? 'bg-primary text-primary-foreground font-bold' : 'text-foreground'
-                  }`}>
-                    {d.getDate()}
-                  </div>
-                  <div className="h-2">
-                    {completed && <div className="w-2 h-2 rounded-full bg-primary" />}
-                    {!completed && planned && <div className="w-2 h-2 rounded-full border border-primary/50" />}
-                  </div>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-mono text-xs ${isToday ? 'bg-primary text-primary-foreground font-bold' : 'text-foreground'}`}>{d.getDate()}</div>
+                  <div className="h-2">{completed && <div className="w-2 h-2 rounded-full bg-primary mx-auto" />}</div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Goals */}
+        {/* SECTION 6 - Goals */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <p className="font-mono text-[10px] text-vault-dim uppercase tracking-widest">MY GOALS</p>
@@ -224,20 +234,20 @@ const HomeDashboard = () => {
             </button>
           </div>
           {goals.length === 0 ? (
-            <div className="bg-vault-bg2 border border-vault-border rounded-xl p-5 text-center">
-              <p className="text-sm text-vault-dim">No goals set yet. Tap + to add.</p>
+            <div className="bg-vault-bg2 border border-vault-border rounded-2xl p-5 text-center">
+              <p className="text-sm text-vault-dim">No goals yet. Tap + to add your first.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {goals.map(g => {
                 const pct = g.target_value > 0 ? Math.min(100, Math.round((g.current_value / g.target_value) * 100)) : 0;
                 return (
-                  <div key={g.id} className="bg-vault-bg2 border border-vault-border rounded-xl p-4">
+                  <div key={g.id} className="bg-vault-bg2 border border-vault-border rounded-2xl p-4">
                     <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-sm font-medium text-foreground">{g.title}</span>
+                      <span className="text-sm font-medium">{g.title}</span>
                       <span className="font-mono text-xs text-primary">{g.current_value}/{g.target_value} {g.metric}</span>
                     </div>
-                    <Progress value={pct} className="h-1.5" />
+                    <Progress value={pct} className="h-1.5 bg-vault-bg3" />
                   </div>
                 );
               })}
@@ -245,20 +255,19 @@ const HomeDashboard = () => {
           )}
         </div>
 
-        {/* Weekly Review */}
-        <div className="bg-vault-bg2 border border-vault-border rounded-xl p-5">
-          <p className="font-mono text-[10px] text-primary tracking-[2px] uppercase mb-2">WEEKLY REVIEW</p>
-          <p className="text-sm text-vault-mid leading-relaxed">
-            {weeklyReview || "Your first weekly review generates after 7 days of training data."}
-          </p>
+        {/* SECTION 7 - Weekly Review */}
+        <div className="bg-vault-bg2 border border-vault-border rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-base">✨</span>
+            <p className="font-mono text-[10px] text-primary uppercase tracking-[2px]">WEEKLY AI REVIEW</p>
+          </div>
+          <p className="text-sm text-vault-mid leading-relaxed">{weeklyReview || "Your first weekly review generates after 7 days of training data."}</p>
         </div>
 
-        {/* Coaching Panel */}
-        <div className="bg-vault-bg2 border border-vault-border rounded-xl p-5">
-          <p className="font-mono text-[10px] text-primary tracking-[2px] uppercase mb-2">FROM ANDY</p>
-          <p className="text-sm text-vault-mid leading-relaxed">
-            {coachNote || "Andy will add a note after reviewing your first week."}
-          </p>
+        {/* SECTION 8 - From Andy */}
+        <div className="bg-vault-bg2 border border-vault-border rounded-2xl p-5">
+          <p className="font-mono text-[10px] text-primary uppercase tracking-[2px] mb-3">FROM ANDY</p>
+          <p className="text-sm text-vault-mid leading-relaxed">{coachNote || "Andy will add a personalised note after reviewing your first week."}</p>
         </div>
       </div>
 
