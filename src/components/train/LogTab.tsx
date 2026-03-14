@@ -489,20 +489,20 @@ export const LogTab = () => {
         {ex.expanded && (
           <div className="px-4 pb-4 space-y-2">
             {/* Column headers */}
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-mono text-[7px] text-muted-foreground uppercase w-7 text-center shrink-0">Set</span>
-              <span className="font-mono text-[7px] text-muted-foreground uppercase flex-1 text-center">
+            <div className="flex items-center gap-3 mb-1">
+              <span className="font-mono text-[8px] text-muted-foreground uppercase w-8 text-center shrink-0">Set</span>
+              <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">
                 {isTimed ? 'Secs' : weightUnit.toUpperCase()}
               </span>
-              {!isTimed && <span className="font-mono text-[7px] text-muted-foreground uppercase flex-1 text-center">Reps</span>}
+              {!isTimed && <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">Reps</span>}
               {ex.exercise.exercise_type === 'conditioning' && (
                 <>
-                  <span className="font-mono text-[7px] text-muted-foreground uppercase flex-1 text-center">Dist</span>
-                  <span className="font-mono text-[7px] text-muted-foreground uppercase flex-1 text-center">Cal</span>
+                  <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">Dist</span>
+                  <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">Cal</span>
                 </>
               )}
-              <span className="font-mono text-[7px] text-muted-foreground uppercase w-12 text-center shrink-0">RIR</span>
-              <span className="w-8 shrink-0" />
+              <span className="font-mono text-[8px] text-muted-foreground uppercase w-14 text-center shrink-0">RIR</span>
+            </div>
             </div>
 
             {/* Sets */}
