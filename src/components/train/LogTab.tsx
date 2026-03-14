@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { calculateSetNtu } from '@/lib/movementPatterns';
-import { Search, Plus, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Plus, Check, ChevronDown, ChevronUp, Dumbbell } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ExerciseRow {
@@ -27,20 +27,6 @@ interface SessionExercise {
   expanded: boolean;
   isPr: boolean;
 }
-
-const PATTERN_COLORS: Record<string, string> = {
-  Squat: '192 91% 54%',
-  Hinge: '38 92% 50%',
-  Push: '142 71% 45%',
-  Pull: '270 60% 60%',
-  Carry: '210 15% 70%',
-  Lunge: '192 91% 54%',
-  Rotation: '45 93% 58%',
-  Jump: '0 72% 51%',
-  Sprint: '0 72% 51%',
-  Swim: '192 91% 54%',
-  Row: '270 60% 60%',
-};
 
 export const LogTab = () => {
   const { user } = useAuth();
@@ -68,7 +54,7 @@ export const LogTab = () => {
     return () => clearInterval(interval);
   }, [sessionStartTime, finished]);
 
-  // Total NTU (silent)
+  // Total NTU
   const totalNtu = useMemo(() => {
     return exercises.reduce((total, ex) => {
       return total + ex.sets.reduce((setTotal, set) => {
@@ -194,27 +180,33 @@ export const LogTab = () => {
     setFinished(true);
   };
 
-  // PRE-SESSION
+  // ─── STATE 1: No active session ───
   if (!sessionId && !finished) {
     return (
-      <div className="max-w-lg mx-auto px-4 space-y-4">
-        <div className="bg-vault-bg2 border border-primary/20 rounded-2xl p-4 space-y-4">
-          <div className="text-center">
-            <p className="font-mono text-2xl text-primary">{timer}</p>
-            <p className="font-mono text-[10px] text-vault-dim mt-1">Ready to train</p>
-          </div>
+      <div className="max-w-lg mx-auto px-4 flex flex-col items-center pt-6">
+        <p className="font-mono text-[10px] text-vault-dim uppercase tracking-widest mb-8">
+          {format(new Date(), 'EEEE, dd MMMM yyyy').toUpperCase()}
+        </p>
+
+        <div
+          className="w-full bg-vault-bg2 border border-primary/20 rounded-2xl p-8 text-center"
+          style={{ boxShadow: '0 0 30px hsl(192 91% 54% / 0.06)' }}
+        >
+          <Dumbbell size={32} className="text-primary mx-auto mb-4" />
+          <h2 className="font-display text-3xl tracking-[2px] mb-2">START WORKOUT</h2>
+          <p className="font-mono text-[10px] text-vault-dim mb-6">LOG YOUR TRAINING SESSION</p>
           <button
             onClick={startSession}
-            className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs"
+            className="w-full bg-primary text-primary-foreground font-bold text-xs py-4 rounded-xl uppercase tracking-widest"
           >
-            START SESSION
+            Begin Session →
           </button>
         </div>
       </div>
     );
   }
 
-  // SUMMARY
+  // ─── SUMMARY ───
   if (finished && summaryData) {
     return (
       <div className="max-w-lg mx-auto px-4 space-y-4">
@@ -236,7 +228,7 @@ export const LogTab = () => {
             ))}
           </div>
           <button
-            onClick={() => { setSessionId(null); setExercises([]); setFinished(false); setSummaryData(null); }}
+            onClick={() => { setSessionId(null); setExercises([]); setFinished(false); setSummaryData(null); setTimer('00:00'); }}
             className="w-full bg-vault-bg3 border border-vault-border text-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs"
           >
             New Session
@@ -246,18 +238,26 @@ export const LogTab = () => {
     );
   }
 
-  // ACTIVE SESSION
+  // ─── STATE 2: Active session ───
   return (
     <div className="max-w-lg mx-auto px-4 space-y-4">
       {/* Session header */}
-      <div className="bg-vault-bg2 border border-primary/20 rounded-2xl p-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-vault-bg2 border border-primary/20 rounded-2xl p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Dumbbell size={18} className="text-primary" />
           <div>
-            <h2 className="font-display text-xl tracking-wide text-foreground">FUNCTIONAL BB A</h2>
-            <p className="font-mono text-[10px] text-vault-dim">Week 3 · Day 1 · Main Block</p>
+            <p className="font-mono text-2xl text-primary">{timer}</p>
+            <p className="font-mono text-[10px] text-vault-dim">
+              {exercises.length} exercise{exercises.length !== 1 ? 's' : ''} · {Math.round(totalNtu)} NTU
+            </p>
           </div>
-          <p className="font-mono text-2xl text-primary">{timer}</p>
         </div>
+        <button
+          onClick={finishSession}
+          className="bg-primary text-primary-foreground font-bold text-[10px] px-4 py-2 rounded-lg uppercase tracking-widest"
+        >
+          Finish
+        </button>
       </div>
 
       {/* Exercise blocks */}
@@ -268,19 +268,19 @@ export const LogTab = () => {
           : null;
 
         return (
-          <div key={exIdx} className="bg-vault-bg2 border border-vault-border rounded-2xl p-4">
+          <div key={exIdx} className="bg-vault-bg2 border border-vault-border rounded-2xl p-4 space-y-3">
             {/* Exercise header */}
             <button
               onClick={() => toggleExpand(exIdx)}
               className="w-full flex items-center justify-between text-left"
             >
-              <div>
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-semibold text-sm text-foreground">{ex.exercise.name}</p>
-                <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 inline-block mt-1">
+                <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                   {ex.exercise.movement_pattern}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {avgRir !== null && (
                   <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-vault-warn/10 text-vault-warn border border-vault-warn/20">
                     RIR {avgRir}
@@ -297,10 +297,10 @@ export const LogTab = () => {
 
             {/* Expanded set table */}
             {ex.expanded && (
-              <div className="mt-3">
+              <div>
                 {/* Headers */}
                 <div className="grid grid-cols-4 gap-2 mb-2">
-                  {['SET', 'WEIGHT', 'REPS', 'RIR'].map((h) => (
+                  {['SET', 'KG', 'REPS', 'RIR'].map((h) => (
                     <span key={h} className="font-mono text-[8px] text-vault-dim uppercase text-center">{h}</span>
                   ))}
                 </div>
@@ -308,7 +308,7 @@ export const LogTab = () => {
                 {/* Set rows */}
                 {ex.sets.map((set, setIdx) => (
                   <div key={setIdx} className="grid grid-cols-4 gap-2 items-center mb-1.5">
-                    <span className="font-mono text-xs text-vault-dim text-center">S{set.set_num}</span>
+                    <span className="font-mono text-xs text-vault-dim text-center">{set.set_num}</span>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -316,7 +316,7 @@ export const LogTab = () => {
                       value={set.weight_kg ?? ''}
                       onChange={(e) => updateSet(exIdx, setIdx, 'weight_kg', e.target.value ? parseFloat(e.target.value) : null)}
                       disabled={set.completed}
-                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
+                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2.5 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
                         set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-vault-border text-foreground'
                       }`}
                     />
@@ -327,7 +327,7 @@ export const LogTab = () => {
                       value={set.reps ?? ''}
                       onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
                       disabled={set.completed}
-                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
+                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2.5 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
                         set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-vault-border text-foreground'
                       }`}
                     />
@@ -340,14 +340,14 @@ export const LogTab = () => {
                       value={set.rir ?? ''}
                       onChange={(e) => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
                       disabled={set.completed}
-                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
+                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2.5 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
                         set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-vault-border text-foreground'
                       }`}
                     />
                   </div>
                 ))}
 
-                {/* Buttons */}
+                {/* Action buttons */}
                 <div className="flex gap-2 mt-2">
                   {ex.sets.some(s => !s.completed && s.reps && s.weight_kg) && (
                     <button
@@ -394,14 +394,14 @@ export const LogTab = () => {
             />
           </div>
           {searchResults.length > 0 && (
-            <div className="bg-vault-bg2 border border-vault-border rounded-2xl overflow-hidden">
+            <div className="bg-vault-bg2 border border-vault-border rounded-xl overflow-hidden">
               {searchResults.map(ex => (
                 <button
                   key={ex.id}
                   onClick={() => addExercise(ex)}
-                  className="w-full flex items-center justify-between px-4 py-3 text-left border-b border-vault-border last:border-b-0 hover:bg-vault-bg3 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 text-left border-b border-vault-border last:border-b-0 text-foreground hover:bg-vault-bg3 cursor-pointer font-mono text-sm transition-colors"
                 >
-                  <span className="text-sm text-foreground">{ex.name}</span>
+                  <span>{ex.name}</span>
                   <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                     {ex.movement_pattern}
                   </span>
@@ -410,16 +410,6 @@ export const LogTab = () => {
             </div>
           )}
         </div>
-      )}
-
-      {/* Finish Session */}
-      {exercises.length > 0 && (
-        <button
-          onClick={finishSession}
-          className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs mt-4"
-        >
-          FINISH SESSION
-        </button>
       )}
     </div>
   );

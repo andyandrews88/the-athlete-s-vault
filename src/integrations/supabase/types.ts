@@ -702,12 +702,40 @@ export type Database = {
           },
         ]
       }
+      training_programmes: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       training_sessions: {
         Row: {
           completed: boolean | null
           created_at: string | null
           date: string
           id: string
+          programme_id: string | null
           session_type: string | null
           total_ntu: number | null
           user_id: string
@@ -717,6 +745,7 @@ export type Database = {
           created_at?: string | null
           date?: string
           id?: string
+          programme_id?: string | null
           session_type?: string | null
           total_ntu?: number | null
           user_id: string
@@ -726,11 +755,20 @@ export type Database = {
           created_at?: string | null
           date?: string
           id?: string
+          programme_id?: string | null
           session_type?: string | null
           total_ntu?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "training_sessions_programme_id_fkey"
+            columns: ["programme_id"]
+            isOneToOne: false
+            referencedRelation: "training_programmes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_reviews: {
         Row: {
