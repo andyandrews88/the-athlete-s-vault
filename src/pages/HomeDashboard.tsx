@@ -65,6 +65,8 @@ const HomeDashboard = () => {
   const [newGoal, setNewGoal] = useState({ title: '', metric: '', current_value: 0, target_value: 0 });
   const [coachNote, setCoachNote] = useState<string | null>(null);
   const [weeklyReview, setWeeklyReview] = useState<string | null>(null);
+  const [readiness, setReadiness] = useState<{ score: number; sleep_hours: number | null; energy: number; stress: number; drive: number; hasCheckin: boolean } | null>(null);
+  const [totalPrs, setTotalPrs] = useState(0);
 
   const weekDates = useMemo(() => getWeekDates(), []);
   const today = new Date().toISOString().split('T')[0];
@@ -115,6 +117,29 @@ const HomeDashboard = () => {
     supabase.from('weekly_reviews').select('summary').eq('user_id', uid)
       .order('generated_at', { ascending: false }).limit(1)
       .then(({ data }) => { if (data?.[0]) setWeeklyReview(data[0].summary); });
+
+    // Readiness from today's check-in
+    const todayStr = new Date().toISOString().split('T')[0];
+    supabase.from('daily_checkins').select('sleep_hours, energy, stress, drive, sleep, mood, soreness')
+      .eq('user_id', uid).eq('date', todayStr).limit(1).single()
+      .then(({ data }) => {
+        if (data) {
+          // Readiness = weighted average: sleep_hours contributes double
+          const sleepNorm = Math.min((data.sleep_hours ?? 7) / 9, 1); // 9h = perfect
+          const energyNorm = (data.energy ?? 5) / 10;
+          const stressNorm = 1 - ((data.stress ?? 5) / 10); // invert: low stress = high readiness
+          const driveNorm = (data.drive ?? 3) / 5;
+          const sleepQNorm = (data.sleep ?? 5) / 10;
+          const score = Math.round(((sleepNorm * 2 + sleepQNorm + energyNorm + driveNorm + stressNorm) / 6) * 100);
+          setReadiness({ score, sleep_hours: data.sleep_hours, energy: data.energy, stress: data.stress, drive: data.drive, hasCheckin: true });
+        } else {
+          setReadiness({ score: 0, sleep_hours: null, energy: 0, stress: 0, drive: 0, hasCheckin: false });
+        }
+      });
+
+    // Total PRs
+    supabase.from('personal_records').select('id', { count: 'exact', head: true }).eq('user_id', uid)
+      .then(({ count }) => { setTotalPrs(count ?? 0); });
   }, [user, weekDates]);
 
   const completedThisWeek = sessions.filter(s => s.completed).length;
@@ -159,30 +184,48 @@ const HomeDashboard = () => {
         </div>
 
         {/* SECTION 2 - Readiness */}
-        <div className="rounded-2xl p-5 border border-primary/20 bg-vault-bg2" style={{ boxShadow: '0 0 30px hsl(192 91% 54% / 0.06)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <p className="font-mono text-[10px] text-primary uppercase tracking-[2px]">READINESS</p>
-            <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-vault-bg3 text-vault-dim">TODAY</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 flex-shrink-0">
-              <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
-                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
-                <circle cx="32" cy="32" r="26" fill="none" stroke="hsl(192,91%,54%)" strokeWidth="4" strokeDasharray="163" strokeDashoffset="30" strokeLinecap="round" />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="font-mono text-base font-bold text-primary">82</span>
+        {(() => {
+          const r = readiness;
+          const score = r?.score ?? 0;
+          const hasCheckin = r?.hasCheckin ?? false;
+          const scoreColor = !hasCheckin ? 'text-vault-dim' : score > 70 ? 'text-vault-ok' : score > 40 ? 'text-vault-warn' : 'text-vault-bad';
+          const strokeColor = !hasCheckin ? 'rgba(255,255,255,0.1)' : score > 70 ? 'hsl(142,71%,45%)' : score > 40 ? 'hsl(38,92%,50%)' : 'hsl(0,72%,51%)';
+          const circumference = 2 * Math.PI * 26;
+          const offset = hasCheckin ? circumference - (score / 100) * circumference : circumference;
+
+          return (
+            <div className="rounded-2xl p-5 border border-primary/20 bg-vault-bg2" style={{ boxShadow: '0 0 30px hsl(192 91% 54% / 0.06)' }}>
+              <div className="flex items-center justify-between mb-4">
+                <p className="font-mono text-[10px] text-primary uppercase tracking-[2px]">READINESS</p>
+                <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-vault-bg3 text-vault-dim">TODAY</span>
               </div>
+              {hasCheckin ? (
+                <div className="flex items-center gap-4">
+                  <div className="relative w-16 h-16 flex-shrink-0">
+                    <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                      <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
+                      <circle cx="32" cy="32" r="26" fill="none" stroke={strokeColor} strokeWidth="4" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className={`font-mono text-base font-bold ${scoreColor}`}>{score}</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 flex-1">
+                    <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">SLEEP</p><p className="font-mono text-sm text-foreground">{r?.sleep_hours ?? '—'}h</p></div>
+                    <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">ENERGY</p><p className="font-mono text-sm text-primary">{r?.energy ?? 0}/10</p></div>
+                    <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">STRESS</p><p className={`font-mono text-sm ${(r?.stress ?? 5) <= 4 ? 'text-vault-ok' : (r?.stress ?? 5) <= 7 ? 'text-vault-warn' : 'text-vault-bad'}`}>{r?.stress ?? 0}/10</p></div>
+                    <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">DRIVE</p><p className="font-mono text-sm text-primary">{r?.drive ?? 0}/5</p></div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-vault-dim text-center py-4">No check-in logged today</p>
+              )}
+              <button onClick={() => navigate('/lifestyle')} className="w-full mt-4 py-2.5 border border-primary/20 bg-vault-bg3 rounded-xl font-mono text-[10px] text-primary uppercase tracking-widest">
+                {hasCheckin ? 'Update Check-In →' : 'Log Today\'s Check-In →'}
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-2 flex-1">
-              <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">SLEEP</p><p className="font-mono text-sm text-foreground">7.5h</p></div>
-              <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">ENERGY</p><p className="font-mono text-sm text-primary">4/5</p></div>
-              <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">STRESS</p><p className="font-mono text-sm text-vault-ok">2/5</p></div>
-              <div className="bg-vault-bg3 rounded-xl p-2 text-center"><p className="font-mono text-[8px] text-vault-dim mb-0.5">DRIVE</p><p className="font-mono text-sm text-primary">5/5</p></div>
-            </div>
-          </div>
-          <button onClick={() => navigate('/lifestyle')} className="w-full mt-4 py-2.5 border border-primary/20 bg-vault-bg3 rounded-xl font-mono text-[10px] text-primary uppercase tracking-widest">Log Today's Check-In →</button>
-        </div>
+          );
+        })()}
 
         {/* SECTION 3 - Today's Focus */}
         <div className="rounded-2xl p-5 border border-vault-border2 bg-vault-bg2">
@@ -196,7 +239,7 @@ const HomeDashboard = () => {
           {[
             { label: 'STREAK', value: streak, unit: 'days' },
             { label: 'THIS WEEK', value: completedThisWeek, unit: 'sessions' },
-            { label: 'TOTAL PRS', value: 0, unit: 'logged' },
+            { label: 'TOTAL PRS', value: totalPrs, unit: 'logged' },
           ].map(s => (
             <div key={s.label} className="bg-vault-bg3 border border-vault-border rounded-2xl p-3 text-center">
               <p className="font-mono text-3xl text-primary leading-none">{s.value}</p>

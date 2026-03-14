@@ -35,6 +35,13 @@ interface Programme {
   is_active: boolean;
 }
 
+interface ProgrammeWorkout {
+  id: string;
+  day_number: number;
+  name: string;
+  prescribed_exercises: Array<{ name: string; sets: number; reps: string; notes: string }>;
+}
+
 export const LogTab = () => {
   const { user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -55,7 +62,12 @@ export const LogTab = () => {
   const [selectedProgrammeId, setSelectedProgrammeId] = useState<string | null>(null);
   const [showProgrammeSelector, setShowProgrammeSelector] = useState(false);
 
-  // Load programmes
+  // Workout day state
+  const [workouts, setWorkouts] = useState<ProgrammeWorkout[]>([]);
+  const [selectedWorkout, setSelectedWorkout] = useState<ProgrammeWorkout | null>(null);
+  const [showWorkoutPicker, setShowWorkoutPicker] = useState(false);
+
+  // Load programmes + workouts
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -69,6 +81,18 @@ export const LogTab = () => {
       const active = progs.find(p => p.is_active) || null;
       setActiveProgramme(active);
       setSelectedProgrammeId(active?.id || null);
+
+      // Load workouts for active programme
+      if (active) {
+        const { data: wkData } = await supabase
+          .from('programme_workouts')
+          .select('id, day_number, name, prescribed_exercises')
+          .eq('programme_id', active.id)
+          .order('day_number');
+        if (wkData && wkData.length > 0) {
+          setWorkouts(wkData as ProgrammeWorkout[]);
+        }
+      }
     })();
   }, [user]);
 
@@ -121,6 +145,33 @@ export const LogTab = () => {
     if (data && !error) {
       setSessionId(data.id);
       setSessionStartTime(new Date());
+
+      // Pre-load prescribed exercises if a workout day is selected
+      if (selectedWorkout) {
+        const prescribed = selectedWorkout.prescribed_exercises || [];
+        const exerciseNames = prescribed.map((p: any) => p.name);
+        if (exerciseNames.length > 0) {
+          const { data: exData } = await supabase
+            .from('exercises')
+            .select('id, name, movement_pattern, difficulty_coefficient')
+            .in('name', exerciseNames);
+
+          if (exData) {
+            const exMap = new Map(exData.map((e: any) => [e.name, e]));
+            const preloaded: SessionExercise[] = prescribed
+              .filter((p: any) => exMap.has(p.name))
+              .map((p: any) => ({
+                exercise: exMap.get(p.name)!,
+                sets: Array.from({ length: p.sets || 1 }, (_, i) => ({
+                  set_num: i + 1, reps: null, weight_kg: null, rir: null, completed: false,
+                })),
+                expanded: false,
+                isPr: false,
+              }));
+            setExercises(preloaded);
+          }
+        }
+      }
     }
   };
 
@@ -271,6 +322,29 @@ export const LogTab = () => {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Workout day picker */}
+          {workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && (
+            <div className="mb-5">
+              <p className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest mb-2 text-left">Select today's workout</p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {workouts.map(w => (
+                  <button
+                    key={w.id}
+                    onClick={() => setSelectedWorkout(selectedWorkout?.id === w.id ? null : w)}
+                    className={`w-full text-left px-4 py-3 rounded-xl font-mono text-xs border transition-colors ${
+                      selectedWorkout?.id === w.id
+                        ? 'text-primary bg-primary/5 border-primary/40'
+                        : 'text-foreground bg-secondary border-border hover:border-primary/20'
+                    }`}
+                  >
+                    <span className="font-bold">Day {w.day_number}</span>
+                    <span className="text-muted-foreground ml-2">— {w.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
