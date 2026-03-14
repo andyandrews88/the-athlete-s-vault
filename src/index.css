@@ -66,6 +66,18 @@
     overflow-x: hidden;
   }
 
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(ellipse at 50% 0%, hsl(192 91% 54% / 0.06) 0%, transparent 60%);
+  }
+
   h1, h2, h3 {
     text-wrap: balance;
     letter-spacing: 0.02em;

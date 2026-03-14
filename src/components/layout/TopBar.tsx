@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { User, Settings, LogOut } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const VISIBLE_ROUTES = ['/home', '/train', '/lifestyle', '/nutrition', '/progress', '/library', '/community'];
 
@@ -32,7 +33,7 @@ export const TopBar = () => {
           borderBottom: '1px solid hsl(var(--border))',
         }}
       >
-        <span className="font-display text-xl text-primary tracking-[3px]">THE VAULT</span>
+        <img src={logo} alt="The Vault" className="h-6 w-auto" />
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="w-[30px] h-[30px] rounded-full bg-vault-bg3 border border-vault-border2 flex items-center justify-center font-mono text-[10px] text-primary"
