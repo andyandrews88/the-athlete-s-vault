@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { User, Settings, LogOut } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const VISIBLE_ROUTES = ['/home', '/train', '/lifestyle', '/nutrition', '/progress', '/library', '/community'];
 
