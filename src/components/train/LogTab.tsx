@@ -774,9 +774,9 @@ export const LogTab = () => {
       </div>
 
       {/* ─── Sections ─── */}
-      {renderSection('🔥 Warm Up', 'warmup', sectionExercises.warmup)}
-      {renderSection('💪 Exercises', 'exercises', sectionExercises.exercises)}
-      {renderSection('🧊 Cool Down', 'cooldown', sectionExercises.cooldown)}
+      {renderSection('warmup', sectionExercises.warmup)}
+      {renderSection('exercises', sectionExercises.exercises)}
+      {renderSection('cooldown', sectionExercises.cooldown)}
 
       {/* Add Exercise */}
       {!showSearch ? (
