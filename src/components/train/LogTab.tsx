@@ -7,7 +7,7 @@ import { RestTimer } from './RestTimer';
 import { WeekStrip } from './WeekStrip';
 import {
   Search, Plus, ChevronDown, ChevronUp, Dumbbell, ListChecks,
-  Link2, MessageSquare, StickyNote, ArrowUp, ArrowDown, Timer,
+  Link2, StickyNote, MessageSquare, Trash2, X, Check,
 } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { format } from 'date-fns';
@@ -45,6 +45,7 @@ interface SessionExercise {
   notes: string;
   section: WorkoutSection;
   supersetGroup: string | null;
+  showNotes: boolean;
 }
 
 interface Programme {
@@ -116,6 +117,13 @@ export const LogTab = () => {
   const toKg = (display: number | null) => {
     if (display === null) return null;
     return weightUnit === 'lbs' ? Math.round((display / LB_PER_KG) * 100) / 100 : display;
+  };
+
+  /** Check if a set has enough data to be completable */
+  const setHasData = (set: SetData, exType?: string) => {
+    if (exType === 'timed') return !!set.duration_secs;
+    if (exType === 'conditioning') return !!(set.duration_secs || set.distance_m || set.calories);
+    return !!(set.reps && set.weight_kg);
   };
 
   /* ─── Load programmes ─── */
@@ -205,6 +213,7 @@ export const LogTab = () => {
                 notes: p.notes || '',
                 section: 'exercises' as WorkoutSection,
                 supersetGroup: null,
+                showNotes: !!(p.notes),
               }));
             setExercises(preloaded);
           }
@@ -213,12 +222,27 @@ export const LogTab = () => {
     }
   };
 
+  const cancelSession = async () => {
+    if (!sessionId) return;
+    await supabase.from('training_sessions').delete().eq('id', sessionId);
+    setSessionId(null);
+    setExercises([]);
+    setSessionStartTime(null);
+    setTimer('00:00');
+    setWorkoutNotes('');
+    toast({ title: 'Workout cancelled', description: 'Session discarded.' });
+  };
+
   const addExercise = (ex: ExerciseRow, section: WorkoutSection = 'exercises') => {
     setExercises(prev => [...prev, {
       exercise: ex, sets: [emptySet(1)], expanded: true, isPr: false,
-      notes: '', section, supersetGroup: null,
+      notes: '', section, supersetGroup: null, showNotes: false,
     }]);
     setSearchQuery(''); setSearchResults([]); setShowSearch(false);
+  };
+
+  const removeExercise = (exIdx: number) => {
+    setExercises(prev => prev.filter((_, i) => i !== exIdx));
   };
 
   const addSet = (exIdx: number) => {
@@ -238,6 +262,10 @@ export const LogTab = () => {
     setShowRestTimer(true);
   };
 
+  const uncompleteSet = (exIdx: number, setIdx: number) => {
+    updateSet(exIdx, setIdx, 'completed', false);
+  };
+
   const toggleExpand = (exIdx: number) => {
     setExercises(prev => prev.map((e, i) => i === exIdx ? { ...e, expanded: !e.expanded } : e));
   };
@@ -248,6 +276,10 @@ export const LogTab = () => {
 
   const updateNotes = (exIdx: number, notes: string) => {
     setExercises(prev => prev.map((e, i) => i === exIdx ? { ...e, notes } : e));
+  };
+
+  const toggleNotesVisibility = (exIdx: number) => {
+    setExercises(prev => prev.map((e, i) => i === exIdx ? { ...e, showNotes: !e.showNotes } : e));
   };
 
   /* ─── Superset linking ─── */
@@ -335,6 +367,8 @@ export const LogTab = () => {
   /* ─── Render helpers ─── */
   const renderSetRow = (ex: SessionExercise, exIdx: number, set: SetData, setIdx: number) => {
     const isTimed = isTimedOrConditioning(ex.exercise.exercise_type);
+    const isConditioning = ex.exercise.exercise_type === 'conditioning';
+    const canComplete = setHasData(set, ex.exercise.exercise_type);
     const inputCls = (completed: boolean) =>
       `w-full bg-secondary border rounded-lg px-1.5 py-2 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
         completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-border text-foreground'
@@ -348,7 +382,7 @@ export const LogTab = () => {
           disabled={set.completed}
           className={`font-mono text-[8px] w-7 h-8 rounded-md flex items-center justify-center shrink-0 border transition-colors ${
             set.set_type === 'warmup'
-              ? 'bg-vault-warn/10 text-vault-warn border-vault-warn/30'
+              ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
               : 'bg-secondary text-muted-foreground border-border'
           }`}
           title={set.set_type === 'warmup' ? 'Warmup set' : 'Working set'}
@@ -368,7 +402,7 @@ export const LogTab = () => {
           <input
             type="number" inputMode="decimal"
             placeholder={weightUnit === 'lbs' ? 'lbs' : 'kg'}
-            value={set.completed ? (toDisplay(set.weight_kg) ?? '') : (set.weight_kg !== null ? toDisplay(set.weight_kg) ?? '' : '')}
+            value={toDisplay(set.weight_kg) ?? ''}
             onChange={e => updateSet(exIdx, setIdx, 'weight_kg', toKg(e.target.value ? parseFloat(e.target.value) : null))}
             disabled={set.completed}
             className={inputCls(set.completed) + ' flex-1'}
@@ -386,7 +420,7 @@ export const LogTab = () => {
         )}
 
         {/* Conditioning extras */}
-        {ex.exercise.exercise_type === 'conditioning' && (
+        {isConditioning && (
           <>
             <input
               type="number" inputMode="decimal" placeholder="m"
@@ -418,6 +452,21 @@ export const LogTab = () => {
           onChange={e => updateSet(exIdx, setIdx, 'rpe', e.target.value ? parseFloat(e.target.value) : null)}
           className={inputCls(set.completed) + ' w-12 shrink-0'}
         />
+
+        {/* Per-set completion button */}
+        <button
+          onClick={() => set.completed ? uncompleteSet(exIdx, setIdx) : (canComplete ? completeSet(exIdx, setIdx) : null)}
+          disabled={!set.completed && !canComplete}
+          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${
+            set.completed
+              ? 'bg-primary text-primary-foreground border-primary'
+              : canComplete
+                ? 'bg-secondary text-muted-foreground border-border hover:border-primary hover:text-primary'
+                : 'bg-secondary text-muted-foreground/30 border-border/50 cursor-not-allowed'
+          }`}
+        >
+          <Check size={12} />
+        </button>
       </div>
     );
   };
@@ -430,13 +479,13 @@ export const LogTab = () => {
     const isConditioning = ex.exercise.exercise_type === 'conditioning';
 
     // Superset visual indicator
-    const ssColor = ex.supersetGroup ? 'border-l-2 border-l-vault-warn' : '';
+    const ssColor = ex.supersetGroup ? 'border-l-2 border-l-amber-500' : '';
 
     return (
       <div key={exIdx} className={`bg-card border border-border rounded-2xl p-4 space-y-3 ${ssColor}`}>
         {/* Header */}
-        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center justify-between text-left">
-          <div className="flex items-center gap-2 flex-wrap min-w-0">
+        <div className="flex items-center justify-between">
+          <button onClick={() => toggleExpand(exIdx)} className="flex items-center gap-2 flex-wrap min-w-0 flex-1 text-left">
             <p className="font-semibold text-sm text-foreground truncate">{ex.exercise.name}</p>
             <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
               {ex.exercise.movement_pattern}
@@ -446,20 +495,29 @@ export const LogTab = () => {
                 {ex.exercise.exercise_type}
               </span>
             )}
-          </div>
+          </button>
           <div className="flex items-center gap-2 shrink-0">
             {avgRir !== null && (
-              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-vault-warn/10 text-vault-warn border border-vault-warn/20">RIR {avgRir}</span>
+              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">RIR {avgRir}</span>
             )}
             {ex.isPr && (
-              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-vault-ok/10 text-vault-ok border border-vault-ok/20">PR ↑</span>
+              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">PR ↑</span>
             )}
             {ex.supersetGroup && (
-              <span className="font-mono text-[8px] px-1.5 py-0.5 rounded-full bg-vault-warn/10 text-vault-warn border border-vault-warn/20">SS</span>
+              <span className="font-mono text-[8px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">SS</span>
             )}
-            {ex.expanded ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
+            <button
+              onClick={() => removeExercise(exIdx)}
+              className="w-7 h-7 rounded-md flex items-center justify-center text-destructive/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+              title="Remove exercise"
+            >
+              <Trash2 size={12} />
+            </button>
+            <button onClick={() => toggleExpand(exIdx)}>
+              {ex.expanded ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
+            </button>
           </div>
-        </button>
+        </div>
 
         {ex.expanded && (
           <div>
@@ -480,6 +538,7 @@ export const LogTab = () => {
               )}
               <span className="font-mono text-[7px] text-muted-foreground uppercase w-12 text-center shrink-0">RIR</span>
               <span className="font-mono text-[7px] text-muted-foreground uppercase w-12 text-center shrink-0">RPE</span>
+              <span className="w-8 shrink-0" /> {/* spacer for check button */}
             </div>
 
             {/* Sets */}
@@ -487,17 +546,6 @@ export const LogTab = () => {
 
             {/* Action row */}
             <div className="flex gap-2 mt-2 flex-wrap">
-              {ex.sets.some(s => !s.completed && ((s.reps && s.weight_kg) || (isTimed && s.duration_secs))) && (
-                <button
-                  onClick={() => {
-                    const idx = ex.sets.findIndex(s => !s.completed && ((s.reps && s.weight_kg) || (isTimed && s.duration_secs)));
-                    if (idx !== -1) completeSet(exIdx, idx);
-                  }}
-                  className="flex-1 font-mono text-[9px] text-vault-ok border border-vault-ok/20 bg-vault-ok/5 rounded-lg px-3 py-2"
-                >
-                  ✓ Complete Set
-                </button>
-              )}
               <button onClick={() => addSet(exIdx)} className="flex-1 font-mono text-[9px] text-primary border border-primary/20 bg-primary/5 rounded-lg px-3 py-2">
                 + Add Set
               </button>
@@ -506,12 +554,14 @@ export const LogTab = () => {
             {/* Exercise notes */}
             <div className="mt-3">
               <button
-                onClick={() => updateNotes(exIdx, ex.notes || ' ')}
-                className={`flex items-center gap-1.5 font-mono text-[8px] text-muted-foreground uppercase tracking-wider ${ex.notes ? 'mb-1' : ''}`}
+                onClick={() => toggleNotesVisibility(exIdx)}
+                className={`flex items-center gap-1.5 font-mono text-[8px] uppercase tracking-wider transition-colors ${
+                  ex.showNotes ? 'text-primary' : 'text-muted-foreground'
+                } ${ex.showNotes ? 'mb-1' : ''}`}
               >
-                <StickyNote size={10} /> Notes
+                <StickyNote size={10} /> {ex.showNotes ? 'Hide Notes' : 'Notes'}
               </button>
-              {ex.notes !== '' && (
+              {ex.showNotes && (
                 <textarea
                   value={ex.notes}
                   onChange={e => updateNotes(exIdx, e.target.value)}
@@ -543,7 +593,7 @@ export const LogTab = () => {
                 onClick={() => handleSupersetLink(exIdx)}
                 className={`font-mono text-[7px] border rounded-md px-2 py-1 flex items-center gap-1 ${
                   linkingSuperset === exIdx
-                    ? 'text-vault-warn border-vault-warn/40 bg-vault-warn/10'
+                    ? 'text-amber-500 border-amber-500/40 bg-amber-500/10'
                     : 'text-muted-foreground border-border hover:bg-secondary'
                 }`}
               >
@@ -685,7 +735,7 @@ export const LogTab = () => {
             ].map(item => (
               <div key={item.label}>
                 <p className="font-mono text-[8px] text-muted-foreground uppercase">{item.label}</p>
-                <p className={`font-mono text-sm ${item.primary ? 'text-primary' : item.gold ? 'text-vault-gold' : 'text-foreground'}`}>{item.value}</p>
+                <p className={`font-mono text-sm ${item.primary ? 'text-primary' : item.gold ? 'text-amber-500' : 'text-foreground'}`}>{item.value}</p>
               </div>
             ))}
           </div>
@@ -718,7 +768,15 @@ export const LogTab = () => {
             </p>
           </div>
         </div>
-        <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest">FINISH</button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={cancelSession}
+            className="text-destructive/70 hover:text-destructive font-mono text-[9px] px-3 py-2.5 rounded-xl border border-destructive/20 hover:bg-destructive/5 transition-colors uppercase tracking-widest"
+          >
+            <X size={14} />
+          </button>
+          <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest">FINISH</button>
+        </div>
       </div>
 
       {/* ─── Sections ─── */}
