@@ -200,6 +200,30 @@ export type Database = {
         }
         Relationships: []
       }
+      breathwork_sessions: {
+        Row: {
+          completed_at: string | null
+          duration_secs: number
+          id: string
+          method: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          duration_secs?: number
+          id?: string
+          method: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          duration_secs?: number
+          id?: string
+          method?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       coaching_notes: {
         Row: {
           coach_id: string | null
@@ -223,6 +247,45 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_pinned?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_checkins: {
+        Row: {
+          created_at: string | null
+          date: string
+          energy: number
+          id: string
+          mood: number
+          note: string | null
+          sleep: number
+          soreness: number
+          stress: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          energy?: number
+          id?: string
+          mood?: number
+          note?: string | null
+          sleep?: number
+          soreness?: number
+          stress?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          energy?: number
+          id?: string
+          mood?: number
+          note?: string | null
+          sleep?: number
+          soreness?: number
+          stress?: number
           user_id?: string
         }
         Relationships: []
@@ -332,6 +395,164 @@ export type Database = {
           target_value?: number | null
           title?: string
           unit?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      habit_completions: {
+        Row: {
+          completed: boolean | null
+          date: string
+          habit_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          date?: string
+          habit_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          date?: string
+          habit_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_completions_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          created_at: string | null
+          emoji: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hand_portion_logs: {
+        Row: {
+          carb_portions: number | null
+          date: string
+          fat_portions: number | null
+          id: string
+          meal: string
+          protein_portions: number | null
+          user_id: string
+          veggie_portions: number | null
+        }
+        Insert: {
+          carb_portions?: number | null
+          date?: string
+          fat_portions?: number | null
+          id?: string
+          meal: string
+          protein_portions?: number | null
+          user_id: string
+          veggie_portions?: number | null
+        }
+        Update: {
+          carb_portions?: number | null
+          date?: string
+          fat_portions?: number | null
+          id?: string
+          meal?: string
+          protein_portions?: number | null
+          user_id?: string
+          veggie_portions?: number | null
+        }
+        Relationships: []
+      }
+      macro_logs: {
+        Row: {
+          calories: number | null
+          carbs_g: number | null
+          date: string
+          fat_g: number | null
+          food_name: string
+          id: string
+          meal: string
+          protein_g: number | null
+          serving_g: number | null
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          carbs_g?: number | null
+          date?: string
+          fat_g?: number | null
+          food_name: string
+          id?: string
+          meal: string
+          protein_g?: number | null
+          serving_g?: number | null
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          carbs_g?: number | null
+          date?: string
+          fat_g?: number | null
+          food_name?: string
+          id?: string
+          meal?: string
+          protein_g?: number | null
+          serving_g?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nutrition_targets: {
+        Row: {
+          calories: number | null
+          carbs_g: number | null
+          fat_g: number | null
+          id: string
+          protein_g: number | null
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          carbs_g?: number | null
+          fat_g?: number | null
+          id?: string
+          protein_g?: number | null
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          carbs_g?: number | null
+          fat_g?: number | null
+          id?: string
+          protein_g?: number | null
           user_id?: string
         }
         Relationships: []
