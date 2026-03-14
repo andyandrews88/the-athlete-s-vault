@@ -197,17 +197,19 @@ export const LogTab = () => {
   // PRE-SESSION
   if (!sessionId && !finished) {
     return (
-      <div className="px-4 py-5 pb-24 space-y-4">
-        <button
-          onClick={startSession}
-          className="w-full py-3 rounded-[12px] text-sm font-bold tracking-wider"
-          style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
-        >
-          START SESSION
-        </button>
-        <p className="text-center text-xs" style={{ color: 'hsl(var(--dim))' }}>
-          Tap to begin logging your workout
-        </p>
+      <div className="max-w-lg mx-auto px-4 space-y-4">
+        <div className="bg-vault-bg2 border border-primary/20 rounded-2xl p-4 space-y-4">
+          <div className="text-center">
+            <p className="font-mono text-2xl text-primary">{timer}</p>
+            <p className="font-mono text-[10px] text-vault-dim mt-1">Ready to train</p>
+          </div>
+          <button
+            onClick={startSession}
+            className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs"
+          >
+            START SESSION
+          </button>
+        </div>
       </div>
     );
   }
@@ -215,10 +217,9 @@ export const LogTab = () => {
   // SUMMARY
   if (finished && summaryData) {
     return (
-      <div className="px-4 py-5 pb-24">
-        <div className="rounded-[12px] p-5 space-y-4"
-          style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
-          <h3 className="font-mono text-xs tracking-wider" style={{ color: 'hsl(var(--dim))' }}>SESSION COMPLETE</h3>
+      <div className="max-w-lg mx-auto px-4 space-y-4">
+        <div className="bg-vault-bg2 border border-primary/20 rounded-2xl p-5 space-y-4">
+          <h3 className="font-mono text-[10px] text-vault-dim uppercase tracking-widest">SESSION COMPLETE</h3>
           <div className="grid grid-cols-2 gap-4">
             {[
               { label: 'Date', value: summaryData.date },
@@ -227,17 +228,16 @@ export const LogTab = () => {
               { label: 'PRs Hit', value: String(summaryData.prsHit), gold: true },
             ].map((item) => (
               <div key={item.label}>
-                <p className="text-[10px]" style={{ color: 'hsl(var(--dim))' }}>{item.label}</p>
-                <p className="font-mono text-sm" style={{
-                  color: item.primary ? 'hsl(var(--primary))' : item.gold ? 'hsl(var(--gold))' : 'hsl(var(--text))',
-                }}>{item.value}</p>
+                <p className="font-mono text-[8px] text-vault-dim uppercase">{item.label}</p>
+                <p className={`font-mono text-sm ${item.primary ? 'text-primary' : item.gold ? 'text-vault-gold' : 'text-foreground'}`}>
+                  {item.value}
+                </p>
               </div>
             ))}
           </div>
           <button
             onClick={() => { setSessionId(null); setExercises([]); setFinished(false); setSummaryData(null); }}
-            className="w-full py-3 rounded-[12px] text-sm font-medium"
-            style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text))' }}
+            className="w-full bg-vault-bg3 border border-vault-border text-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs"
           >
             New Session
           </button>
@@ -248,194 +248,106 @@ export const LogTab = () => {
 
   // ACTIVE SESSION
   return (
-    <div className="px-4 py-5 pb-24 space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="font-display text-[22px] tracking-wide" style={{ color: 'hsl(var(--text))' }}>
-            FUNCTIONAL BB A
-          </h2>
-          <p className="text-xs" style={{ color: 'hsl(var(--dim))' }}>
-            Week 3 · Day 1 · Main Block
-          </p>
+    <div className="max-w-lg mx-auto px-4 space-y-4">
+      {/* Session header */}
+      <div className="bg-vault-bg2 border border-primary/20 rounded-2xl p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-xl tracking-wide text-foreground">FUNCTIONAL BB A</h2>
+            <p className="font-mono text-[10px] text-vault-dim">Week 3 · Day 1 · Main Block</p>
+          </div>
+          <p className="font-mono text-2xl text-primary">{timer}</p>
         </div>
-        <div className="font-mono text-xs px-3 py-1.5 rounded-[8px]"
-          style={{ border: '1px solid hsl(var(--ok))', color: 'hsl(var(--ok))' }}>
-          {timer}
-        </div>
-      </div>
-
-      {/* WARM UP banner */}
-      <div className="py-2 px-3 rounded-[4px]"
-        style={{
-          background: 'hsla(38,92%,50%,0.15)',
-          borderLeft: '3px solid hsl(var(--warn))',
-        }}>
-        <span className="font-mono text-[10px] tracking-[2px] font-semibold"
-          style={{ color: 'hsl(var(--warn))' }}>
-          🔥 WARM UP
-        </span>
-      </div>
-
-      {/* Warm up exercise (static) */}
-      <div className="py-2 px-3 rounded-[10px]"
-        style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
-        <p className="text-[13px] font-semibold" style={{ color: 'hsl(var(--text))' }}>
-          Hip Activation + Mobility
-        </p>
-        <p className="text-xs" style={{ color: 'hsl(var(--dim))' }}>2 × 10 · bodyweight</p>
-      </div>
-
-      {/* MAIN EXERCISES banner */}
-      <div className="py-2 px-3 rounded-[4px]"
-        style={{
-          background: 'hsla(var(--pgb), 0.15)',
-          borderLeft: '3px solid hsl(var(--primary))',
-        }}>
-        <span className="font-mono text-[10px] tracking-[2px] font-semibold"
-          style={{ color: 'hsl(var(--primary))' }}>
-          🏋 MAIN EXERCISES
-        </span>
       </div>
 
       {/* Exercise blocks */}
       {exercises.map((ex, exIdx) => {
-        const patternColor = PATTERN_COLORS[ex.exercise.movement_pattern] || '215 14% 50%';
         const completedSets = ex.sets.filter(s => s.completed);
         const avgRir = completedSets.length > 0
           ? Math.round(completedSets.reduce((sum, s) => sum + (s.rir ?? 0), 0) / completedSets.length)
           : null;
-        const summaryWeight = completedSets.length > 0
-          ? Math.max(...completedSets.map(s => s.weight_kg ?? 0))
-          : null;
 
         return (
-          <div key={exIdx} className="rounded-[10px] overflow-hidden"
-            style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+          <div key={exIdx} className="bg-vault-bg2 border border-vault-border rounded-2xl p-4">
             {/* Exercise header */}
             <button
               onClick={() => toggleExpand(exIdx)}
-              className="w-full flex items-center gap-3 p-3 text-left"
+              className="w-full flex items-center justify-between text-left"
             >
-              {/* Movement pattern pip */}
-              <div className="w-[3px] h-8 rounded-[2px] shrink-0"
-                style={{ background: `hsl(${patternColor})` }} />
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold" style={{ color: 'hsl(var(--text))' }}>
-                  {ex.exercise.name}
-                </p>
-                <p className="text-xs" style={{ color: 'hsl(var(--dim))' }}>
-                  {ex.sets.length} × {completedSets[0]?.reps ?? '—'} · {summaryWeight ? `${summaryWeight}kg` : '—'}
-                </p>
+              <div>
+                <p className="font-semibold text-sm text-foreground">{ex.exercise.name}</p>
+                <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 inline-block mt-1">
+                  {ex.exercise.movement_pattern}
+                </span>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {/* RIR badge */}
+              <div className="flex items-center gap-2">
                 {avgRir !== null && (
-                  <span className="font-mono text-[9px] px-2 py-0.5 rounded-[4px]"
-                    style={{
-                      background: 'hsla(38,92%,50%,0.1)',
-                      border: '1px solid hsl(var(--warn))',
-                      color: 'hsl(var(--warn))',
-                    }}>
+                  <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-vault-warn/10 text-vault-warn border border-vault-warn/20">
                     RIR {avgRir}
                   </span>
                 )}
-                {/* PR badge */}
                 {ex.isPr && (
-                  <span className="font-mono text-[9px] px-2 py-0.5 rounded-[4px]"
-                    style={{
-                      background: 'hsla(142,71%,45%,0.1)',
-                      border: '1px solid hsl(var(--ok))',
-                      color: 'hsl(var(--ok))',
-                    }}>
+                  <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-vault-ok/10 text-vault-ok border border-vault-ok/20">
                     PR ↑
                   </span>
                 )}
-                {ex.expanded ? (
-                  <ChevronUp size={14} style={{ color: 'hsl(var(--dim))' }} />
-                ) : (
-                  <ChevronDown size={14} style={{ color: 'hsl(var(--dim))' }} />
-                )}
+                {ex.expanded ? <ChevronUp size={14} className="text-vault-dim" /> : <ChevronDown size={14} className="text-vault-dim" />}
               </div>
             </button>
 
             {/* Expanded set table */}
             {ex.expanded && (
-              <div className="px-3 pb-3">
-                {/* Column headers */}
-                <div className="grid grid-cols-[36px_1fr_1fr_48px] gap-2 mb-1">
-                  {['Set', 'Weight', 'Reps', 'RIR'].map((h) => (
-                    <span key={h} className="font-mono text-[9px] tracking-wider"
-                      style={{ color: 'hsl(var(--dim))' }}>{h}</span>
+              <div className="mt-3">
+                {/* Headers */}
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {['SET', 'WEIGHT', 'REPS', 'RIR'].map((h) => (
+                    <span key={h} className="font-mono text-[8px] text-vault-dim uppercase text-center">{h}</span>
                   ))}
                 </div>
 
                 {/* Set rows */}
-                {ex.sets.map((set, setIdx) => {
-                  const isActive = !set.completed;
-                  return (
-                    <div key={setIdx} className="grid grid-cols-[36px_1fr_1fr_48px] gap-2 items-center mb-1.5">
-                      <span className="font-mono text-xs" style={{ color: 'hsl(var(--dim))' }}>
-                        S{set.set_num}
-                      </span>
-                      {/* Weight */}
-                      <div className="relative">
-                        <input
-                          type="number"
-                          inputMode="decimal"
-                          placeholder="—"
-                          value={set.weight_kg ?? ''}
-                          onChange={(e) => updateSet(exIdx, setIdx, 'weight_kg', e.target.value ? parseFloat(e.target.value) : null)}
-                          disabled={set.completed}
-                          className="w-full h-8 rounded-[6px] px-2 text-xs font-mono text-center outline-none disabled:opacity-100"
-                          style={{
-                            background: 'hsl(var(--bg3))',
-                            border: `1px solid ${isActive ? 'hsl(var(--primary))' : 'hsl(var(--border2))'}`,
-                            color: set.completed ? 'hsl(var(--primary))' : 'hsl(var(--text))',
-                          }}
-                        />
-                        {set.completed && (
-                          <Check size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2"
-                            style={{ color: 'hsl(var(--ok))' }} />
-                        )}
-                      </div>
-                      {/* Reps */}
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        placeholder="—"
-                        value={set.reps ?? ''}
-                        onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
-                        disabled={set.completed}
-                        className="w-full h-8 rounded-[6px] px-2 text-xs font-mono text-center outline-none disabled:opacity-100"
-                        style={{
-                          background: 'hsl(var(--bg3))',
-                          border: `1px solid ${isActive ? 'hsl(var(--primary))' : 'hsl(var(--border2))'}`,
-                          color: set.completed ? 'hsl(var(--primary))' : 'hsl(var(--text))',
-                        }}
-                      />
-                      {/* RIR */}
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
-                        max={5}
-                        placeholder="—"
-                        value={set.rir ?? ''}
-                        onChange={(e) => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
-                        disabled={set.completed}
-                        className="w-full h-8 rounded-[6px] px-2 text-xs font-mono text-center outline-none disabled:opacity-100"
-                        style={{
-                          background: 'hsl(var(--bg3))',
-                          border: `1px solid ${isActive ? 'hsl(var(--primary))' : 'hsl(var(--border2))'}`,
-                          color: set.completed ? 'hsl(var(--primary))' : 'hsl(var(--text))',
-                        }}
-                      />
-                    </div>
-                  );
-                })}
+                {ex.sets.map((set, setIdx) => (
+                  <div key={setIdx} className="grid grid-cols-4 gap-2 items-center mb-1.5">
+                    <span className="font-mono text-xs text-vault-dim text-center">S{set.set_num}</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="—"
+                      value={set.weight_kg ?? ''}
+                      onChange={(e) => updateSet(exIdx, setIdx, 'weight_kg', e.target.value ? parseFloat(e.target.value) : null)}
+                      disabled={set.completed}
+                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
+                        set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-vault-border text-foreground'
+                      }`}
+                    />
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="—"
+                      value={set.reps ?? ''}
+                      onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
+                      disabled={set.completed}
+                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
+                        set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-vault-border text-foreground'
+                      }`}
+                    />
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={5}
+                      placeholder="—"
+                      value={set.rir ?? ''}
+                      onChange={(e) => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
+                      disabled={set.completed}
+                      className={`w-full bg-vault-bg3 border rounded-lg px-2 py-2 font-mono text-xs text-center focus:border-primary focus:outline-none disabled:opacity-100 ${
+                        set.completed ? 'border-primary/40 bg-primary/5 text-primary' : 'border-vault-border text-foreground'
+                      }`}
+                    />
+                  </div>
+                ))}
 
-                {/* Complete set + Add set buttons */}
+                {/* Buttons */}
                 <div className="flex gap-2 mt-2">
                   {ex.sets.some(s => !s.completed && s.reps && s.weight_kg) && (
                     <button
@@ -443,16 +355,14 @@ export const LogTab = () => {
                         const idx = ex.sets.findIndex(s => !s.completed && s.reps && s.weight_kg);
                         if (idx !== -1) updateSet(exIdx, idx, 'completed', true);
                       }}
-                      className="flex-1 py-2 rounded-[8px] text-[11px] font-semibold"
-                      style={{ background: 'hsla(var(--ok), 0.15)', color: 'hsl(var(--ok))' }}
+                      className="flex-1 font-mono text-[9px] text-vault-ok border border-vault-ok/20 bg-vault-ok/5 rounded-lg px-3 py-2"
                     >
                       ✓ Complete Set
                     </button>
                   )}
                   <button
                     onClick={() => addSet(exIdx)}
-                    className="flex-1 py-2 rounded-[8px] text-[11px] font-medium"
-                    style={{ background: 'hsl(var(--bg3))', color: 'hsl(var(--dim))' }}
+                    className="flex-1 font-mono text-[9px] text-primary border border-primary/20 bg-primary/5 rounded-lg px-3 py-2"
                   >
                     + Add Set
                   </button>
@@ -467,38 +377,32 @@ export const LogTab = () => {
       {!showSearch ? (
         <button
           onClick={() => setShowSearch(true)}
-          className="w-full py-3 rounded-[12px] text-xs font-medium flex items-center justify-center gap-2"
-          style={{ border: '2px dashed hsl(var(--border2))', color: 'hsl(var(--dim))', background: 'transparent' }}
+          className="w-full py-3 rounded-2xl text-xs font-medium flex items-center justify-center gap-2 border-2 border-dashed border-vault-border2 text-vault-dim bg-transparent"
         >
           <Plus size={14} /> Add Exercise
         </button>
       ) : (
         <div className="space-y-1">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2"
-              style={{ color: 'hsl(var(--dim))' }} />
+            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-vault-dim" />
             <input
               autoFocus
               placeholder="Search exercises..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full h-10 rounded-[10px] pl-9 pr-3 text-sm outline-none"
-              style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text))' }}
+              className="w-full bg-vault-bg3 border border-vault-border2 rounded-xl px-4 py-3 pl-10 font-mono text-sm text-foreground placeholder:text-vault-dim focus:outline-none focus:border-primary"
             />
           </div>
           {searchResults.length > 0 && (
-            <div className="rounded-[10px] overflow-hidden"
-              style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+            <div className="bg-vault-bg2 border border-vault-border rounded-2xl overflow-hidden">
               {searchResults.map(ex => (
                 <button
                   key={ex.id}
                   onClick={() => addExercise(ex)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors"
-                  style={{ borderBottom: '1px solid hsl(var(--border))' }}
+                  className="w-full flex items-center justify-between px-4 py-3 text-left border-b border-vault-border last:border-b-0 hover:bg-vault-bg3 transition-colors"
                 >
-                  <span className="text-sm" style={{ color: 'hsl(var(--text))' }}>{ex.name}</span>
-                  <span className="font-mono text-[9px] px-2 py-0.5 rounded-[4px]"
-                    style={{ background: 'hsla(var(--primary), 0.15)', color: 'hsl(var(--primary))' }}>
+                  <span className="text-sm text-foreground">{ex.name}</span>
+                  <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                     {ex.movement_pattern}
                   </span>
                 </button>
@@ -512,8 +416,7 @@ export const LogTab = () => {
       {exercises.length > 0 && (
         <button
           onClick={finishSession}
-          className="w-full py-3 rounded-[12px] text-sm font-bold tracking-wider"
-          style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
+          className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs mt-4"
         >
           FINISH SESSION
         </button>
