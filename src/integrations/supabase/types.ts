@@ -200,6 +200,66 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_notes: {
+        Row: {
+          coach_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          is_pinned: boolean | null
+          user_id: string
+        }
+        Insert: {
+          coach_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          user_id: string
+        }
+        Update: {
+          coach_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          created_at: string | null
+          current_value: number | null
+          id: string
+          metric: string | null
+          target_value: number | null
+          title: string
+          unit: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          metric?: string | null
+          target_value?: number | null
+          title: string
+          unit?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          metric?: string | null
+          target_value?: number | null
+          title?: string
+          unit?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           audit_score: number | null
@@ -251,6 +311,60 @@ export type Database = {
           referral_code?: string | null
           role?: string | null
           tier?: string | null
+        }
+        Relationships: []
+      }
+      training_sessions: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          date: string
+          id: string
+          session_type: string | null
+          total_ntu: number | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          session_type?: string | null
+          total_ntu?: number | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          session_type?: string | null
+          total_ntu?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_reviews: {
+        Row: {
+          generated_at: string | null
+          highlights: Json | null
+          id: string
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          generated_at?: string | null
+          highlights?: Json | null
+          id?: string
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          generated_at?: string | null
+          highlights?: Json | null
+          id?: string
+          summary?: string | null
+          user_id?: string
         }
         Relationships: []
       }
