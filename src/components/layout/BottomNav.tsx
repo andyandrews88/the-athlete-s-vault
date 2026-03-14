@@ -102,16 +102,21 @@ export const BottomNav = () => {
       >
         {navTabs.map((tab) => {
           if (tab.path === '__more__') {
+            const isActive = sheetOpen;
             return (
               <button
                 key="more"
                 onClick={handleMoreTap}
-                className={`flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all duration-200 ${
-                  sheetOpen ? 'text-primary' : 'text-muted-foreground'
-                }`}
+                className="flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all duration-200"
               >
-                <tab.icon size={20} strokeWidth={sheetOpen ? 2.5 : 1.5} />
-                <span className="text-[10px] font-medium tracking-wider">{tab.label}</span>
+                {isActive ? (
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <tab.icon size={18} strokeWidth={2.5} className="text-primary" />
+                  </div>
+                ) : (
+                  <tab.icon size={20} strokeWidth={1.5} className="text-muted-foreground" />
+                )}
+                <span className={isActive ? "text-[10px] font-semibold text-primary tracking-wider" : "text-[10px] font-medium text-muted-foreground tracking-wider"}>{tab.label}</span>
               </button>
             );
           }
@@ -121,18 +126,23 @@ export const BottomNav = () => {
               key={tab.path}
               to={tab.path}
               onClick={() => setSheetOpen(false)}
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all duration-200 ${
-                  isActive && !sheetOpen ? 'text-primary' : 'text-muted-foreground'
-                }`
-              }
+              className="flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all duration-200"
             >
-              {({ isActive }) => (
-                <>
-                  <tab.icon size={20} strokeWidth={isActive && !sheetOpen ? 2.5 : 1.5} />
-                  <span className="text-[10px] font-medium tracking-wider">{tab.label}</span>
-                </>
-              )}
+              {({ isActive: active }) => {
+                const isActive = active && !sheetOpen;
+                return (
+                  <>
+                    {isActive ? (
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <tab.icon size={18} strokeWidth={2.5} className="text-primary" />
+                      </div>
+                    ) : (
+                      <tab.icon size={20} strokeWidth={1.5} className="text-muted-foreground" />
+                    )}
+                    <span className={isActive ? "text-[10px] font-semibold text-primary tracking-wider" : "text-[10px] font-medium text-muted-foreground tracking-wider"}>{tab.label}</span>
+                  </>
+                );
+              }}
             </NavLink>
           );
         })}
