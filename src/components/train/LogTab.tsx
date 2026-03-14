@@ -183,24 +183,14 @@ export const LogTab = () => {
   // ─── STATE 1: No active session ───
   if (!sessionId && !finished) {
     return (
-      <div className="max-w-lg mx-auto px-4 flex flex-col items-center pt-6">
-        <p className="font-mono text-[10px] text-vault-dim uppercase tracking-widest mb-8">
-          {format(new Date(), 'EEEE, dd MMMM yyyy').toUpperCase()}
-        </p>
-
-        <div
-          className="w-full bg-vault-bg2 border border-primary/20 rounded-2xl p-8 text-center"
-          style={{ boxShadow: '0 0 30px hsl(192 91% 54% / 0.06)' }}
-        >
-          <Dumbbell size={32} className="text-primary mx-auto mb-4" />
-          <h2 className="font-display text-3xl tracking-[2px] mb-2">START WORKOUT</h2>
-          <p className="font-mono text-[10px] text-vault-dim mb-6">LOG YOUR TRAINING SESSION</p>
-          <button
-            onClick={startSession}
-            className="w-full bg-primary text-primary-foreground font-bold text-xs py-4 rounded-xl uppercase tracking-widest"
-          >
-            Begin Session →
-          </button>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+        <div className="w-full bg-vault-bg2 border border-primary/20 rounded-2xl p-8 text-center" style={{boxShadow:'0 0 30px hsl(192 91% 54% / 0.06)'}}>
+          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
+            <Dumbbell size={28} className="text-primary" />
+          </div>
+          <h2 className="font-display text-4xl tracking-[2px] mb-2">START WORKOUT</h2>
+          <p className="font-mono text-[10px] text-vault-dim mb-7 uppercase tracking-widest">Log your training session</p>
+          <button onClick={startSession} className="w-full bg-primary text-primary-foreground font-bold text-xs py-4 rounded-xl uppercase tracking-widest">Begin Session →</button>
         </div>
       </div>
     );
