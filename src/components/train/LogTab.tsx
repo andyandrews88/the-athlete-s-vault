@@ -232,22 +232,15 @@ export const LogTab = () => {
   return (
     <div className="max-w-lg mx-auto px-4 space-y-4">
       {/* Session header */}
-      <div className="bg-vault-bg2 border border-primary/20 rounded-2xl p-4 flex items-center justify-between">
+      <div className="rounded-2xl p-4 border border-primary/20 bg-vault-bg2 flex items-center justify-between" style={{boxShadow:'0 0 20px hsl(192 91% 54% / 0.06)'}}>
         <div className="flex items-center gap-3">
-          <Dumbbell size={18} className="text-primary" />
+          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           <div>
-            <p className="font-mono text-2xl text-primary">{timer}</p>
-            <p className="font-mono text-[10px] text-vault-dim">
-              {exercises.length} exercise{exercises.length !== 1 ? 's' : ''} · {Math.round(totalNtu)} NTU
-            </p>
+            <p className="font-mono text-2xl text-primary leading-none">{timer}</p>
+            <p className="font-mono text-[9px] text-vault-dim mt-0.5">{exercises.length} exercise{exercises.length !== 1 ? 's' : ''} · {Math.round(totalNtu)} NTU</p>
           </div>
         </div>
-        <button
-          onClick={finishSession}
-          className="bg-primary text-primary-foreground font-bold text-[10px] px-4 py-2 rounded-lg uppercase tracking-widest"
-        >
-          Finish
-        </button>
+        <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest">FINISH</button>
       </div>
 
       {/* Exercise blocks */}

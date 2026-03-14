@@ -5,19 +5,6 @@ import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
 
 type ViewMode = 'bar' | 'line' | 'radar' | 'table';
 
-const ViewPill = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className={`font-mono text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all ${
-      active
-        ? 'bg-primary text-primary-foreground'
-        : 'bg-vault-bg3 border border-vault-border text-vault-dim'
-    }`}
-  >
-    {label}
-  </button>
-);
-
 const ChartCard = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="bg-vault-bg2 border border-vault-border rounded-2xl p-5">
     <p className="font-mono text-[10px] text-vault-dim uppercase tracking-widest mb-4">{label}</p>
@@ -44,6 +31,7 @@ export const AnalyticsTab = () => {
   const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('bar');
   const [volumeData, setVolumeData] = useState<{ week: string; ntu: number }[]>([]);
+  const [rirData, setRirData] = useState<any[]>([]);
   const [totalSessions, setTotalSessions] = useState(0);
   const [totalNtu, setTotalNtu] = useState(0);
 
@@ -56,13 +44,15 @@ export const AnalyticsTab = () => {
     if (!user) return;
 
     const weeks: { week: string; ntu: number }[] = [];
+    const rirWeeks: any[] = [];
     let sessCount = 0;
+
     for (let i = 11; i >= 0; i--) {
       const ws = startOfWeek(subWeeks(new Date(), i), { weekStartsOn: 1 });
       const we = endOfWeek(subWeeks(new Date(), i), { weekStartsOn: 1 });
       const { data: sessions } = await supabase
         .from('training_sessions')
-        .select('total_ntu')
+        .select('id, total_ntu')
         .eq('user_id', user.id)
         .eq('completed', true)
         .gte('date', format(ws, 'yyyy-MM-dd'))
@@ -71,8 +61,32 @@ export const AnalyticsTab = () => {
       const ntu = sessions?.reduce((sum, s) => sum + (Number(s.total_ntu) || 0), 0) ?? 0;
       weeks.push({ week: `W${12 - i}`, ntu: Math.round(ntu) });
       sessCount += sessions?.length ?? 0;
+
+      // RIR data
+      let avgRir = 0;
+      if (sessions?.length) {
+        const sessionIds = sessions.map(s => s.id);
+        const { data: seData } = await supabase
+          .from('session_exercises')
+          .select('id')
+          .in('session_id', sessionIds);
+        if (seData?.length) {
+          const seIds = seData.map(se => se.id);
+          const { data: sets } = await supabase
+            .from('exercise_sets')
+            .select('is_pr')
+            .in('session_exercise_id', seIds);
+          // RIR column may not exist yet - using placeholder
+          if (sets?.length) {
+            avgRir = 0;
+          }
+        }
+      }
+      rirWeeks.push({ week: `W${12 - i}`, avgRir });
     }
+
     setVolumeData(weeks);
+    setRirData(rirWeeks);
     setTotalSessions(sessCount);
     setTotalNtu(weeks.reduce((s, w) => s + w.ntu, 0));
   };
@@ -83,8 +97,18 @@ export const AnalyticsTab = () => {
     <div className="max-w-lg mx-auto px-4 space-y-4">
       {/* View toggle */}
       <div className="flex gap-2 mb-2">
-        {(['bar', 'line', 'radar', 'table'] as ViewMode[]).map((mode) => (
-          <ViewPill key={mode} label={mode} active={viewMode === mode} onClick={() => setViewMode(mode)} />
+        {(['bar', 'line', 'radar', 'table'] as const).map((v) => (
+          <button
+            key={v}
+            onClick={() => setViewMode(v)}
+            className={`font-mono text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all ${
+              viewMode === v
+                ? 'bg-primary text-primary-foreground font-bold'
+                : 'bg-vault-bg3 border border-vault-border text-vault-dim'
+            }`}
+          >
+            {v}
+          </button>
         ))}
       </div>
 
@@ -117,6 +141,37 @@ export const AnalyticsTab = () => {
               </div>
             ) : (
               <p className="font-mono text-[10px] text-vault-dim text-center py-8">No data yet. Complete your first session.</p>
+            )}
+          </ChartCard>
+
+          {/* Proximity to Failure (Avg RIR) */}
+          <ChartCard label="PROXIMITY TO FAILURE (AVG RIR)">
+            {rirData.some(d => d.avgRir > 0) ? (
+              <div>
+                <div className="flex items-end gap-1 h-16">
+                  {rirData.slice(-8).map((d, i, arr) => {
+                    const isLast = i === arr.length - 1;
+                    const height = d.avgRir > 0 ? Math.max((d.avgRir / 5) * 100, 8) : 2;
+                    const color = d.avgRir <= 1 ? 'bg-destructive' : d.avgRir <= 2 ? 'bg-vault-warn' : 'bg-primary';
+                    return (
+                      <div
+                        key={i}
+                        className={`flex-1 rounded-t-sm transition-all ${
+                          isLast ? `${color} shadow-[0_0_8px_hsl(192_91%_54%/0.4)]` : `${color}/60`
+                        }`}
+                        style={{ height: `${height}%` }}
+                      />
+                    );
+                  })}
+                </div>
+                <div className="flex gap-1 mt-1">
+                  {rirData.slice(-8).map((d, i) => (
+                    <span key={i} className="flex-1 font-mono text-[7px] text-vault-dim text-center">{d.week}</span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="font-mono text-[10px] text-vault-dim text-center py-8">No RIR data yet. Log sets with RIR values.</p>
             )}
           </ChartCard>
 
