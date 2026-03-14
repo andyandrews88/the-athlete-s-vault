@@ -792,6 +792,41 @@ export type Database = {
         }
         Relationships: []
       }
+      programme_workouts: {
+        Row: {
+          created_at: string | null
+          day_number: number
+          id: string
+          name: string
+          prescribed_exercises: Json
+          programme_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          day_number: number
+          id?: string
+          name: string
+          prescribed_exercises?: Json
+          programme_id: string
+        }
+        Update: {
+          created_at?: string | null
+          day_number?: number
+          id?: string
+          name?: string
+          prescribed_exercises?: Json
+          programme_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programme_workouts_programme_id_fkey"
+            columns: ["programme_id"]
+            isOneToOne: false
+            referencedRelation: "training_programmes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       progress_photos: {
         Row: {
           angle: string
@@ -861,25 +896,31 @@ export type Database = {
       training_programmes: {
         Row: {
           created_at: string | null
+          created_by: string | null
           description: string | null
           id: string
           is_active: boolean
+          is_template: boolean | null
           name: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
+          is_template?: boolean | null
           name: string
           user_id: string
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
+          is_template?: boolean | null
           name?: string
           user_id?: string
         }
