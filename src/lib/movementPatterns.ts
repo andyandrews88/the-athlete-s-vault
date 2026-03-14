@@ -10,6 +10,7 @@ export const MOVEMENT_COEFFICIENTS: Record<string, number> = {
   Isolation: 1.0,
   Plyometric: 1.6,
   Rotational: 1.0,
+  Conditioning: 1.2,
 };
 
 export const ALL_PATTERNS = Object.keys(MOVEMENT_COEFFICIENTS);
