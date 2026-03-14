@@ -1,12 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { calculateSetNtu } from '@/lib/movementPatterns';
-import { Search, Plus, Link, Check, Trophy } from 'lucide-react';
+import { Search, Plus, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ExerciseRow {
@@ -17,27 +14,33 @@ interface ExerciseRow {
 }
 
 interface SetData {
-  id?: string;
   set_num: number;
   reps: number | null;
   weight_kg: number | null;
+  rir: number | null;
   completed: boolean;
 }
 
 interface SessionExercise {
-  id?: string;
   exercise: ExerciseRow;
   sets: SetData[];
-  superset_group: string | null;
+  expanded: boolean;
+  isPr: boolean;
 }
 
-interface PastSession {
-  id: string;
-  date: string;
-  session_type: string | null;
-  total_ntu: number | null;
-  exercise_count: number;
-}
+const PATTERN_COLORS: Record<string, string> = {
+  Squat: '192 91% 54%',
+  Hinge: '38 92% 50%',
+  Push: '142 71% 45%',
+  Pull: '270 60% 60%',
+  Carry: '210 15% 70%',
+  Lunge: '192 91% 54%',
+  Rotation: '45 93% 58%',
+  Jump: '0 72% 51%',
+  Sprint: '0 72% 51%',
+  Swim: '192 91% 54%',
+  Row: '270 60% 60%',
+};
 
 export const LogTab = () => {
   const { user } = useAuth();
@@ -47,55 +50,25 @@ export const LogTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ExerciseRow[]>([]);
   const [showSearch, setShowSearch] = useState(false);
-  const [pastSessions, setPastSessions] = useState<PastSession[]>([]);
   const [finished, setFinished] = useState(false);
   const [summaryData, setSummaryData] = useState<{
     date: string; duration: string; totalNtu: number; prsHit: number; exercisesDone: number;
   } | null>(null);
-  const [timer, setTimer] = useState(0);
+  const [timer, setTimer] = useState('00:00');
 
   // Timer
   useEffect(() => {
     if (!sessionStartTime || finished) return;
     const interval = setInterval(() => {
-      setTimer(Math.floor((Date.now() - sessionStartTime.getTime()) / 1000));
+      const s = Math.floor((Date.now() - sessionStartTime.getTime()) / 1000);
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      setTimer(`${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`);
     }, 1000);
     return () => clearInterval(interval);
   }, [sessionStartTime, finished]);
 
-  const formatTimer = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-  };
-
-  // Load past sessions
-  useEffect(() => {
-    if (!user) return;
-    const loadPast = async () => {
-      const { data: sessions } = await supabase
-        .from('training_sessions')
-        .select('id, date, session_type, total_ntu, completed')
-        .eq('user_id', user.id)
-        .eq('completed', true)
-        .order('date', { ascending: false })
-        .limit(3);
-
-      if (sessions) {
-        const withCounts = await Promise.all(sessions.map(async (s) => {
-          const { count } = await supabase
-            .from('session_exercises')
-            .select('id', { count: 'exact', head: true })
-            .eq('session_id', s.id);
-          return { ...s, exercise_count: count ?? 0 };
-        }));
-        setPastSessions(withCounts);
-      }
-    };
-    loadPast();
-  }, [user]);
-
-  // Total NTU
+  // Total NTU (silent)
   const totalNtu = useMemo(() => {
     return exercises.reduce((total, ex) => {
       return total + ex.sets.reduce((setTotal, set) => {
@@ -105,7 +78,7 @@ export const LogTab = () => {
     }, 0);
   }, [exercises]);
 
-  // Search exercises
+  // Search
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
     if (query.length < 1) { setSearchResults([]); return; }
@@ -133,8 +106,9 @@ export const LogTab = () => {
   const addExercise = (ex: ExerciseRow) => {
     setExercises(prev => [...prev, {
       exercise: ex,
-      sets: [{ set_num: 1, reps: null, weight_kg: null, completed: false }],
-      superset_group: null,
+      sets: [{ set_num: 1, reps: null, weight_kg: null, rir: null, completed: false }],
+      expanded: true,
+      isPr: false,
     }]);
     setSearchQuery('');
     setSearchResults([]);
@@ -144,7 +118,7 @@ export const LogTab = () => {
   const addSet = (exIdx: number) => {
     setExercises(prev => prev.map((e, i) => i === exIdx ? {
       ...e,
-      sets: [...e.sets, { set_num: e.sets.length + 1, reps: null, weight_kg: null, completed: false }],
+      sets: [...e.sets, { set_num: e.sets.length + 1, reps: null, weight_kg: null, rir: null, completed: false }],
     } : e));
   };
 
@@ -155,39 +129,26 @@ export const LogTab = () => {
     } : e));
   };
 
-  const linkSuperset = (exIdx: number) => {
-    if (exIdx < 1) return;
-    const group = `ss-${Date.now()}`;
-    setExercises(prev => prev.map((e, i) =>
-      (i === exIdx || i === exIdx - 1) ? { ...e, superset_group: group } : e
-    ));
+  const toggleExpand = (exIdx: number) => {
+    setExercises(prev => prev.map((e, i) => i === exIdx ? { ...e, expanded: !e.expanded } : e));
   };
 
   const finishSession = async () => {
     if (!sessionId || !user) return;
-
     let prsHit = 0;
 
-    // Save all exercises and sets to Supabase
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
       const { data: seData } = await supabase
         .from('session_exercises')
-        .insert({
-          session_id: sessionId,
-          exercise_id: ex.exercise.id,
-          superset_group: ex.superset_group,
-          display_order: i,
-        })
+        .insert({ session_id: sessionId, exercise_id: ex.exercise.id, display_order: i })
         .select('id')
         .single();
-
       if (!seData) continue;
 
       for (const set of ex.sets) {
         if (!set.completed || !set.reps || !set.weight_kg) continue;
 
-        // Check for PR
         const { data: existingPr } = await supabase
           .from('personal_records')
           .select('weight_kg')
@@ -199,44 +160,33 @@ export const LogTab = () => {
         const isPr = !existingPr?.length || set.weight_kg > Number(existingPr[0].weight_kg);
 
         await supabase.from('exercise_sets').insert({
-          session_exercise_id: seData.id,
-          set_num: set.set_num,
-          reps: set.reps,
-          weight_kg: set.weight_kg,
-          completed: true,
-          is_pr: isPr,
+          session_exercise_id: seData.id, set_num: set.set_num,
+          reps: set.reps, weight_kg: set.weight_kg, completed: true, is_pr: isPr,
         });
 
         if (isPr) {
           prsHit++;
           await supabase.from('personal_records').insert({
-            user_id: user.id,
-            exercise_id: ex.exercise.id,
-            weight_kg: set.weight_kg,
-            reps: set.reps,
-            session_id: sessionId,
+            user_id: user.id, exercise_id: ex.exercise.id,
+            weight_kg: set.weight_kg, reps: set.reps, session_id: sessionId,
           });
-          toast({
-            title: '🏆 New PR!',
-            description: `${ex.exercise.name}: ${set.weight_kg}kg × ${set.reps}`,
-          });
+          toast({ title: '🏆 New PR!', description: `${ex.exercise.name}: ${set.weight_kg}kg × ${set.reps}` });
+          setExercises(prev => prev.map((e, idx) => idx === i ? { ...e, isPr: true } : e));
         }
       }
     }
 
-    // Update session
-    await supabase
-      .from('training_sessions')
+    await supabase.from('training_sessions')
       .update({ completed: true, total_ntu: Math.round(totalNtu) })
       .eq('id', sessionId);
 
-    const duration = sessionStartTime
-      ? formatTimer(Math.floor((Date.now() - sessionStartTime.getTime()) / 1000))
-      : '00:00';
+    const durSecs = sessionStartTime ? Math.floor((Date.now() - sessionStartTime.getTime()) / 1000) : 0;
+    const m = Math.floor(durSecs / 60);
+    const s = durSecs % 60;
 
     setSummaryData({
       date: format(new Date(), 'dd MMM yyyy'),
-      duration,
+      duration: `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`,
       totalNtu: Math.round(totalNtu),
       prsHit,
       exercisesDone: exercises.length,
@@ -244,209 +194,329 @@ export const LogTab = () => {
     setFinished(true);
   };
 
-  // Pre-session state
+  // PRE-SESSION
   if (!sessionId && !finished) {
     return (
-      <div className="mt-4 space-y-4">
-        <Button
+      <div className="px-4 py-5 pb-24 space-y-4">
+        <button
           onClick={startSession}
-          className="w-full h-12 bg-primary text-primary-foreground font-mono text-sm tracking-wider hover:bg-primary/90"
+          className="w-full py-3 rounded-[12px] text-sm font-bold tracking-wider"
+          style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
         >
           START SESSION
-        </Button>
+        </button>
+        <p className="text-center text-xs" style={{ color: 'hsl(var(--dim))' }}>
+          Tap to begin logging your workout
+        </p>
+      </div>
+    );
+  }
 
-        {pastSessions.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="font-mono text-xs text-muted-foreground tracking-wider">RECENT SESSIONS</h3>
-            {pastSessions.map(s => (
-              <div key={s.id} className="bg-card border border-border rounded-lg p-4 space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-mono text-xs text-muted-foreground">{format(new Date(s.date), 'dd MMM yyyy')}</span>
-                  {s.session_type && <span className="text-xs bg-vault-bg3 px-2 py-0.5 rounded text-muted-foreground">{s.session_type}</span>}
-                </div>
-                <div className="flex gap-4 text-sm">
-                  <span className="text-primary font-mono">{s.total_ntu ?? 0} NTU</span>
-                  <span className="text-muted-foreground">{s.exercise_count} exercises</span>
-                </div>
+  // SUMMARY
+  if (finished && summaryData) {
+    return (
+      <div className="px-4 py-5 pb-24">
+        <div className="rounded-[12px] p-5 space-y-4"
+          style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+          <h3 className="font-mono text-xs tracking-wider" style={{ color: 'hsl(var(--dim))' }}>SESSION COMPLETE</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { label: 'Date', value: summaryData.date },
+              { label: 'Duration', value: summaryData.duration },
+              { label: 'Total NTU', value: String(summaryData.totalNtu), primary: true },
+              { label: 'PRs Hit', value: String(summaryData.prsHit), gold: true },
+            ].map((item) => (
+              <div key={item.label}>
+                <p className="text-[10px]" style={{ color: 'hsl(var(--dim))' }}>{item.label}</p>
+                <p className="font-mono text-sm" style={{
+                  color: item.primary ? 'hsl(var(--primary))' : item.gold ? 'hsl(var(--gold))' : 'hsl(var(--text))',
+                }}>{item.value}</p>
               </div>
             ))}
           </div>
-        )}
-      </div>
-    );
-  }
-
-  // Session summary after finishing
-  if (finished && summaryData) {
-    return (
-      <div className="mt-4">
-        <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-          <h3 className="font-mono text-xs text-muted-foreground tracking-wider">SESSION COMPLETE</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Date</p>
-              <p className="font-mono text-sm">{summaryData.date}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Duration</p>
-              <p className="font-mono text-sm">{summaryData.duration}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Total NTU</p>
-              <p className="font-mono text-sm text-primary">{summaryData.totalNtu}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">PRs Hit</p>
-              <p className="font-mono text-sm text-vault-gold">{summaryData.prsHit}</p>
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Exercises</p>
-            <p className="font-mono text-sm">{summaryData.exercisesDone}</p>
-          </div>
-          <Button
-            onClick={() => {
-              setSessionId(null);
-              setExercises([]);
-              setFinished(false);
-              setSummaryData(null);
-              setTimer(0);
-            }}
-            variant="outline"
-            className="w-full mt-2"
+          <button
+            onClick={() => { setSessionId(null); setExercises([]); setFinished(false); setSummaryData(null); }}
+            className="w-full py-3 rounded-[12px] text-sm font-medium"
+            style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text))' }}
           >
             New Session
-          </Button>
+          </button>
         </div>
       </div>
     );
   }
 
-  // Active session
+  // ACTIVE SESSION
   return (
-    <div className="mt-4 space-y-4">
-      {/* Timer */}
-      <div className="flex justify-between items-center">
-        <span className="font-mono text-2xl text-primary">{`NTU: ${Math.round(totalNtu)}`}</span>
-        <span className="font-mono text-sm text-vault-ok border border-vault-ok/30 px-3 py-1 rounded">{formatTimer(timer)}</span>
+    <div className="px-4 py-5 pb-24 space-y-4">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="font-display text-[22px] tracking-wide" style={{ color: 'hsl(var(--text))' }}>
+            FUNCTIONAL BB A
+          </h2>
+          <p className="text-xs" style={{ color: 'hsl(var(--dim))' }}>
+            Week 3 · Day 1 · Main Block
+          </p>
+        </div>
+        <div className="font-mono text-xs px-3 py-1.5 rounded-[8px]"
+          style={{ border: '1px solid hsl(var(--ok))', color: 'hsl(var(--ok))' }}>
+          {timer}
+        </div>
       </div>
 
-      {/* Exercise search */}
-      <div className="relative">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search exercises..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            onFocus={() => setShowSearch(true)}
-            className="pl-10 bg-vault-bg2 border-border"
-          />
-        </div>
-        {showSearch && searchResults.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-vault-bg2 border border-border rounded-lg overflow-hidden shadow-lg">
-            {searchResults.map(ex => (
-              <button
-                key={ex.id}
-                onClick={() => addExercise(ex)}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-vault-bg3 transition-colors text-left"
-              >
-                <span className="text-sm">{ex.name}</span>
-                <span className="text-[10px] font-mono bg-primary/20 text-primary px-2 py-0.5 rounded">
-                  {ex.movement_pattern}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
+      {/* WARM UP banner */}
+      <div className="py-2 px-3 rounded-[4px]"
+        style={{
+          background: 'hsla(38,92%,50%,0.15)',
+          borderLeft: '3px solid hsl(var(--warn))',
+        }}>
+        <span className="font-mono text-[10px] tracking-[2px] font-semibold"
+          style={{ color: 'hsl(var(--warn))' }}>
+          🔥 WARM UP
+        </span>
+      </div>
+
+      {/* Warm up exercise (static) */}
+      <div className="py-2 px-3 rounded-[10px]"
+        style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+        <p className="text-[13px] font-semibold" style={{ color: 'hsl(var(--text))' }}>
+          Hip Activation + Mobility
+        </p>
+        <p className="text-xs" style={{ color: 'hsl(var(--dim))' }}>2 × 10 · bodyweight</p>
+      </div>
+
+      {/* MAIN EXERCISES banner */}
+      <div className="py-2 px-3 rounded-[4px]"
+        style={{
+          background: 'hsla(var(--pgb), 0.15)',
+          borderLeft: '3px solid hsl(var(--primary))',
+        }}>
+        <span className="font-mono text-[10px] tracking-[2px] font-semibold"
+          style={{ color: 'hsl(var(--primary))' }}>
+          🏋 MAIN EXERCISES
+        </span>
       </div>
 
       {/* Exercise blocks */}
-      {exercises.map((ex, exIdx) => (
-        <div key={exIdx} className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <div className="flex items-center gap-2">
-              {ex.superset_group && (
-                <span className="text-[10px] font-mono bg-vault-warn/20 text-vault-warn px-1.5 py-0.5 rounded">SS</span>
-              )}
-              <h4 className="text-sm font-semibold">{ex.exercise.name}</h4>
-            </div>
-            <span className="text-[10px] font-mono bg-primary/20 text-primary px-2 py-0.5 rounded">
-              {ex.exercise.movement_pattern}
-            </span>
-          </div>
+      {exercises.map((ex, exIdx) => {
+        const patternColor = PATTERN_COLORS[ex.exercise.movement_pattern] || '215 14% 50%';
+        const completedSets = ex.sets.filter(s => s.completed);
+        const avgRir = completedSets.length > 0
+          ? Math.round(completedSets.reduce((sum, s) => sum + (s.rir ?? 0), 0) / completedSets.length)
+          : null;
+        const summaryWeight = completedSets.length > 0
+          ? Math.max(...completedSets.map(s => s.weight_kg ?? 0))
+          : null;
 
-          {/* Header row */}
-          <div className="grid grid-cols-[40px_1fr_1fr_40px] gap-2 px-4 py-2 text-[10px] font-mono text-muted-foreground tracking-wider">
-            <span>SET</span>
-            <span>REPS</span>
-            <span>WEIGHT</span>
-            <span></span>
-          </div>
-
-          {/* Set rows */}
-          {ex.sets.map((set, setIdx) => (
-            <div
-              key={setIdx}
-              className={`grid grid-cols-[40px_1fr_1fr_40px] gap-2 px-4 py-2 items-center ${set.completed ? 'bg-vault-pgb' : ''}`}
+        return (
+          <div key={exIdx} className="rounded-[10px] overflow-hidden"
+            style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+            {/* Exercise header */}
+            <button
+              onClick={() => toggleExpand(exIdx)}
+              className="w-full flex items-center gap-3 p-3 text-left"
             >
-              <span className="font-mono text-xs text-muted-foreground">S{set.set_num}</span>
-              <Input
-                type="number"
-                placeholder="—"
-                value={set.reps ?? ''}
-                onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
-                className="h-8 bg-vault-bg3 border-border text-sm font-mono text-center"
-              />
-              <Input
-                type="number"
-                placeholder="—"
-                value={set.weight_kg ?? ''}
-                onChange={(e) => updateSet(exIdx, setIdx, 'weight_kg', e.target.value ? parseFloat(e.target.value) : null)}
-                className="h-8 bg-vault-bg3 border-border text-sm font-mono text-center"
-              />
-              <div className="flex justify-center">
-                <Checkbox
-                  checked={set.completed}
-                  onCheckedChange={(checked) => updateSet(exIdx, setIdx, 'completed', !!checked)}
-                  className={set.completed ? 'border-vault-ok text-vault-ok data-[state=checked]:bg-vault-ok/20 data-[state=checked]:border-vault-ok' : ''}
-                />
+              {/* Movement pattern pip */}
+              <div className="w-[3px] h-8 rounded-[2px] shrink-0"
+                style={{ background: `hsl(${patternColor})` }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold" style={{ color: 'hsl(var(--text))' }}>
+                  {ex.exercise.name}
+                </p>
+                <p className="text-xs" style={{ color: 'hsl(var(--dim))' }}>
+                  {ex.sets.length} × {completedSets[0]?.reps ?? '—'} · {summaryWeight ? `${summaryWeight}kg` : '—'}
+                </p>
               </div>
-            </div>
-          ))}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* RIR badge */}
+                {avgRir !== null && (
+                  <span className="font-mono text-[9px] px-2 py-0.5 rounded-[4px]"
+                    style={{
+                      background: 'hsla(38,92%,50%,0.1)',
+                      border: '1px solid hsl(var(--warn))',
+                      color: 'hsl(var(--warn))',
+                    }}>
+                    RIR {avgRir}
+                  </span>
+                )}
+                {/* PR badge */}
+                {ex.isPr && (
+                  <span className="font-mono text-[9px] px-2 py-0.5 rounded-[4px]"
+                    style={{
+                      background: 'hsla(142,71%,45%,0.1)',
+                      border: '1px solid hsl(var(--ok))',
+                      color: 'hsl(var(--ok))',
+                    }}>
+                    PR ↑
+                  </span>
+                )}
+                {ex.expanded ? (
+                  <ChevronUp size={14} style={{ color: 'hsl(var(--dim))' }} />
+                ) : (
+                  <ChevronDown size={14} style={{ color: 'hsl(var(--dim))' }} />
+                )}
+              </div>
+            </button>
 
-          <div className="flex gap-2 px-4 py-3 border-t border-border">
-            <Button variant="ghost" size="sm" onClick={() => addSet(exIdx)} className="text-xs text-primary">
-              <Plus className="h-3 w-3 mr-1" /> Add Set
-            </Button>
-            {exIdx > 0 && !ex.superset_group && (
-              <Button variant="ghost" size="sm" onClick={() => linkSuperset(exIdx)} className="text-xs text-vault-warn">
-                <Link className="h-3 w-3 mr-1" /> Superset
-              </Button>
+            {/* Expanded set table */}
+            {ex.expanded && (
+              <div className="px-3 pb-3">
+                {/* Column headers */}
+                <div className="grid grid-cols-[36px_1fr_1fr_48px] gap-2 mb-1">
+                  {['Set', 'Weight', 'Reps', 'RIR'].map((h) => (
+                    <span key={h} className="font-mono text-[9px] tracking-wider"
+                      style={{ color: 'hsl(var(--dim))' }}>{h}</span>
+                  ))}
+                </div>
+
+                {/* Set rows */}
+                {ex.sets.map((set, setIdx) => {
+                  const isActive = !set.completed;
+                  return (
+                    <div key={setIdx} className="grid grid-cols-[36px_1fr_1fr_48px] gap-2 items-center mb-1.5">
+                      <span className="font-mono text-xs" style={{ color: 'hsl(var(--dim))' }}>
+                        S{set.set_num}
+                      </span>
+                      {/* Weight */}
+                      <div className="relative">
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          placeholder="—"
+                          value={set.weight_kg ?? ''}
+                          onChange={(e) => updateSet(exIdx, setIdx, 'weight_kg', e.target.value ? parseFloat(e.target.value) : null)}
+                          disabled={set.completed}
+                          className="w-full h-8 rounded-[6px] px-2 text-xs font-mono text-center outline-none disabled:opacity-100"
+                          style={{
+                            background: 'hsl(var(--bg3))',
+                            border: `1px solid ${isActive ? 'hsl(var(--primary))' : 'hsl(var(--border2))'}`,
+                            color: set.completed ? 'hsl(var(--primary))' : 'hsl(var(--text))',
+                          }}
+                        />
+                        {set.completed && (
+                          <Check size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2"
+                            style={{ color: 'hsl(var(--ok))' }} />
+                        )}
+                      </div>
+                      {/* Reps */}
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        placeholder="—"
+                        value={set.reps ?? ''}
+                        onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
+                        disabled={set.completed}
+                        className="w-full h-8 rounded-[6px] px-2 text-xs font-mono text-center outline-none disabled:opacity-100"
+                        style={{
+                          background: 'hsl(var(--bg3))',
+                          border: `1px solid ${isActive ? 'hsl(var(--primary))' : 'hsl(var(--border2))'}`,
+                          color: set.completed ? 'hsl(var(--primary))' : 'hsl(var(--text))',
+                        }}
+                      />
+                      {/* RIR */}
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={5}
+                        placeholder="—"
+                        value={set.rir ?? ''}
+                        onChange={(e) => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
+                        disabled={set.completed}
+                        className="w-full h-8 rounded-[6px] px-2 text-xs font-mono text-center outline-none disabled:opacity-100"
+                        style={{
+                          background: 'hsl(var(--bg3))',
+                          border: `1px solid ${isActive ? 'hsl(var(--primary))' : 'hsl(var(--border2))'}`,
+                          color: set.completed ? 'hsl(var(--primary))' : 'hsl(var(--text))',
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+
+                {/* Complete set + Add set buttons */}
+                <div className="flex gap-2 mt-2">
+                  {ex.sets.some(s => !s.completed && s.reps && s.weight_kg) && (
+                    <button
+                      onClick={() => {
+                        const idx = ex.sets.findIndex(s => !s.completed && s.reps && s.weight_kg);
+                        if (idx !== -1) updateSet(exIdx, idx, 'completed', true);
+                      }}
+                      className="flex-1 py-2 rounded-[8px] text-[11px] font-semibold"
+                      style={{ background: 'hsla(var(--ok), 0.15)', color: 'hsl(var(--ok))' }}
+                    >
+                      ✓ Complete Set
+                    </button>
+                  )}
+                  <button
+                    onClick={() => addSet(exIdx)}
+                    className="flex-1 py-2 rounded-[8px] text-[11px] font-medium"
+                    style={{ background: 'hsl(var(--bg3))', color: 'hsl(var(--dim))' }}
+                  >
+                    + Add Set
+                  </button>
+                </div>
+              </div>
             )}
           </div>
-        </div>
-      ))}
+        );
+      })}
 
-      {/* Add exercise shortcut */}
-      {exercises.length > 0 && !showSearch && (
-        <Button
-          variant="outline"
-          className="w-full border-dashed border-border text-primary"
+      {/* Add Exercise */}
+      {!showSearch ? (
+        <button
           onClick={() => setShowSearch(true)}
+          className="w-full py-3 rounded-[12px] text-xs font-medium flex items-center justify-center gap-2"
+          style={{ border: '2px dashed hsl(var(--border2))', color: 'hsl(var(--dim))', background: 'transparent' }}
         >
-          <Plus className="h-4 w-4 mr-2" /> Add Exercise
-        </Button>
+          <Plus size={14} /> Add Exercise
+        </button>
+      ) : (
+        <div className="space-y-1">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2"
+              style={{ color: 'hsl(var(--dim))' }} />
+            <input
+              autoFocus
+              placeholder="Search exercises..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full h-10 rounded-[10px] pl-9 pr-3 text-sm outline-none"
+              style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text))' }}
+            />
+          </div>
+          {searchResults.length > 0 && (
+            <div className="rounded-[10px] overflow-hidden"
+              style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+              {searchResults.map(ex => (
+                <button
+                  key={ex.id}
+                  onClick={() => addExercise(ex)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors"
+                  style={{ borderBottom: '1px solid hsl(var(--border))' }}
+                >
+                  <span className="text-sm" style={{ color: 'hsl(var(--text))' }}>{ex.name}</span>
+                  <span className="font-mono text-[9px] px-2 py-0.5 rounded-[4px]"
+                    style={{ background: 'hsla(var(--primary), 0.15)', color: 'hsl(var(--primary))' }}>
+                    {ex.movement_pattern}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
-      {/* Finish */}
+      {/* Finish Session */}
       {exercises.length > 0 && (
-        <Button
+        <button
           onClick={finishSession}
-          className="w-full h-12 bg-vault-ok text-primary-foreground font-mono text-sm tracking-wider hover:bg-vault-ok/90"
+          className="w-full py-3 rounded-[12px] text-sm font-bold tracking-wider"
+          style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
         >
-          <Check className="h-4 w-4 mr-2" /> FINISH SESSION
-        </Button>
+          FINISH SESSION
+        </button>
       )}
     </div>
   );
