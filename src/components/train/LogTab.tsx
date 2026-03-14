@@ -373,7 +373,7 @@ export const LogTab = () => {
     const completedCls = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
     const normalCls = 'bg-secondary border-border text-foreground';
     const inputCls = (done: boolean) =>
-      `w-full rounded-lg px-1.5 py-2.5 font-mono text-xs text-center border focus:border-primary focus:outline-none disabled:opacity-100 ${done ? completedCls : normalCls}`;
+      `w-full rounded-xl px-2 py-3.5 font-mono text-sm text-center border focus:border-primary focus:outline-none disabled:opacity-100 ${done ? completedCls : normalCls}`;
 
     return (
       <div key={setIdx} className="flex items-center gap-3 mb-2">
