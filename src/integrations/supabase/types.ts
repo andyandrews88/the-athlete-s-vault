@@ -255,11 +255,15 @@ export type Database = {
         Row: {
           created_at: string | null
           date: string
+          drive: number
           energy: number
+          hydration_litres: number | null
           id: string
           mood: number
           note: string | null
+          nutrition_habits: Json | null
           sleep: number
+          sleep_hours: number | null
           soreness: number
           stress: number
           user_id: string
@@ -267,11 +271,15 @@ export type Database = {
         Insert: {
           created_at?: string | null
           date?: string
+          drive?: number
           energy?: number
+          hydration_litres?: number | null
           id?: string
           mood?: number
           note?: string | null
+          nutrition_habits?: Json | null
           sleep?: number
+          sleep_hours?: number | null
           soreness?: number
           stress?: number
           user_id: string
@@ -279,11 +287,15 @@ export type Database = {
         Update: {
           created_at?: string | null
           date?: string
+          drive?: number
           energy?: number
+          hydration_litres?: number | null
           id?: string
           mood?: number
           note?: string | null
+          nutrition_habits?: Json | null
           sleep?: number
+          sleep_hours?: number | null
           soreness?: number
           stress?: number
           user_id?: string
@@ -788,6 +800,36 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_reflections: {
+        Row: {
+          challenges: string | null
+          created_at: string | null
+          focus_next_week: string | null
+          id: string
+          user_id: string
+          week_start: string
+          wins: string | null
+        }
+        Insert: {
+          challenges?: string | null
+          created_at?: string | null
+          focus_next_week?: string | null
+          id?: string
+          user_id: string
+          week_start: string
+          wins?: string | null
+        }
+        Update: {
+          challenges?: string | null
+          created_at?: string | null
+          focus_next_week?: string | null
+          id?: string
+          user_id?: string
+          week_start?: string
+          wins?: string | null
         }
         Relationships: []
       }
