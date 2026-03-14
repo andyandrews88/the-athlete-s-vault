@@ -21,6 +21,7 @@ import AdminClientProfile from "./pages/AdminClientProfile";
 import TrainPage from "./pages/TrainPage";
 import LifestylePage from "./pages/LifestylePage";
 import NutritionPage from "./pages/NutritionPage";
+import ProgressPage from "./pages/ProgressPage";
 import StubPage from "./pages/stubs/StubPage";
 import NotFound from "./pages/NotFound";
 
