@@ -200,6 +200,75 @@ export type Database = {
         }
         Relationships: []
       }
+      body_measurements: {
+        Row: {
+          chest_cm: number | null
+          created_at: string | null
+          date: string
+          hips_cm: number | null
+          id: string
+          left_arm_cm: number | null
+          left_thigh_cm: number | null
+          neck_cm: number | null
+          right_arm_cm: number | null
+          right_thigh_cm: number | null
+          user_id: string
+          waist_cm: number | null
+        }
+        Insert: {
+          chest_cm?: number | null
+          created_at?: string | null
+          date?: string
+          hips_cm?: number | null
+          id?: string
+          left_arm_cm?: number | null
+          left_thigh_cm?: number | null
+          neck_cm?: number | null
+          right_arm_cm?: number | null
+          right_thigh_cm?: number | null
+          user_id: string
+          waist_cm?: number | null
+        }
+        Update: {
+          chest_cm?: number | null
+          created_at?: string | null
+          date?: string
+          hips_cm?: number | null
+          id?: string
+          left_arm_cm?: number | null
+          left_thigh_cm?: number | null
+          neck_cm?: number | null
+          right_arm_cm?: number | null
+          right_thigh_cm?: number | null
+          user_id?: string
+          waist_cm?: number | null
+        }
+        Relationships: []
+      }
+      body_weight_logs: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          user_id: string
+          weight_kg: number
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          user_id: string
+          weight_kg: number
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          user_id?: string
+          weight_kg?: number
+        }
+        Relationships: []
+      }
       breathwork_sessions: {
         Row: {
           completed_at: string | null
@@ -506,6 +575,51 @@ export type Database = {
         }
         Relationships: []
       }
+      inbody_scans: {
+        Row: {
+          basal_metabolic_rate: number | null
+          bmi: number | null
+          body_fat_kg: number | null
+          body_fat_pct: number | null
+          created_at: string | null
+          date: string
+          id: string
+          notes: string | null
+          skeletal_muscle_kg: number | null
+          total_body_water: number | null
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          basal_metabolic_rate?: number | null
+          bmi?: number | null
+          body_fat_kg?: number | null
+          body_fat_pct?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+          skeletal_muscle_kg?: number | null
+          total_body_water?: number | null
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          basal_metabolic_rate?: number | null
+          bmi?: number | null
+          body_fat_kg?: number | null
+          body_fat_pct?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+          skeletal_muscle_kg?: number | null
+          total_body_water?: number | null
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
       macro_logs: {
         Row: {
           calories: number | null
@@ -675,6 +789,33 @@ export type Database = {
           referral_code?: string | null
           role?: string | null
           tier?: string | null
+        }
+        Relationships: []
+      }
+      progress_photos: {
+        Row: {
+          angle: string
+          created_at: string | null
+          date: string
+          id: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          angle: string
+          created_at?: string | null
+          date?: string
+          id?: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          angle?: string
+          created_at?: string | null
+          date?: string
+          id?: string
+          storage_path?: string
+          user_id?: string
         }
         Relationships: []
       }
