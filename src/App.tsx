@@ -7,7 +7,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { Dumbbell, Leaf, Apple, TrendingUp, BookOpen, Users } from "lucide-react";
+import { TrendingUp, BookOpen, Users } from "lucide-react";
 
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
@@ -19,6 +19,8 @@ import PricingPage from "./pages/PricingPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminClientProfile from "./pages/AdminClientProfile";
 import TrainPage from "./pages/TrainPage";
+import LifestylePage from "./pages/LifestylePage";
+import NutritionPage from "./pages/NutritionPage";
 import StubPage from "./pages/stubs/StubPage";
 import NotFound from "./pages/NotFound";
 
@@ -40,8 +42,8 @@ const App = () => (
           <Route path="/results" element={<ProtectedRoute><AuditResults /></ProtectedRoute>} />
           <Route path="/home" element={<ProtectedRoute><HomeDashboard /></ProtectedRoute>} />
           <Route path="/train" element={<ProtectedRoute><TrainPage /></ProtectedRoute>} />
-          <Route path="/lifestyle" element={<ProtectedRoute><StubPage icon={Leaf} name="Lifestyle" /></ProtectedRoute>} />
-          <Route path="/nutrition" element={<ProtectedRoute><StubPage icon={Apple} name="Nutrition" /></ProtectedRoute>} />
+          <Route path="/lifestyle" element={<ProtectedRoute><LifestylePage /></ProtectedRoute>} />
+          <Route path="/nutrition" element={<ProtectedRoute><NutritionPage /></ProtectedRoute>} />
           <Route path="/progress" element={<ProtectedRoute><StubPage icon={TrendingUp} name="Progress" /></ProtectedRoute>} />
           <Route path="/library" element={<ProtectedRoute><StubPage icon={BookOpen} name="Library" /></ProtectedRoute>} />
           <Route path="/community" element={<ProtectedRoute><StubPage icon={Users} name="Community" /></ProtectedRoute>} />
