@@ -145,6 +145,33 @@ export const LogTab = () => {
     if (data && !error) {
       setSessionId(data.id);
       setSessionStartTime(new Date());
+
+      // Pre-load prescribed exercises if a workout day is selected
+      if (selectedWorkout) {
+        const prescribed = selectedWorkout.prescribed_exercises || [];
+        const exerciseNames = prescribed.map((p: any) => p.name);
+        if (exerciseNames.length > 0) {
+          const { data: exData } = await supabase
+            .from('exercises')
+            .select('id, name, movement_pattern, difficulty_coefficient')
+            .in('name', exerciseNames);
+
+          if (exData) {
+            const exMap = new Map(exData.map((e: any) => [e.name, e]));
+            const preloaded: SessionExercise[] = prescribed
+              .filter((p: any) => exMap.has(p.name))
+              .map((p: any) => ({
+                exercise: exMap.get(p.name)!,
+                sets: Array.from({ length: p.sets || 1 }, (_, i) => ({
+                  set_num: i + 1, reps: null, weight_kg: null, rir: null, completed: false,
+                })),
+                expanded: false,
+                isPr: false,
+              }));
+            setExercises(preloaded);
+          }
+        }
+      }
     }
   };
 
