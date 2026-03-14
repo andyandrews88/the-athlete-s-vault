@@ -25,12 +25,15 @@ const AuthPage = () => {
       } else {
         const { user } = await signIn(email, password);
         if (user) {
-          // Fetch profile for redirect logic
           const { supabase } = await import('@/integrations/supabase/client');
           const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-          if (prof && !prof.onboarding_complete) navigate('/onboarding');
-          else if (prof && prof.audit_score === null) navigate('/audit');
-          else navigate('/home');
+          if (!prof || prof.onboarding_complete === false || prof.onboarding_complete === null) {
+            navigate('/onboarding');
+          } else if (prof.audit_score === null) {
+            navigate('/audit');
+          } else {
+            navigate('/home');
+          }
         }
       }
     } catch (err: any) {
