@@ -325,6 +325,29 @@ export const LogTab = () => {
             </div>
           )}
 
+          {/* Workout day picker */}
+          {workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && (
+            <div className="mb-5">
+              <p className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest mb-2 text-left">Select today's workout</p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {workouts.map(w => (
+                  <button
+                    key={w.id}
+                    onClick={() => setSelectedWorkout(selectedWorkout?.id === w.id ? null : w)}
+                    className={`w-full text-left px-4 py-3 rounded-xl font-mono text-xs border transition-colors ${
+                      selectedWorkout?.id === w.id
+                        ? 'text-primary bg-primary/5 border-primary/40'
+                        : 'text-foreground bg-secondary border-border hover:border-primary/20'
+                    }`}
+                  >
+                    <span className="font-bold">Day {w.day_number}</span>
+                    <span className="text-muted-foreground ml-2">— {w.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button onClick={startSession} className="w-full bg-primary text-primary-foreground font-bold text-xs py-4 rounded-xl uppercase tracking-widest">Begin Session →</button>
         </div>
       </div>
