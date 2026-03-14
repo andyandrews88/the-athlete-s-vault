@@ -503,7 +503,6 @@ export const LogTab = () => {
               )}
               <span className="font-mono text-[8px] text-muted-foreground uppercase w-14 text-center shrink-0">RIR</span>
             </div>
-            </div>
 
             {/* Sets */}
             {ex.sets.map((set, setIdx) => renderSetRow(ex, exIdx, set, setIdx))}
