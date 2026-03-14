@@ -1,15 +1,15 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Dumbbell, Leaf, Apple, TrendingUp } from 'lucide-react';
+import { Home, Dumbbell, BookOpen, TrendingUp, MoreHorizontal } from 'lucide-react';
 
 const tabs = [
   { path: '/home', label: 'Home', icon: Home },
   { path: '/train', label: 'Train', icon: Dumbbell },
-  { path: '/lifestyle', label: 'Lifestyle', icon: Leaf },
-  { path: '/nutrition', label: 'Nutrition', icon: Apple },
+  { path: '/library', label: 'Library', icon: BookOpen },
   { path: '/progress', label: 'Progress', icon: TrendingUp },
+  { path: '/more', label: 'More', icon: MoreHorizontal },
 ];
 
-const VISIBLE_ROUTES = ['/home', '/train', '/lifestyle', '/nutrition', '/progress', '/library', '/community'];
+const VISIBLE_ROUTES = ['/home', '/train', '/library', '/progress', '/more'];
 
 export const BottomNav = () => {
   const location = useLocation();
@@ -18,8 +18,7 @@ export const BottomNav = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 h-[60px] z-50 px-4 flex items-center justify-around"
       style={{
-        background: 'hsla(220,16%,8%,0.97)',
-        backdropFilter: 'blur(20px)',
+        background: 'hsl(var(--bg))',
         borderTop: '1px solid hsl(var(--border))',
       }}
     >
@@ -28,15 +27,15 @@ export const BottomNav = () => {
           key={tab.path}
           to={tab.path}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition-all duration-200 ${
-              isActive ? 'bg-vault-pgb text-primary' : 'text-vault-dim'
+            `flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all duration-200 ${
+              isActive ? 'text-primary' : 'text-muted-foreground'
             }`
           }
         >
           {({ isActive }) => (
             <>
-              <tab.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[8px] font-medium uppercase tracking-wider">{tab.label}</span>
+              <tab.icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
+              <span className="text-[10px] font-medium tracking-wider">{tab.label}</span>
             </>
           )}
         </NavLink>
