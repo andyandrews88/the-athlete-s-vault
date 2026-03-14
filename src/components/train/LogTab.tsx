@@ -750,27 +750,35 @@ export const LogTab = () => {
       {/* Week strip */}
       <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} workoutDays={workouts.map(w => w.day_number)} />
 
-      {/* Session header */}
-      <div className="rounded-2xl p-4 border border-primary/20 bg-card flex items-center justify-between" style={{ boxShadow: '0 0 20px hsl(var(--primary) / 0.06)' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <div>
-            <p className="font-mono text-2xl text-primary leading-none">{timer}</p>
-            <p className="font-mono text-[9px] text-muted-foreground mt-0.5">
-              {activeProgramme ? activeProgramme.name + ' · ' : ''}
-              {exercises.length} exercise{exercises.length !== 1 ? 's' : ''} · {Math.round(totalNtu)} NTU
-            </p>
-          </div>
+      {/* Session header — compact */}
+      <div className="flex items-start justify-between">
+        <div className="min-w-0 flex-1">
+          {activeProgramme && (
+            <h2 className="font-display text-3xl tracking-[1.5px] text-foreground leading-none">{activeProgramme.name.toUpperCase()}</h2>
+          )}
+          <p className="font-mono text-[10px] text-muted-foreground mt-1">
+            {selectedWorkout ? `Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 bg-card border border-primary/20 rounded-xl px-3 py-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="font-mono text-sm text-primary font-semibold">{timer}</span>
+          </div>
           <button
             onClick={cancelSession}
-            className="text-destructive/70 hover:text-destructive font-mono text-[9px] px-3 py-2.5 rounded-xl border border-destructive/20 hover:bg-destructive/5 transition-colors uppercase tracking-widest"
+            className="w-9 h-9 rounded-xl border border-destructive/20 flex items-center justify-center text-destructive/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
           >
             <X size={14} />
           </button>
-          <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest">FINISH</button>
+          <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold text-[10px] px-4 py-2.5 rounded-xl uppercase tracking-widest">FINISH</button>
         </div>
+      </div>
+
+      {/* NTU counter */}
+      <div className="flex items-center gap-3">
+        <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest">Total NTU</span>
+        <span className="font-mono text-sm text-primary font-semibold">{Math.round(totalNtu)}</span>
       </div>
 
       {/* ─── Sections ─── */}
