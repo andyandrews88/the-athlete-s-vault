@@ -2,30 +2,43 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  LineChart, Line, BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 import { ALL_PATTERNS } from '@/lib/movementPatterns';
 import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
-import { Trophy } from 'lucide-react';
 
 const EmptyState = () => (
-  <div className="flex items-center justify-center h-40 text-muted-foreground text-sm font-mono">
+  <div className="flex items-center justify-center h-32 text-muted-foreground text-xs font-mono">
     No data yet. Complete your first session.
   </div>
 );
 
-const chartGrid = <CartesianGrid horizontal={true} vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />;
+const chartGrid = <CartesianGrid horizontal vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />;
+
+const SectionCard = ({ title, badge, children, headerRight }: { title: string; badge?: string; children: React.ReactNode; headerRight?: React.ReactNode }) => (
+  <div className="bg-card border border-border rounded-lg p-4">
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2">
+        <h3 className="font-mono text-xs text-muted-foreground tracking-wider">{title}</h3>
+        {badge && <span className="font-mono text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded">{badge}</span>}
+      </div>
+      {headerRight}
+    </div>
+    {children}
+  </div>
+);
 
 export const AnalyticsTab = () => {
   const { user } = useAuth();
   const [volumeData, setVolumeData] = useState<any[]>([]);
   const [frequencyData, setFrequencyData] = useState<any[]>([]);
-  const [radarData, setRadarData] = useState<any[]>([]);
-  const [prList, setPrList] = useState<any[]>([]);
   const [strengthData, setStrengthData] = useState<any[]>([]);
   const [exercises, setExercises] = useState<{ id: string; name: string }[]>([]);
   const [selectedExercise, setSelectedExercise] = useState<string>('');
+  const [selectedExerciseName, setSelectedExerciseName] = useState<string>('');
+  const [movementData, setMovementData] = useState<{ pattern: string; ntu: number; max: number }[]>([]);
+  const [consistencyData, setConsistencyData] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -39,9 +52,10 @@ export const AnalyticsTab = () => {
   const loadData = async () => {
     if (!user) return;
 
-    // Volume + Frequency over last 12 weeks
+    // Volume + Frequency + Consistency over last 12 weeks
     const weeks: any[] = [];
     const freqWeeks: any[] = [];
+    const consistWeeks: any[] = [];
     for (let i = 11; i >= 0; i--) {
       const weekStart = startOfWeek(subWeeks(new Date(), i), { weekStartsOn: 1 });
       const weekEnd = endOfWeek(subWeeks(new Date(), i), { weekStartsOn: 1 });
@@ -56,39 +70,29 @@ export const AnalyticsTab = () => {
       const totalNtu = sessions?.reduce((sum, s) => sum + (Number(s.total_ntu) || 0), 0) ?? 0;
       weeks.push({ week: `W${12 - i}`, ntu: Math.round(totalNtu) });
       freqWeeks.push({ week: `W${12 - i}`, sessions: sessions?.length ?? 0 });
+      consistWeeks.push({ week: `W${12 - i}`, sessions: sessions?.length ?? 0 });
     }
     setVolumeData(weeks);
     setFrequencyData(freqWeeks);
+    setConsistencyData(consistWeeks);
 
-    // Radar: movement pattern balance this month
-    const monthStart = format(subWeeks(new Date(), 4), 'yyyy-MM-dd');
-    const { data: sessionExercises } = await supabase
-      .from('session_exercises')
-      .select(`
-        exercise_id,
-        exercises (movement_pattern, difficulty_coefficient),
-        exercise_sets (reps, weight_kg, completed)
-      `)
-      .gte('session_id', '') as any; // We need to join through sessions
-
-    // Simpler approach: load all completed sets with exercise info
+    // Movement balance — NTU per pattern
     const patternNtu: Record<string, number> = {};
-    ALL_PATTERNS.forEach(p => patternNtu[p] = 0);
-    setRadarData(ALL_PATTERNS.map(p => ({ pattern: p.substring(0, 3).toUpperCase(), value: patternNtu[p] || 0, fullName: p })));
-
-    // PRs
-    const { data: prs } = await supabase
-      .from('personal_records')
-      .select('weight_kg, reps, achieved_at, exercise_id, exercises(name)')
-      .eq('user_id', user.id)
-      .order('achieved_at', { ascending: false })
-      .limit(20) as any;
-    setPrList(prs || []);
+    ALL_PATTERNS.forEach(p => { patternNtu[p] = 0; });
+    const maxNtu = Math.max(...Object.values(patternNtu), 1);
+    setMovementData(ALL_PATTERNS.map(p => ({
+      pattern: p.substring(0, 3).toUpperCase(),
+      ntu: patternNtu[p] || 0,
+      max: maxNtu,
+    })));
 
     // Exercise list for strength dropdown
     const { data: exList } = await supabase.from('exercises').select('id, name').order('name');
     setExercises(exList || []);
-    if (exList?.length) setSelectedExercise(exList[0].id);
+    if (exList?.length) {
+      setSelectedExercise(exList[0].id);
+      setSelectedExerciseName(exList[0].name);
+    }
   };
 
   const loadStrength = async (exerciseId: string) => {
@@ -100,113 +104,123 @@ export const AnalyticsTab = () => {
       .eq('exercise_id', exerciseId)
       .order('achieved_at', { ascending: true }) as any;
 
-    setStrengthData((data || []).map((d: any) => ({
-      date: format(new Date(d.achieved_at), 'dd/MM'),
+    setStrengthData((data || []).map((d: any, i: number) => ({
+      label: format(new Date(d.achieved_at), 'dd/MM'),
       weight: Number(d.weight_kg),
     })));
   };
 
+  const strengthStart = strengthData.length > 0 ? strengthData[0].weight : 0;
+  const strengthCurrent = strengthData.length > 0 ? strengthData[strengthData.length - 1].weight : 0;
+  const strengthGain = strengthCurrent - strengthStart;
+
   return (
-    <div className="mt-4 space-y-6">
-      {/* 1. Volume Over Time */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <h3 className="font-mono text-xs text-muted-foreground tracking-wider mb-4">WEEKLY VOLUME</h3>
+    <div className="mt-4 space-y-4">
+      {/* 1. Strength Trend */}
+      <SectionCard
+        title="STRENGTH TREND"
+        headerRight={
+          <select
+            value={selectedExercise}
+            onChange={e => {
+              setSelectedExercise(e.target.value);
+              const ex = exercises.find(x => x.id === e.target.value);
+              setSelectedExerciseName(ex?.name || '');
+            }}
+            className="bg-secondary border border-border text-[10px] font-mono rounded-full px-3 py-1 text-primary outline-none"
+          >
+            {exercises.map(ex => (
+              <option key={ex.id} value={ex.id}>{ex.name.toUpperCase()}</option>
+            ))}
+          </select>
+        }
+      >
+        {strengthData.length > 0 ? (
+          <>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={strengthData}>
+                {chartGrid}
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11, fontFamily: 'monospace' }} />
+                <Bar dataKey="weight" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="grid grid-cols-3 gap-2 mt-3">
+              <div className="bg-secondary rounded-lg p-2 text-center">
+                <p className="text-[10px] font-mono text-muted-foreground">START</p>
+                <p className="font-mono text-sm text-foreground">{strengthStart}kg</p>
+              </div>
+              <div className="bg-secondary rounded-lg p-2 text-center">
+                <p className="text-[10px] font-mono text-muted-foreground">CURRENT</p>
+                <p className="font-mono text-sm text-primary">{strengthCurrent}kg</p>
+              </div>
+              <div className="bg-secondary rounded-lg p-2 text-center">
+                <p className="text-[10px] font-mono text-muted-foreground">GAIN</p>
+                <p className={`font-mono text-sm ${strengthGain > 0 ? 'text-[hsl(var(--ok))]' : 'text-foreground'}`}>+{strengthGain}kg</p>
+              </div>
+            </div>
+          </>
+        ) : <EmptyState />}
+      </SectionCard>
+
+      {/* 2. Weekly Volume */}
+      <SectionCard title="WEEKLY VOLUME" badge={`${volumeData.reduce((s, d) => s + d.ntu, 0)} NTU`}>
         {volumeData.some(d => d.ntu > 0) ? (
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={volumeData}>
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={volumeData.slice(-4)}>
               {chartGrid}
-              <XAxis dataKey="week" tick={{ fontSize: 10, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+              <XAxis dataKey="week" tick={{ fontSize: 9, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11, fontFamily: 'monospace' }} />
               <Bar dataKey="ntu" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : <EmptyState />}
-      </div>
+      </SectionCard>
 
-      {/* 2. Strength Progress */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-mono text-xs text-muted-foreground tracking-wider">STRENGTH TREND</h3>
-          <select
-            value={selectedExercise}
-            onChange={e => setSelectedExercise(e.target.value)}
-            className="bg-vault-bg3 border border-border text-xs rounded px-2 py-1 text-foreground font-mono"
-          >
-            {exercises.map(ex => (
-              <option key={ex.id} value={ex.id}>{ex.name}</option>
-            ))}
-          </select>
-        </div>
-        {strengthData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={strengthData}>
-              {chartGrid}
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
-              <Line type="monotone" dataKey="weight" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, fill: 'hsl(var(--primary))' }} />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : <EmptyState />}
-      </div>
+      {/* 3. Proximity to Failure (Avg RIR) — placeholder */}
+      <SectionCard title="PROXIMITY TO FAILURE (AVG RIR)">
+        <EmptyState />
+      </SectionCard>
 
-      {/* 3. Movement Pattern Balance */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <h3 className="font-mono text-xs text-muted-foreground tracking-wider mb-4">MOVEMENT BALANCE</h3>
-        {radarData.some(d => d.value > 0) ? (
-          <ResponsiveContainer width="100%" height={250}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="hsl(var(--border))" />
-              <PolarAngleAxis dataKey="pattern" tick={{ fontSize: 9, fill: 'hsl(var(--dim))' }} />
-              <Radar dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.2} />
-            </RadarChart>
-          </ResponsiveContainer>
-        ) : <EmptyState />}
-      </div>
-
-      {/* 4. Session Frequency */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <h3 className="font-mono text-xs text-muted-foreground tracking-wider mb-4">SESSION FREQUENCY</h3>
-        {frequencyData.some(d => d.sessions > 0) ? (
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={frequencyData}>
-              {chartGrid}
-              <XAxis dataKey="week" tick={{ fontSize: 10, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
-              <Bar dataKey="sessions" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : <EmptyState />}
-      </div>
-
-      {/* 5. PR Timeline */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <h3 className="font-mono text-xs text-muted-foreground tracking-wider mb-4">PR TIMELINE</h3>
-        {prList.length > 0 ? (
-          <div className="space-y-3">
-            {prList.map((pr: any, i: number) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <div className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-vault-gold" />
-                  <span className="text-sm">{pr.exercises?.name}</span>
+      {/* 4. Movement Balance — horizontal bars */}
+      <SectionCard title="MOVEMENT BALANCE">
+        {movementData.some(d => d.ntu > 0) ? (
+          <div className="space-y-2">
+            {movementData.map(d => {
+              const pct = d.max > 0 ? (d.ntu / d.max) * 100 : 0;
+              return (
+                <div key={d.pattern} className="flex items-center gap-3">
+                  <span className="font-mono text-[10px] text-muted-foreground w-8">{d.pattern}</span>
+                  <div className="flex-1 h-3 bg-secondary rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="font-mono text-[10px] text-muted-foreground w-12 text-right">{d.ntu} NTU</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm text-primary">{Number(pr.weight_kg)}kg</span>
-                  <span className="font-mono text-xs text-muted-foreground">{format(new Date(pr.achieved_at), 'dd MMM')}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : <EmptyState />}
-      </div>
+      </SectionCard>
 
-      {/* 6. Recovery vs Performance — placeholder since no daily_checkins table yet */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <h3 className="font-mono text-xs text-muted-foreground tracking-wider mb-4">RECOVERY VS PERFORMANCE</h3>
+      {/* 5. Workout Compliance — ring placeholder */}
+      <SectionCard title="WORKOUT COMPLIANCE">
         <EmptyState />
-      </div>
+      </SectionCard>
+
+      {/* 6. Training Consistency (12 wks) — BarChart */}
+      <SectionCard title="TRAINING CONSISTENCY (12 WKS)">
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={consistencyData}>
+            {chartGrid}
+            <XAxis dataKey="week" tick={{ fontSize: 9, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--dim))' }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, 7]} />
+            <Tooltip contentStyle={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11, fontFamily: 'monospace' }} />
+            <Bar dataKey="sessions" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </SectionCard>
     </div>
   );
 };
