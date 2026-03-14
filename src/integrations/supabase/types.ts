@@ -161,6 +161,45 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_results: {
+        Row: {
+          conditioning_score: number
+          created_at: string | null
+          id: string
+          lifestyle_score: number
+          mobility_score: number
+          raw_data: Json | null
+          score: number
+          strength_score: number
+          tier: string
+          user_id: string
+        }
+        Insert: {
+          conditioning_score?: number
+          created_at?: string | null
+          id?: string
+          lifestyle_score?: number
+          mobility_score?: number
+          raw_data?: Json | null
+          score?: number
+          strength_score?: number
+          tier?: string
+          user_id: string
+        }
+        Update: {
+          conditioning_score?: number
+          created_at?: string | null
+          id?: string
+          lifestyle_score?: number
+          mobility_score?: number
+          raw_data?: Json | null
+          score?: number
+          strength_score?: number
+          tier?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           audit_score: number | null
