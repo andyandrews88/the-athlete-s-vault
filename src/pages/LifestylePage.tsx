@@ -2,8 +2,9 @@ import { useState } from 'react';
 import CheckInTab from '@/components/lifestyle/CheckInTab';
 import HabitsTab from '@/components/lifestyle/HabitsTab';
 import BreathworkTab from '@/components/lifestyle/BreathworkTab';
+import WeeklyReflectionTab from '@/components/lifestyle/WeeklyReflectionTab';
 
-const TABS = ['CHECK-IN', 'HABITS', 'BREATHWORK'] as const;
+const TABS = ['CHECK-IN', 'HABITS', 'REFLECT', 'BREATHWORK'] as const;
 
 const LifestylePage = () => {
   const [tab, setTab] = useState<typeof TABS[number]>('CHECK-IN');
@@ -29,6 +30,7 @@ const LifestylePage = () => {
 
       {tab === 'CHECK-IN' && <CheckInTab />}
       {tab === 'HABITS' && <HabitsTab />}
+      {tab === 'REFLECT' && <WeeklyReflectionTab />}
       {tab === 'BREATHWORK' && <BreathworkTab />}
     </div>
   );
