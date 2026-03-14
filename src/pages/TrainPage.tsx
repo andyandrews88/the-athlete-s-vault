@@ -7,14 +7,32 @@ import { CalendarTab } from '@/components/train/CalendarTab';
 const TrainPage = () => {
   const [activeTab, setActiveTab] = useState('log');
 
+  const tabs = [
+    { value: 'log', label: 'Log Workout' },
+    { value: 'calendar', label: 'Calendar' },
+    { value: 'analytics', label: 'Analytics' },
+  ];
+
   return (
-    <div className="min-h-screen bg-background pt-16 pb-20 px-4">
+    <div className="min-h-screen bg-vault-bg pt-12 pb-24">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-3 bg-card border border-border rounded-lg h-10">
-          <TabsTrigger value="log" className="font-mono text-xs tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">Log Workout</TabsTrigger>
-          <TabsTrigger value="calendar" className="font-mono text-xs tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">Calendar</TabsTrigger>
-          <TabsTrigger value="analytics" className="font-mono text-xs tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">Analytics</TabsTrigger>
-        </TabsList>
+        <div className="px-4">
+          <TabsList className="flex w-full bg-vault-bg3 border border-vault-border rounded-xl p-1 mb-5 h-auto">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className={`flex-1 font-mono text-[10px] uppercase tracking-widest py-2.5 rounded-lg transition-all ${
+                  activeTab === tab.value
+                    ? 'bg-primary text-primary-foreground font-bold'
+                    : 'text-vault-dim bg-transparent'
+                }`}
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         <TabsContent value="log"><LogTab /></TabsContent>
         <TabsContent value="calendar"><CalendarTab /></TabsContent>
