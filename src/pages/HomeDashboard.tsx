@@ -117,6 +117,29 @@ const HomeDashboard = () => {
     supabase.from('weekly_reviews').select('summary').eq('user_id', uid)
       .order('generated_at', { ascending: false }).limit(1)
       .then(({ data }) => { if (data?.[0]) setWeeklyReview(data[0].summary); });
+
+    // Readiness from today's check-in
+    const todayStr = new Date().toISOString().split('T')[0];
+    supabase.from('daily_checkins').select('sleep_hours, energy, stress, drive, sleep, mood, soreness')
+      .eq('user_id', uid).eq('date', todayStr).limit(1).single()
+      .then(({ data }) => {
+        if (data) {
+          // Readiness = weighted average: sleep_hours contributes double
+          const sleepNorm = Math.min((data.sleep_hours ?? 7) / 9, 1); // 9h = perfect
+          const energyNorm = (data.energy ?? 5) / 10;
+          const stressNorm = 1 - ((data.stress ?? 5) / 10); // invert: low stress = high readiness
+          const driveNorm = (data.drive ?? 3) / 5;
+          const sleepQNorm = (data.sleep ?? 5) / 10;
+          const score = Math.round(((sleepNorm * 2 + sleepQNorm + energyNorm + driveNorm + stressNorm) / 6) * 100);
+          setReadiness({ score, sleep_hours: data.sleep_hours, energy: data.energy, stress: data.stress, drive: data.drive, hasCheckin: true });
+        } else {
+          setReadiness({ score: 0, sleep_hours: null, energy: 0, stress: 0, drive: 0, hasCheckin: false });
+        }
+      });
+
+    // Total PRs
+    supabase.from('personal_records').select('id', { count: 'exact', head: true }).eq('user_id', uid)
+      .then(({ count }) => { setTotalPrs(count ?? 0); });
   }, [user, weekDates]);
 
   const completedThisWeek = sessions.filter(s => s.completed).length;
