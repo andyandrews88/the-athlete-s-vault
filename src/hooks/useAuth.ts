@@ -15,6 +15,8 @@ interface Profile {
   currency: string;
   referral_code: string | null;
   created_at: string;
+  weight_unit: string;
+  rest_timer_secs: number;
 }
 
 export const useAuth = () => {
