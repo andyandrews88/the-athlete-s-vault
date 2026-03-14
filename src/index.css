@@ -83,4 +83,24 @@
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
+  .grid-pattern {
+    background-image: 
+      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .scan-line::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.4), transparent);
+    animation: scan 4s linear infinite;
+  }
+  @keyframes scan {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
 }
