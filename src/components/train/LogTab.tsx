@@ -376,71 +376,65 @@ export const LogTab = () => {
       `w-full rounded-lg px-1.5 py-2.5 font-mono text-xs text-center border focus:border-primary focus:outline-none disabled:opacity-100 ${done ? completedCls : normalCls}`;
 
     return (
-      <div key={setIdx} className="flex items-center gap-2 mb-1.5">
-        {/* Set label */}
-        <span className={`font-mono text-[10px] w-7 text-center shrink-0 ${
-          set.set_type === 'warmup' ? 'text-amber-500' : 'text-muted-foreground'
-        }`}>
-          {set.set_type === 'warmup' ? 'W' : `S${set.set_num}`}
-        </span>
+      <div key={setIdx} className="flex items-center gap-3 mb-2">
+        {/* Set label — tap to toggle completion */}
+        <button
+          onClick={() => set.completed ? uncompleteSet(exIdx, setIdx) : (canComplete ? completeSet(exIdx, setIdx) : null)}
+          className={`font-mono text-xs w-8 text-center shrink-0 py-2 rounded-lg transition-colors ${
+            set.completed
+              ? 'bg-emerald-500/20 text-emerald-400 font-bold'
+              : set.set_type === 'warmup'
+                ? 'text-amber-500'
+                : 'text-muted-foreground'
+          }`}
+        >
+          {set.completed ? '✓' : set.set_type === 'warmup' ? 'W' : `S${set.set_num}`}
+        </button>
 
         {/* Weight / Duration */}
         {isTimed ? (
-          <div className="flex-1 relative">
-            <input
-              type="number" inputMode="numeric" placeholder="sec"
-              value={set.duration_secs ?? ''} disabled={set.completed}
-              onChange={e => updateSet(exIdx, setIdx, 'duration_secs', e.target.value ? parseInt(e.target.value) : null)}
-              className={inputCls(set.completed)}
-            />
-            {set.completed && <Check size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-400" />}
-          </div>
+          <input
+            type="number" inputMode="numeric" placeholder="sec"
+            value={set.duration_secs ?? ''} disabled={set.completed}
+            onChange={e => updateSet(exIdx, setIdx, 'duration_secs', e.target.value ? parseInt(e.target.value) : null)}
+            className={inputCls(set.completed) + ' flex-1'}
+          />
         ) : (
-          <div className="flex-1 relative">
-            <input
-              type="number" inputMode="decimal"
-              placeholder={weightUnit === 'lbs' ? 'lbs' : 'kg'}
-              value={toDisplay(set.weight_kg) ?? ''}
-              onChange={e => updateSet(exIdx, setIdx, 'weight_kg', toKg(e.target.value ? parseFloat(e.target.value) : null))}
-              disabled={set.completed}
-              className={inputCls(set.completed)}
-            />
-            {set.completed && <Check size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-400" />}
-          </div>
+          <input
+            type="number" inputMode="decimal"
+            placeholder={weightUnit === 'lbs' ? 'lbs' : 'kg'}
+            value={toDisplay(set.weight_kg) ?? ''}
+            onChange={e => updateSet(exIdx, setIdx, 'weight_kg', toKg(e.target.value ? parseFloat(e.target.value) : null))}
+            disabled={set.completed}
+            className={inputCls(set.completed) + ' flex-1'}
+          />
         )}
 
         {/* Reps */}
         {!isTimed && (
-          <div className="flex-1 relative">
-            <input
-              type="number" inputMode="numeric" placeholder="reps"
-              value={set.reps ?? ''} disabled={set.completed}
-              onChange={e => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
-              className={inputCls(set.completed)}
-            />
-            {set.completed && <Check size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-400" />}
-          </div>
+          <input
+            type="number" inputMode="numeric" placeholder="reps"
+            value={set.reps ?? ''} disabled={set.completed}
+            onChange={e => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
+            className={inputCls(set.completed) + ' flex-1'}
+          />
         )}
 
         {/* Conditioning extras */}
         {isConditioning && (
           <>
-            <div className="flex-1 relative">
-              <input
-                type="number" inputMode="decimal" placeholder="m"
-                value={set.distance_m ?? ''} disabled={set.completed}
-                onChange={e => updateSet(exIdx, setIdx, 'distance_m', e.target.value ? parseFloat(e.target.value) : null)}
-                className={inputCls(set.completed)}
-              />
-            </div>
-            <div className="flex-1 relative">
-              <input
-                type="number" inputMode="numeric" placeholder="cal"
-                value={set.calories ?? ''} disabled={set.completed}
-                onChange={e => updateSet(exIdx, setIdx, 'calories', e.target.value ? parseInt(e.target.value) : null)}
-                className={inputCls(set.completed)}
-              />
-            </div>
+            <input
+              type="number" inputMode="decimal" placeholder="m"
+              value={set.distance_m ?? ''} disabled={set.completed}
+              onChange={e => updateSet(exIdx, setIdx, 'distance_m', e.target.value ? parseFloat(e.target.value) : null)}
+              className={inputCls(set.completed) + ' flex-1'}
+            />
+            <input
+              type="number" inputMode="numeric" placeholder="cal"
+              value={set.calories ?? ''} disabled={set.completed}
+              onChange={e => updateSet(exIdx, setIdx, 'calories', e.target.value ? parseInt(e.target.value) : null)}
+              className={inputCls(set.completed) + ' flex-1'}
+            />
           </>
         )}
 
@@ -449,23 +443,8 @@ export const LogTab = () => {
           type="number" inputMode="numeric" min={0} max={5} placeholder="RIR"
           value={set.rir ?? ''} disabled={set.completed}
           onChange={e => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
-          className={inputCls(set.completed) + ' w-12 shrink-0'}
+          className={inputCls(set.completed) + ' w-14 shrink-0'}
         />
-
-        {/* Per-set completion button */}
-        <button
-          onClick={() => set.completed ? uncompleteSet(exIdx, setIdx) : (canComplete ? completeSet(exIdx, setIdx) : null)}
-          disabled={!set.completed && !canComplete}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-            set.completed
-              ? 'bg-emerald-500 text-white'
-              : canComplete
-                ? 'border border-border text-muted-foreground hover:border-primary hover:text-primary'
-                : 'text-muted-foreground/20 cursor-not-allowed'
-          }`}
-        >
-          <Check size={12} />
-        </button>
       </div>
     );
   };
