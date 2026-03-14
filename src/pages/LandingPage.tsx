@@ -22,7 +22,7 @@ const tiers = [
   { name: 'Pre-built Programme', price: 'LKR 8.2k/mo', desc: 'Self-directed', active: false },
 ];
 
-const ease = [0.16, 1, 0.3, 1];
+const ease = [0.16, 1, 0.3, 1] as const;
 
 const LandingPage = () => {
   const navigate = useNavigate();
