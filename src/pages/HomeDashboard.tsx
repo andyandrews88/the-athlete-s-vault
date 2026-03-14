@@ -239,7 +239,7 @@ const HomeDashboard = () => {
           {[
             { label: 'STREAK', value: streak, unit: 'days' },
             { label: 'THIS WEEK', value: completedThisWeek, unit: 'sessions' },
-            { label: 'TOTAL PRS', value: 0, unit: 'logged' },
+            { label: 'TOTAL PRS', value: totalPrs, unit: 'logged' },
           ].map(s => (
             <div key={s.label} className="bg-vault-bg3 border border-vault-border rounded-2xl p-3 text-center">
               <p className="font-mono text-3xl text-primary leading-none">{s.value}</p>
