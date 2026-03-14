@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Dumbbell, BookOpen, TrendingUp, MoreHorizontal, Leaf, Apple, Users, User, Settings, Gift } from 'lucide-react';
 
-const tabs = [
+const navTabs = [
   { path: '/home', label: 'Home', icon: Home },
   { path: '/train', label: 'Train', icon: Dumbbell },
   { path: '/library', label: 'Library', icon: BookOpen },
@@ -28,23 +28,26 @@ export const BottomNav = () => {
 
   const handleMoreTap = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    setSheetOpen(prev => !prev);
+    setSheetOpen((prev) => !prev);
   }, []);
 
-  const handleItemTap = useCallback((path: string) => {
-    setSheetOpen(false);
-    navigate(path);
-  }, [navigate]);
+  const handleItemTap = useCallback(
+    (path: string) => {
+      setSheetOpen(false);
+      navigate(path);
+    },
+    [navigate],
+  );
 
   const handleOverlayTap = useCallback(() => {
     setSheetOpen(false);
   }, []);
 
-  const showNav = VISIBLE_ROUTES.includes(location.pathname);
-  if (!showNav) return null;
+  if (!VISIBLE_ROUTES.includes(location.pathname)) return null;
 
   return (
-      {/* Bottom sheet overlay */}
+    <>
+      {/* Overlay */}
       {sheetOpen && (
         <div
           className="fixed inset-0 z-[60] transition-opacity duration-200"
@@ -63,19 +66,12 @@ export const BottomNav = () => {
           borderRadius: '20px 20px 0 0',
         }}
       >
-        {/* Handle bar */}
+        {/* Handle */}
         <div className="flex justify-center pt-3 pb-4">
-          <div
-            className="rounded-full"
-            style={{
-              width: 40,
-              height: 4,
-              background: 'hsl(var(--bg4))',
-            }}
-          />
+          <div className="rounded-full" style={{ width: 40, height: 4, background: 'hsl(var(--bg4))' }} />
         </div>
 
-        {/* Grid of module cards 2×3 */}
+        {/* 2×3 grid */}
         <div className="grid grid-cols-3 gap-3 px-5 pb-6">
           {moreItems.map((item) => (
             <button
@@ -90,11 +86,7 @@ export const BottomNav = () => {
               <item.icon size={24} className="text-primary" />
               <span
                 className="font-medium text-center leading-tight"
-                style={{
-                  fontSize: 11,
-                  color: 'hsl(var(--mid))',
-                  fontFamily: 'Inter, sans-serif',
-                }}
+                style={{ fontSize: 11, color: 'hsl(var(--mid))', fontFamily: 'Inter, sans-serif' }}
               >
                 {item.label}
               </span>
@@ -106,12 +98,9 @@ export const BottomNav = () => {
       {/* Nav bar */}
       <nav
         className="fixed bottom-0 left-0 right-0 h-[60px] z-[80] px-4 flex items-center justify-around"
-        style={{
-          background: 'hsl(var(--bg))',
-          borderTop: '1px solid hsl(var(--border))',
-        }}
+        style={{ background: 'hsl(var(--bg))', borderTop: '1px solid hsl(var(--border))' }}
       >
-        {tabs.map((tab) => {
+        {navTabs.map((tab) => {
           if (tab.path === '__more__') {
             return (
               <button
