@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_responses: {
+        Row: {
+          back_squat_1rm: number | null
+          created_at: string | null
+          days_per_week: number | null
+          deadlift_1rm: number | null
+          hip_flexion: number | null
+          id: string
+          injuries: string | null
+          max_burpees_60s: number | null
+          max_double_unders: number | null
+          max_pullups: number | null
+          nutrition_consistency: number | null
+          overhead_press_1rm: number | null
+          primary_sport: string | null
+          recovery_quality: number | null
+          run_400m_seconds: number | null
+          shoulder_flexion: number | null
+          sleep_quality: number | null
+          stress_level: number | null
+          thoracic_rotation: number | null
+          user_id: string
+          years_training: number | null
+        }
+        Insert: {
+          back_squat_1rm?: number | null
+          created_at?: string | null
+          days_per_week?: number | null
+          deadlift_1rm?: number | null
+          hip_flexion?: number | null
+          id?: string
+          injuries?: string | null
+          max_burpees_60s?: number | null
+          max_double_unders?: number | null
+          max_pullups?: number | null
+          nutrition_consistency?: number | null
+          overhead_press_1rm?: number | null
+          primary_sport?: string | null
+          recovery_quality?: number | null
+          run_400m_seconds?: number | null
+          shoulder_flexion?: number | null
+          sleep_quality?: number | null
+          stress_level?: number | null
+          thoracic_rotation?: number | null
+          user_id: string
+          years_training?: number | null
+        }
+        Update: {
+          back_squat_1rm?: number | null
+          created_at?: string | null
+          days_per_week?: number | null
+          deadlift_1rm?: number | null
+          hip_flexion?: number | null
+          id?: string
+          injuries?: string | null
+          max_burpees_60s?: number | null
+          max_double_unders?: number | null
+          max_pullups?: number | null
+          nutrition_consistency?: number | null
+          overhead_press_1rm?: number | null
+          primary_sport?: string | null
+          recovery_quality?: number | null
+          run_400m_seconds?: number | null
+          shoulder_flexion?: number | null
+          sleep_quality?: number | null
+          stress_level?: number | null
+          thoracic_rotation?: number | null
+          user_id?: string
+          years_training?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           audit_score: number | null
@@ -22,7 +94,10 @@ export type Database = {
           created_at: string | null
           currency: string | null
           email: string | null
+          equipment: string[] | null
+          experience_level: string | null
           full_name: string | null
+          goal: string | null
           id: string
           onboarding_complete: boolean | null
           referral_code: string | null
@@ -36,7 +111,10 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           email?: string | null
+          equipment?: string[] | null
+          experience_level?: string | null
           full_name?: string | null
+          goal?: string | null
           id: string
           onboarding_complete?: boolean | null
           referral_code?: string | null
@@ -50,7 +128,10 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           email?: string | null
+          equipment?: string[] | null
+          experience_level?: string | null
           full_name?: string | null
+          goal?: string | null
           id?: string
           onboarding_complete?: boolean | null
           referral_code?: string | null
