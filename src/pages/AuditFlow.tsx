@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Play } from 'lucide-react';
 
 const TOTAL_STEPS = 6;
 const STEP_LABELS = ['Biometrics', 'Big 4', 'Engine', 'Movement', 'Lifestyle', 'Review'];
