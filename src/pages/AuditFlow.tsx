@@ -561,6 +561,19 @@ const AuditFlow = () => {
                   <ReviewItem label="Overhead Reach" value={overheadReach || '—'} />
                   <ReviewItem label="Dead Hang" value={deadHang ? `${deadHang}s` : '—'} />
                   <ReviewItem label="Pistol Squat" value={pistolSquat || '—'} />
+                  {/* Watch Demo buttons — will link to admin-provided video URLs in future */}
+                  <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-vault-border">
+                    {['Deep Squat', 'Overhead Reach', 'Dead Hang', 'Pistol Squat'].map((test) => (
+                      <button
+                        key={test}
+                        onClick={() => {/* future: open video modal */}}
+                        className="flex items-center gap-1.5 text-[10px] font-mono text-primary bg-primary/10 px-3 py-1.5 rounded-lg hover:bg-primary/20 transition-colors"
+                      >
+                        <Play size={10} className="fill-primary" />
+                        {test} Demo
+                      </button>
+                    ))}
+                  </div>
                 </ReviewSection>
                 <ReviewSection title="Lifestyle">
                   <ReviewItem label="Sleep" value={sleepCategory || '—'} />

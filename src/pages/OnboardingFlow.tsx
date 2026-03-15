@@ -80,17 +80,15 @@ const OnboardingFlow = () => {
       <div className="flex-1 flex flex-col items-center justify-center px-5 relative z-20">
         <div className="w-full max-w-md">
 
-          {/* Screen 1 — Opening */}
+          {/* Screen 1 — The Mission */}
           {step === 0 && (
             <div className="text-center animate-fade-in">
-              <div className="mb-8">
-                <span className="font-display text-[28px] tracking-[4px] text-primary block">
-                  THE VAULT
-                </span>
+              <div className="mb-10">
+                <img src={logoImg} alt="The Vault" className="w-28 h-28 mx-auto mb-6 rounded-2xl" />
               </div>
 
               <p className="font-display text-[26px] leading-tight tracking-wide text-vault-text mb-3">
-                10 YEARS OF COACHING.
+                OVER A DECADE OF COACHING.
                 <br />
                 ONE APP.
               </p>
