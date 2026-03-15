@@ -43,10 +43,8 @@ const LandingPage = () => {
           transition={{ duration: 0.8, ease }}
           className="relative z-10 flex flex-col items-center text-center max-w-2xl"
         >
-          <img src={logo} alt="The Vault" className="h-20 md:h-28 w-auto brightness-0 invert mb-8" />
-          <h1 className="font-display text-[clamp(40px,8vw,72px)] leading-[0.95] text-foreground mb-6 tracking-[2px]">
-            ONE PLACE.<br />EVERYTHING YOU NEED.
-          </h1>
+          <h1 className="sr-only">The Vault – Fitness Coaching Platform</h1>
+          <img src={logo} alt="The Vault" className="h-28 md:h-40 w-auto brightness-0 invert mb-10" />
           <p className="text-muted-foreground text-base md:text-lg max-w-xl mb-10 leading-relaxed">
             Over a decade of coaching. The Vault brings training, nutrition, and lifestyle into one place.
           </p>
