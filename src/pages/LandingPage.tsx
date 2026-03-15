@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Link2, Unlock, Dumbbell, UtensilsCrossed, BookOpen, BarChart3, Target } from 'lucide-react';
+import { Shield, Link2, Dumbbell, UtensilsCrossed, BookOpen, BarChart3, Target } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const featureCards = [
-  { icon: Shield, emoji: '🛡️', title: 'Coach-Built', desc: 'A decade of real coaching, not a product team chasing features.' },
+  { icon: Shield, emoji: '🛡️', title: 'Coach-Built', desc: 'Over a decade of coaching. Not a product team chasing features.' },
   { icon: Link2, emoji: '🔗', title: 'Everything Connected', desc: 'Your readiness score shapes your training. No more juggling five apps.' },
-  { icon: Unlock, emoji: '🔓', title: 'Free. No Paywall.', desc: 'Core tracking is completely free from day one.' },
 ];
 
 const features = [
@@ -30,7 +30,9 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* HERO */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6">
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 grid-pattern">
+        {/* Scan line */}
+        <div className="absolute inset-0 scan-line pointer-events-none" />
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[70vh] pointer-events-none"
           style={{ background: 'radial-gradient(circle at center, hsla(192,91%,54%,0.08) 0%, transparent 70%)' }}
@@ -41,15 +43,15 @@ const LandingPage = () => {
           transition={{ duration: 0.8, ease }}
           className="relative z-10 flex flex-col items-center text-center max-w-2xl"
         >
-          <span className="font-display text-primary text-lg tracking-[4px] mb-8">THE VAULT</span>
+          <img src={logo} alt="The Vault" className="h-20 md:h-28 w-auto brightness-0 invert mb-8" />
           <h1 className="font-display text-[clamp(40px,8vw,72px)] leading-[0.95] text-foreground mb-6 tracking-[2px]">
             ONE PLACE.<br />EVERYTHING YOU NEED.
           </h1>
           <p className="text-muted-foreground text-base md:text-lg max-w-xl mb-10 leading-relaxed">
-            Stop juggling five different apps. The Vault brings training, nutrition, and lifestyle into one place.
+            Over a decade of coaching. The Vault brings training, nutrition, and lifestyle into one place.
           </p>
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/onboarding')}
             className="w-full sm:w-auto bg-primary text-primary-foreground font-bold text-sm tracking-wider px-10 py-4 rounded-lg hover:scale-[1.02] active:scale-[0.97] transition-transform"
           >
             BEGIN YOUR AUDIT
@@ -143,7 +145,7 @@ const LandingPage = () => {
               transition={{ duration: 0.5, delay: i * 0.1, ease }}
               className={`rounded-xl p-5 border ${
                 tier.active
-                  ? 'border-primary bg-vault-pgb'
+                  ? 'border-primary bg-primary/[0.08]'
                   : 'border-border bg-card'
               }`}
             >

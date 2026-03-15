@@ -5,9 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
-import { TopBar } from "@/components/layout/TopBar";
-import { BottomNav } from "@/components/layout/BottomNav";
-import { TrendingUp, BookOpen, Users } from "lucide-react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { BookOpen, Users } from "lucide-react";
 
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
@@ -33,29 +32,29 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <TopBar />
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/onboarding" element={<ProtectedRoute><OnboardingFlow /></ProtectedRoute>} />
-          <Route path="/audit" element={<ProtectedRoute><AuditFlow /></ProtectedRoute>} />
-          <Route path="/results" element={<ProtectedRoute><AuditResults /></ProtectedRoute>} />
-          <Route path="/home" element={<ProtectedRoute><HomeDashboard /></ProtectedRoute>} />
-          <Route path="/train" element={<ProtectedRoute><TrainPage /></ProtectedRoute>} />
-          <Route path="/lifestyle" element={<ProtectedRoute><LifestylePage /></ProtectedRoute>} />
-          <Route path="/nutrition" element={<ProtectedRoute><NutritionPage /></ProtectedRoute>} />
-          <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
-          <Route path="/library" element={<ProtectedRoute><StubPage icon={BookOpen} name="Library" /></ProtectedRoute>} />
-          <Route path="/community" element={<ProtectedRoute><StubPage icon={Users} name="Community" /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><StubPage icon={Users} name="Profile" /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><StubPage icon={Users} name="Settings" /></ProtectedRoute>} />
-          <Route path="/referral" element={<ProtectedRoute><StubPage icon={Users} name="Refer a Friend" /></ProtectedRoute>} />
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-          <Route path="/admin/client/:userId" element={<AdminRoute><AdminClientProfile /></AdminRoute>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <BottomNav />
+        <AppLayout>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/onboarding" element={<ProtectedRoute><OnboardingFlow /></ProtectedRoute>} />
+            <Route path="/audit" element={<ProtectedRoute><AuditFlow /></ProtectedRoute>} />
+            <Route path="/results" element={<ProtectedRoute><AuditResults /></ProtectedRoute>} />
+            <Route path="/home" element={<ProtectedRoute><HomeDashboard /></ProtectedRoute>} />
+            <Route path="/train" element={<ProtectedRoute><TrainPage /></ProtectedRoute>} />
+            <Route path="/lifestyle" element={<ProtectedRoute><LifestylePage /></ProtectedRoute>} />
+            <Route path="/nutrition" element={<ProtectedRoute><NutritionPage /></ProtectedRoute>} />
+            <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
+            <Route path="/library" element={<ProtectedRoute><StubPage icon={BookOpen} name="Library" /></ProtectedRoute>} />
+            <Route path="/community" element={<ProtectedRoute><StubPage icon={Users} name="Community" /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><StubPage icon={Users} name="Profile" /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><StubPage icon={Users} name="Settings" /></ProtectedRoute>} />
+            <Route path="/referral" element={<ProtectedRoute><StubPage icon={Users} name="Refer a Friend" /></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/client/:userId" element={<AdminRoute><AdminClientProfile /></AdminRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AppLayout>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
