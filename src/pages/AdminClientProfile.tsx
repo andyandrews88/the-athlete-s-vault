@@ -332,6 +332,7 @@ const AdminClientProfile = () => {
   };
 
 
+  const sendDm = async () => {
     if (!dmText.trim() || !user) return;
     setSending(true);
     try {
