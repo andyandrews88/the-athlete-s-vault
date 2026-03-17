@@ -894,6 +894,7 @@ export type Database = {
           name: string
           prescribed_exercises: Json
           programme_id: string
+          section: string | null
         }
         Insert: {
           created_at?: string | null
@@ -902,6 +903,7 @@ export type Database = {
           name: string
           prescribed_exercises?: Json
           programme_id: string
+          section?: string | null
         }
         Update: {
           created_at?: string | null
@@ -910,6 +912,7 @@ export type Database = {
           name?: string
           prescribed_exercises?: Json
           programme_id?: string
+          section?: string | null
         }
         Relationships: [
           {
@@ -1118,32 +1121,41 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          days_per_week: number | null
           description: string | null
           id: string
           is_active: boolean
+          is_free: boolean | null
           is_template: boolean | null
           name: string
           user_id: string
+          weeks: number | null
         }
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          days_per_week?: number | null
           description?: string | null
           id?: string
           is_active?: boolean
+          is_free?: boolean | null
           is_template?: boolean | null
           name: string
           user_id: string
+          weeks?: number | null
         }
         Update: {
           created_at?: string | null
           created_by?: string | null
+          days_per_week?: number | null
           description?: string | null
           id?: string
           is_active?: boolean
+          is_free?: boolean | null
           is_template?: boolean | null
           name?: string
           user_id?: string
+          weeks?: number | null
         }
         Relationships: []
       }

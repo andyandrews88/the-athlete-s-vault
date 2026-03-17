@@ -18,6 +18,7 @@ import PricingPage from "./pages/PricingPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminClientProfile from "./pages/AdminClientProfile";
 import AdminClientsPage from "./pages/AdminClientsPage";
+import AdminWorkoutBuilder from "./pages/AdminWorkoutBuilder";
 import TrainPage from "./pages/TrainPage";
 import LifestylePage from "./pages/LifestylePage";
 import NutritionPage from "./pages/NutritionPage";
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/client/:userId" element={<AdminRoute><AdminClientProfile /></AdminRoute>} />
             <Route path="/admin/clients" element={<AdminRoute><AdminClientsPage /></AdminRoute>} />
+            <Route path="/admin/workout-builder" element={<AdminRoute><AdminWorkoutBuilder /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
