@@ -251,7 +251,87 @@ const AdminClientProfile = () => {
     } catch { setStreak(0); }
   };
 
-  const sendDm = async () => {
+  // PT data loaders
+  const loadPtData = async () => {
+    setPtLoading(true);
+    try {
+      const [pkgRes, sessRes, invRes, wkRes] = await Promise.all([
+        supabase.from('pt_packages').select('*').eq('client_id', userId!).order('created_at', { ascending: false }),
+        supabase.from('pt_sessions').select('*').eq('client_id', userId!).order('date', { ascending: false }),
+        supabase.from('invoices').select('*').eq('client_id', userId!).order('created_at', { ascending: false }),
+        supabase.from('training_sessions').select('id, date, session_type').eq('user_id', userId!).order('date', { ascending: false }).limit(30),
+      ]);
+      setPtPackages(pkgRes.data ?? []);
+      setPtSessions(sessRes.data ?? []);
+      setPtInvoices(invRes.data ?? []);
+      setClientWorkouts(wkRes.data ?? []);
+    } catch { /* silent */ }
+    setPtLoading(false);
+  };
+
+  useEffect(() => { if (mainTab === 'pt' && userId) loadPtData(); }, [mainTab, userId]);
+
+  const activePackage = ptPackages.find(p => p.status === 'active');
+  const totalBilled = ptInvoices.reduce((a, i) => a + (Number(i.amount) || 0), 0);
+  const outstanding = ptInvoices.filter(i => i.status !== 'paid').reduce((a, i) => a + (Number(i.amount) || 0), 0);
+
+  const savePkg = async () => {
+    if (!pkgForm.name || !pkgForm.sessions_total || !user) return;
+    try {
+      await supabase.from('pt_packages').insert({
+        client_id: userId!, coach_id: user.id, name: pkgForm.name,
+        sessions_total: Number(pkgForm.sessions_total), sessions_used: 0,
+        price_per_session: pkgForm.price_per_session ? Number(pkgForm.price_per_session) : null,
+        currency: 'LKR', start_date: pkgForm.start_date || null, status: 'active', notes: pkgForm.notes || null,
+      });
+      setPkgForm({ name: '', sessions_total: '', price_per_session: '', start_date: '', notes: '' });
+      setShowPkgForm(false);
+      loadPtData();
+    } catch { /* silent */ }
+  };
+
+  const logSession = async () => {
+    if (!user || !activePackage) return;
+    try {
+      await supabase.from('pt_sessions').insert({
+        package_id: activePackage.id, client_id: userId!, coach_id: user.id,
+        date: sessForm.date, notes: sessForm.notes || null, completed: true,
+      });
+      await supabase.from('pt_packages').update({ sessions_used: (activePackage.sessions_used || 0) + 1 }).eq('id', activePackage.id);
+      setSessForm({ date: new Date().toISOString().slice(0, 10), workout_id: '', notes: '' });
+      setShowSessForm(false);
+      loadPtData();
+    } catch { /* silent */ }
+  };
+
+  const saveInvoice = async () => {
+    if (!invForm.amount || !user) return;
+    try {
+      await supabase.from('invoices').insert({
+        client_id: userId!, coach_id: user.id, amount: Number(invForm.amount),
+        currency: invForm.currency, status: invForm.status,
+        invoice_url: invForm.invoice_url || null, package_id: invForm.package_id || null,
+        created_at: invForm.date ? new Date(invForm.date).toISOString() : new Date().toISOString(),
+      });
+      setInvForm({ invoice_url: '', amount: '', currency: 'LKR', status: 'draft', date: new Date().toISOString().slice(0, 10), package_id: '' });
+      setShowInvForm(false);
+      loadPtData();
+    } catch { /* silent */ }
+  };
+
+  const deletePtSession = async (id: string) => {
+    try {
+      const sess = ptSessions.find(s => s.id === id);
+      await supabase.from('pt_sessions').delete().eq('id', id);
+      if (sess?.package_id) {
+        const pkg = ptPackages.find(p => p.id === sess.package_id);
+        if (pkg) await supabase.from('pt_packages').update({ sessions_used: Math.max(0, (pkg.sessions_used || 0) - 1) }).eq('id', pkg.id);
+      }
+      loadPtData();
+    } catch { /* silent */ }
+  };
+
+
     if (!dmText.trim() || !user) return;
     setSending(true);
     try {
