@@ -799,9 +799,10 @@ export const LogTab = () => {
       {!showSearch ? (
         <button
           onClick={() => setShowSearch(true)}
-          className="w-full py-3 rounded-2xl text-xs font-medium flex items-center justify-center gap-2 border-2 border-dashed border-border text-muted-foreground bg-transparent"
+          className="w-full flex items-center justify-center gap-2 bg-transparent"
+          style={{ border: '1px dashed hsl(var(--border2))', color: 'hsl(var(--dim))', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: 8, borderRadius: 8 }}
         >
-          <Plus size={14} /> Add Exercise
+          <Plus size={14} /> ADD EXERCISE
         </button>
       ) : (
         <div className="space-y-1">
