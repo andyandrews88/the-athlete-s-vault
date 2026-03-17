@@ -837,7 +837,7 @@ export const LogTab = () => {
       )}
 
       {/* Workout notes */}
-      <div className="bg-card border border-border rounded-2xl p-4">
+      <div className="rounded-2xl p-4" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
         <div className="flex items-center gap-1.5 mb-2">
           <MessageSquare size={12} className="text-muted-foreground" />
           <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest">Workout Notes</span>
