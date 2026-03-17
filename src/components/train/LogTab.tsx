@@ -370,23 +370,30 @@ export const LogTab = () => {
     const isConditioning = ex.exercise.exercise_type === 'conditioning';
     const canComplete = setHasData(set, ex.exercise.exercise_type);
 
-    const inputCls = (done: boolean) =>
-      done
-        ? 'w-full rounded-lg px-2 py-2 font-mono text-[9px] text-center border focus:outline-none bg-transparent border-[hsl(var(--border))]'
-        : 'w-full rounded-lg px-2 py-2 font-mono text-[9px] text-center border focus:outline-none bg-[hsl(var(--bg3))] border-[hsl(var(--border2))] text-[hsl(var(--text))] focus:border-[hsl(var(--primary))]';
+    const cellBase: React.CSSProperties = {
+      background: 'hsl(var(--bg3))',
+      border: '1px solid hsl(var(--border))',
+      borderRadius: 5,
+      padding: '3px 6px',
+      fontFamily: 'JetBrains Mono, monospace',
+      fontSize: 9,
+      textAlign: 'center' as const,
+      width: '100%',
+      outline: 'none',
+    };
+    const cellDone: React.CSSProperties = { ...cellBase, color: 'hsl(var(--ok))' };
+    const cellActive: React.CSSProperties = { ...cellBase, color: 'hsl(var(--primary))', borderColor: 'hsla(192,91%,54%,0.3)' };
+    const cellDefault: React.CSSProperties = { ...cellBase, color: 'hsl(var(--text))' };
+    const rirStyle: React.CSSProperties = { ...cellBase, fontSize: 8, padding: '3px 5px' };
+
+    const getStyle = (done: boolean) => done ? cellDone : cellDefault;
 
     return (
-      <div key={setIdx} className="flex items-center gap-3 mb-2">
+      <div key={setIdx} style={{ display: 'grid', gridTemplateColumns: isTimed ? '28px 1fr 40px' : '28px 1fr 1fr 40px', gap: 4, marginBottom: 2 }}>
         {/* Set label — tap to toggle completion */}
         <button
           onClick={() => set.completed ? uncompleteSet(exIdx, setIdx) : (canComplete ? completeSet(exIdx, setIdx) : null)}
-          className={`font-mono text-xs w-8 text-center shrink-0 py-2 rounded-lg transition-colors ${
-            set.completed
-              ? 'bg-emerald-500/20 text-emerald-400 font-bold'
-              : set.set_type === 'warmup'
-                ? 'text-amber-500'
-                : 'text-muted-foreground'
-          }`}
+          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: set.completed ? 'hsl(var(--ok))' : set.set_type === 'warmup' ? 'hsl(var(--warn))' : 'hsl(var(--dim))', textAlign: 'center', fontWeight: set.completed ? 700 : 400, background: 'transparent', border: 'none' }}
         >
           {set.completed ? '✓' : set.set_type === 'warmup' ? 'W' : `S${set.set_num}`}
         </button>
@@ -397,18 +404,16 @@ export const LogTab = () => {
             type="number" inputMode="numeric" placeholder="sec"
             value={set.duration_secs ?? ''} disabled={set.completed}
             onChange={e => updateSet(exIdx, setIdx, 'duration_secs', e.target.value ? parseInt(e.target.value) : null)}
-            className={inputCls(set.completed) + ' flex-1'}
-            style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
+            style={getStyle(set.completed)}
           />
         ) : (
           <input
             type="number" inputMode="decimal"
             placeholder={weightUnit === 'lbs' ? 'lbs' : 'kg'}
-            value={toDisplay(set.weight_kg) ?? ''}
+            value={set.completed && set.weight_kg ? `${toDisplay(set.weight_kg)}` : (toDisplay(set.weight_kg) ?? '')}
             onChange={e => updateSet(exIdx, setIdx, 'weight_kg', toKg(e.target.value ? parseFloat(e.target.value) : null))}
             disabled={set.completed}
-            className={inputCls(set.completed) + ' flex-1'}
-            style={set.completed ? { color: 'hsl(var(--ok))' } : (!set.completed && !set.weight_kg ? undefined : undefined)}
+            style={getStyle(set.completed)}
           />
         )}
 
@@ -418,29 +423,8 @@ export const LogTab = () => {
             type="number" inputMode="numeric" placeholder="reps"
             value={set.reps ?? ''} disabled={set.completed}
             onChange={e => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
-            className={inputCls(set.completed) + ' flex-1'}
-            style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
+            style={getStyle(set.completed)}
           />
-        )}
-
-        {/* Conditioning extras */}
-        {isConditioning && (
-          <>
-            <input
-              type="number" inputMode="decimal" placeholder="m"
-              value={set.distance_m ?? ''} disabled={set.completed}
-              onChange={e => updateSet(exIdx, setIdx, 'distance_m', e.target.value ? parseFloat(e.target.value) : null)}
-              className={inputCls(set.completed) + ' flex-1'}
-              style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
-            />
-            <input
-              type="number" inputMode="numeric" placeholder="cal"
-              value={set.calories ?? ''} disabled={set.completed}
-              onChange={e => updateSet(exIdx, setIdx, 'calories', e.target.value ? parseInt(e.target.value) : null)}
-              className={inputCls(set.completed) + ' flex-1'}
-              style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
-            />
-          </>
         )}
 
         {/* RIR */}
@@ -448,8 +432,7 @@ export const LogTab = () => {
           type="number" inputMode="numeric" min={0} max={5} placeholder="RIR"
           value={set.rir ?? ''} disabled={set.completed}
           onChange={e => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
-          className={inputCls(set.completed) + ' w-14 shrink-0'}
-          style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
+          style={set.completed ? { ...rirStyle, color: 'hsl(var(--ok))' } : rirStyle}
         />
       </div>
     );
@@ -487,59 +470,53 @@ export const LogTab = () => {
     const lastSetRir = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].rir : null;
 
     return (
-      <div key={exIdx} className={`rounded-2xl overflow-hidden ${ssColor}`} style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
-        {/* Header — tap to expand */}
-        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center gap-3 px-4 py-3 text-left">
+      <div key={exIdx} className={ssColor} style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+        {/* Header — flat row */}
+        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center gap-[6px] text-left" style={{ padding: '7px 0' }}>
           <div style={{ width: 3, minWidth: 3, height: 26, borderRadius: 2, flexShrink: 0, background: pipColor(ex.exercise.movement_pattern || '') }} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="font-semibold text-sm text-foreground truncate">{ex.exercise.name}</p>
+              <p className="truncate" style={{ fontSize: 10, fontWeight: 500, color: 'hsl(var(--text))' }}>{ex.exercise.name}</p>
               {ex.supersetGroup && (
-                <span className="font-mono text-[8px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">SS</span>
+                <span className="font-mono" style={{ fontSize: 8, padding: '0.5px 4px', borderRadius: 9, background: 'hsla(38,92%,50%,0.1)', color: 'hsl(var(--warn))', border: '1px solid hsla(38,92%,50%,0.2)' }}>SS</span>
               )}
             </div>
-            <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{summaryLine}</p>
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', marginTop: 1 }}>{summaryLine}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {completedSets.length > 0 && (
-              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: '1px 5px', borderRadius: 9, background: 'hsla(142,71%,45%,0.1)', color: 'hsl(var(--ok))', border: '1px solid hsla(142,71%,45%,0.2)' }}>
                 {completedSets.length}/{ex.sets.length}
               </span>
             )}
             {!ex.expanded && lastSetRir !== null && lastSetRir !== undefined && (
-              <span style={{ background: 'hsla(38,92%,50%,0.1)', color: 'hsl(var(--warn))', border: '1px solid hsla(38,92%,50%,0.3)', fontFamily: 'JetBrains Mono, monospace', fontSize: 8, padding: '1px 4px', borderRadius: 3 }}>
+              <span style={{ background: 'hsla(38,92%,50%,0.1)', color: 'hsl(var(--warn))', fontFamily: 'JetBrains Mono, monospace', fontSize: 8, padding: '1px 3px', borderRadius: 3 }}>
                 RIR {lastSetRir}
               </span>
             )}
             {ex.isPr && (
-              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">PR ↑</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, padding: '1px 3px', borderRadius: 3, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', border: '1px solid hsla(192,91%,54%,0.25)' }}>PR ↑</span>
             )}
           </div>
         </button>
 
         {ex.expanded && (
-          <div className="px-4 pb-4 space-y-2">
+          <div style={{ padding: '0 0 8px 9px' }} className="space-y-1">
             {/* Column headers */}
-            <div className="flex items-center gap-3 mb-1">
-              <span className="font-mono text-[8px] text-muted-foreground uppercase w-8 text-center shrink-0">Set</span>
-              <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">
-                {isTimed ? 'Secs' : weightUnit.toUpperCase()}
+            <div style={{ display: 'grid', gridTemplateColumns: isTimed ? '28px 1fr 40px' : '28px 1fr 1fr 40px', gap: 4, padding: '4px 0 0 0' }}>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>Set</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>
+                {isTimed ? 'Secs' : 'Weight'}
               </span>
-              {!isTimed && <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">Reps</span>}
-              {ex.exercise.exercise_type === 'conditioning' && (
-                <>
-                  <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">Dist</span>
-                  <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">Cal</span>
-                </>
-              )}
-              <span className="font-mono text-[8px] text-muted-foreground uppercase w-14 text-center shrink-0">RIR</span>
+              {!isTimed && <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>Reps</span>}
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>RIR</span>
             </div>
 
             {/* Sets */}
             {ex.sets.map((set, setIdx) => renderSetRow(ex, exIdx, set, setIdx))}
 
             {/* Add Set */}
-            <button onClick={() => addSet(exIdx)} className="w-full font-mono text-[10px] text-primary py-2 rounded-lg border border-dashed border-primary/20 hover:bg-primary/5 transition-colors">
+            <button onClick={() => addSet(exIdx)} className="w-full text-primary" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: '5px 0', border: '1px dashed hsla(192,91%,54%,0.2)', borderRadius: 5, background: 'transparent' }}>
               + Set
             </button>
 
@@ -547,9 +524,8 @@ export const LogTab = () => {
             <div>
               <button
                 onClick={() => toggleNotesVisibility(exIdx)}
-                className={`flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider transition-colors ${
-                  ex.showNotes ? 'text-primary' : 'text-muted-foreground'
-                }`}
+                className="flex items-center gap-1.5 transition-colors"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.05em', color: ex.showNotes ? 'hsl(var(--primary))' : 'hsl(var(--dim))' }}
               >
                 <StickyNote size={10} /> {ex.showNotes ? 'Hide Notes' : 'Notes'}
               </button>
@@ -559,34 +535,35 @@ export const LogTab = () => {
                   onChange={e => updateNotes(exIdx, e.target.value)}
                   placeholder="Exercise notes..."
                   rows={2}
-                  className="w-full mt-1 bg-secondary border border-border rounded-lg px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none resize-none"
+                  className="w-full mt-1 focus:outline-none resize-none"
+                  style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', borderRadius: 6, padding: '6px 8px', fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'hsl(var(--text))' }}
                 />
               )}
             </div>
 
             {/* Overflow actions — compact row */}
-            <div className="flex items-center gap-2 pt-1 border-t border-border/50">
+            <div className="flex items-center gap-2 pt-1" style={{ borderTop: '1px solid hsl(var(--border))' }}>
               <button
                 onClick={() => removeExercise(exIdx)}
-                className="font-mono text-[8px] text-destructive/60 hover:text-destructive flex items-center gap-1 transition-colors"
+                className="flex items-center gap-1 transition-colors"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--bad))' }}
               >
                 <Trash2 size={10} /> Remove
               </button>
-              <span className="text-border">|</span>
+              <span style={{ color: 'hsl(var(--border))' }}>|</span>
               {ex.section !== 'warmup' && (
-                <button onClick={() => moveExercise(exIdx, 'warmup')} className="font-mono text-[8px] text-muted-foreground hover:text-foreground transition-colors">→ Warm Up</button>
+                <button onClick={() => moveExercise(exIdx, 'warmup')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>→ Warm Up</button>
               )}
               {ex.section !== 'exercises' && (
-                <button onClick={() => moveExercise(exIdx, 'exercises')} className="font-mono text-[8px] text-muted-foreground hover:text-foreground transition-colors">→ Main</button>
+                <button onClick={() => moveExercise(exIdx, 'exercises')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>→ Main</button>
               )}
               {ex.section !== 'cooldown' && (
-                <button onClick={() => moveExercise(exIdx, 'cooldown')} className="font-mono text-[8px] text-muted-foreground hover:text-foreground transition-colors">→ Cool Down</button>
+                <button onClick={() => moveExercise(exIdx, 'cooldown')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>→ Cool Down</button>
               )}
               <button
                 onClick={() => handleSupersetLink(exIdx)}
-                className={`font-mono text-[8px] flex items-center gap-1 transition-colors ${
-                  linkingSuperset === exIdx ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className="flex items-center gap-1 transition-colors"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: linkingSuperset === exIdx ? 'hsl(var(--warn))' : 'hsl(var(--dim))' }}
               >
                 <Link2 size={8} /> {linkingSuperset === exIdx ? 'Pick pair…' : 'SS'}
               </button>
@@ -597,35 +574,27 @@ export const LogTab = () => {
     );
   };
 
-  const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; textCls: string; bannerStyle: React.CSSProperties }> = {
-    warmup:    { label: 'WARM UP',        emoji: '🔥', textCls: 'text-amber-500', bannerStyle: { background: 'hsla(38,92%,50%,0.06)', border: '1px solid hsla(38,92%,50%,0.15)' } },
-    exercises: { label: 'MAIN EXERCISES', emoji: '⚡', textCls: 'text-primary',   bannerStyle: { background: 'hsl(var(--pgb))', border: '1px solid hsla(192,91%,54%,0.2)' } },
-    cooldown:  { label: 'COOL DOWN',      emoji: '🧊', textCls: 'text-sky-500',   bannerStyle: { background: 'hsla(14,100%,57%,0.06)', border: '1px solid hsla(14,100%,57%,0.15)' } },
+  const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; color: string; bannerStyle: React.CSSProperties }> = {
+    warmup:    { label: 'WARM UP',        emoji: '🔥', color: 'hsl(var(--warn))',    bannerStyle: { padding: '4px 7px', background: 'hsla(38,92%,50%,0.06)', border: '1px solid hsla(38,92%,50%,0.15)', borderRadius: 6 } },
+    exercises: { label: 'MAIN EXERCISES', emoji: '🏋️', color: 'hsl(var(--primary))', bannerStyle: { padding: '4px 7px', background: 'hsl(var(--pgb))', border: '1px solid hsla(192,91%,54%,0.2)', borderRadius: 6 } },
+    cooldown:  { label: 'COOL DOWN',      emoji: '🧊', color: 'hsl(200,60%,60%)',   bannerStyle: { padding: '4px 7px', background: 'hsla(200,60%,50%,0.06)', border: '1px solid hsla(200,60%,50%,0.15)', borderRadius: 6 } },
   };
 
   const renderSection = (sectionKey: WorkoutSection, items: { ex: SessionExercise; globalIdx: number }[]) => {
     const cfg = sectionConfig[sectionKey];
     return (
-      <Collapsible
-        open={sectionsOpen[sectionKey]}
-        onOpenChange={open => setSectionsOpen(prev => ({ ...prev, [sectionKey]: open }))}
-      >
-        <CollapsibleTrigger className="w-full flex items-center justify-between py-2.5 px-4 rounded-xl mb-2" style={cfg.bannerStyle}>
-          <div className="flex items-center gap-2">
-            <span className="text-sm">{cfg.emoji}</span>
-            <span className={`${cfg.textCls} uppercase font-semibold`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, letterSpacing: 1 }}>{cfg.label}</span>
-            {items.length > 0 && (
-              <span className={`font-mono text-[9px] ${cfg.textCls} opacity-60`}>{items.length}</span>
-            )}
-          </div>
-          {sectionsOpen[sectionKey]
-            ? <ChevronUp size={14} className={cfg.textCls} />
-            : <ChevronDown size={14} className={cfg.textCls} />}
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-3 mb-4">
+      <div>
+        <div className="flex items-center gap-2 mb-2" style={cfg.bannerStyle}>
+          <span style={{ fontSize: 10 }}>{cfg.emoji}</span>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, letterSpacing: 1, color: cfg.color, textTransform: 'uppercase', fontWeight: 600 }}>{cfg.label}</span>
+          {items.length > 0 && (
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: cfg.color, opacity: 0.6 }}>{items.length}</span>
+          )}
+        </div>
+        <div className="mb-4">
           {items.map(({ ex, globalIdx }) => renderExerciseCard(ex, globalIdx))}
-        </CollapsibleContent>
-      </Collapsible>
+        </div>
+      </div>
     );
   };
 
@@ -755,7 +724,7 @@ export const LogTab = () => {
      STATE 2 — Active session
      ═══════════════════════════════════════════ */
   return (
-    <div className="max-w-lg mx-auto px-4 space-y-4">
+    <div className="max-w-lg mx-auto space-y-4" style={{ padding: '8px 11px 64px', background: 'hsl(var(--bg))' }}>
       {/* Week strip */}
       <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} workoutDays={workouts.map(w => w.day_number)} />
 
@@ -763,31 +732,26 @@ export const LogTab = () => {
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           {activeProgramme && (
-            <h2 className="font-display text-3xl tracking-[1.5px] text-foreground leading-none">{activeProgramme.name.toUpperCase()}</h2>
+            <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1 }}>{activeProgramme.name.toUpperCase()}</h2>
           )}
-          <p className="font-mono text-[10px] text-muted-foreground mt-1">
-            {selectedWorkout ? `Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
+            {selectedWorkout ? `Week 1 · Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 px-2 py-0.5" style={{ background: 'transparent', border: '1px solid hsl(var(--warn))', borderRadius: 6, padding: '3px 8px' }}>
+          <div className="flex items-center gap-1.5" style={{ background: 'transparent', border: '1px solid hsl(var(--warn))', borderRadius: 6, padding: '3px 8px' }}>
             <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--warn))' }} />
             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, fontSize: 11, color: 'hsl(var(--warn))' }}>{timer}</span>
           </div>
           <button
             onClick={cancelSession}
-            className="w-9 h-9 rounded-xl border border-destructive/20 flex items-center justify-center text-destructive/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
+            className="w-9 h-9 flex items-center justify-center transition-colors"
+            style={{ borderRadius: 8, border: '1px solid hsl(var(--border))', color: 'hsl(var(--bad))' }}
           >
             <X size={14} />
           </button>
-          <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold text-[10px] px-4 py-2.5 rounded-xl uppercase tracking-widest">FINISH</button>
+          <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold uppercase" style={{ fontSize: 10, padding: '7px 14px', borderRadius: 8, letterSpacing: 1 }}>FINISH</button>
         </div>
-      </div>
-
-      {/* NTU counter */}
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest">Total NTU</span>
-        <span className="font-mono text-sm text-primary font-semibold">{Math.round(totalNtu)}</span>
       </div>
 
       {/* ─── Sections ─── */}
@@ -799,10 +763,10 @@ export const LogTab = () => {
       {!showSearch ? (
         <button
           onClick={() => setShowSearch(true)}
-          className="w-full flex items-center justify-center gap-2 bg-transparent"
-          style={{ border: '1px dashed hsl(var(--border2))', color: 'hsl(var(--dim))', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: 8, borderRadius: 8 }}
+          className="w-full flex items-center justify-center gap-2"
+          style={{ border: '1px solid hsl(var(--border2))', color: 'hsl(var(--dim))', fontFamily: 'Inter, sans-serif', fontSize: 9, padding: 7, borderRadius: 8, background: 'transparent', marginTop: 7 }}
         >
-          <Plus size={14} /> ADD EXERCISE
+          <Plus size={12} /> + Add Exercise
         </button>
       ) : (
         <div className="space-y-1">
