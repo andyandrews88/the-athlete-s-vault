@@ -455,6 +455,24 @@ export const LogTab = () => {
     );
   };
 
+  const pipColor = (pattern: string) => {
+    const map: Record<string, string> = {
+      'Hinge':      'hsl(0,72%,51%)',
+      'Squat':      'hsl(262,60%,55%)',
+      'Push':       'hsl(var(--primary))',
+      'Pull':       'hsl(var(--ok))',
+      'Single Leg': 'hsl(38,92%,50%)',
+      'Carry':      'hsl(38,92%,50%)',
+      'Core':       'hsl(215,14%,50%)',
+      'Olympic':    'hsl(var(--gold))',
+      'Isolation':  'hsl(215,14%,50%)',
+      'Plyometric': 'hsl(var(--gold))',
+      'Rotational': 'hsl(var(--primary))',
+      'Conditioning':'hsl(var(--warn))',
+    };
+    return map[pattern] || 'hsl(var(--primary))';
+  };
+
   const renderExerciseCard = (ex: SessionExercise, exIdx: number) => {
     const completedSets = ex.sets.filter(s => s.completed);
     const isTimed = isTimedOrConditioning(ex.exercise.exercise_type);
@@ -466,11 +484,13 @@ export const LogTab = () => {
       : `${ex.sets.length} × ${firstReps ?? '–'} · ${ex.exercise.movement_pattern || ''}`;
 
     const ssColor = ex.supersetGroup ? 'border-l-2 border-l-amber-500' : '';
+    const lastSetRir = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].rir : null;
 
     return (
-      <div key={exIdx} className={`bg-card border border-border rounded-2xl overflow-hidden ${ssColor}`}>
+      <div key={exIdx} className={`rounded-2xl overflow-hidden ${ssColor}`} style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
         {/* Header — tap to expand */}
-        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center justify-between px-4 py-3 text-left">
+        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center gap-3 px-4 py-3 text-left">
+          <div style={{ width: 3, minWidth: 3, height: 26, borderRadius: 2, flexShrink: 0, background: pipColor(ex.exercise.movement_pattern || '') }} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="font-semibold text-sm text-foreground truncate">{ex.exercise.name}</p>
@@ -484,6 +504,11 @@ export const LogTab = () => {
             {completedSets.length > 0 && (
               <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 {completedSets.length}/{ex.sets.length}
+              </span>
+            )}
+            {!ex.expanded && lastSetRir !== null && lastSetRir !== undefined && (
+              <span style={{ background: 'hsla(38,92%,50%,0.1)', color: 'hsl(var(--warn))', border: '1px solid hsla(38,92%,50%,0.3)', fontFamily: 'JetBrains Mono, monospace', fontSize: 8, padding: '1px 4px', borderRadius: 3 }}>
+                RIR {lastSetRir}
               </span>
             )}
             {ex.isPr && (
