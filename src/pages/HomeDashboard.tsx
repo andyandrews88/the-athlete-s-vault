@@ -326,9 +326,8 @@ const HomeDashboard = () => {
                   <circle cx="28" cy="28" r="22" fill="none" stroke="hsl(var(--bg4))" strokeWidth="5" />
                   <circle cx="28" cy="28" r="22" fill="none" stroke={strokeColor} strokeWidth="5" strokeDasharray={circumference} strokeDashoffset={scoreOffset} strokeLinecap="round" />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-mono text-[16px] font-semibold text-primary leading-none">{readinessScore}</span>
-                  <span className="font-mono text-[8px] text-vault-dim">%</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="font-mono text-[16px] font-semibold text-primary leading-none">{readinessScore}%</span>
                 </div>
               </div>
               {/* 2×2 metric tiles */}
