@@ -17,16 +17,32 @@ const TrainPage = () => {
     <div className="min-h-screen bg-vault-bg pt-12 pb-24">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="px-4">
-          <TabsList className="flex w-full bg-vault-bg3 border border-vault-border rounded-xl p-1 mb-5 h-auto">
+          <TabsList
+            className="flex w-full h-auto mb-5"
+            style={{
+              background: 'hsl(var(--bg3))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: 7,
+              padding: 2,
+              gap: 2,
+            }}
+          >
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className={`flex-1 font-mono text-[10px] uppercase tracking-widest py-2.5 rounded-lg transition-all ${
-                  activeTab === tab.value
-                    ? 'bg-primary text-primary-foreground font-bold'
-                    : 'text-vault-dim bg-transparent'
-                }`}
+                className="flex-1 transition-all"
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 7,
+                  letterSpacing: '0.3px',
+                  textTransform: 'uppercase',
+                  padding: '7px 0',
+                  borderRadius: 5,
+                  fontWeight: activeTab === tab.value ? 700 : 400,
+                  background: activeTab === tab.value ? 'hsl(var(--primary))' : 'transparent',
+                  color: activeTab === tab.value ? 'hsl(220,16%,6%)' : 'hsl(var(--dim))',
+                }}
               >
                 {tab.label}
               </TabsTrigger>
