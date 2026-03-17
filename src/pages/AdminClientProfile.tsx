@@ -91,16 +91,25 @@ const AdminClientProfile = () => {
 
   const loadAll = async () => {
     setLoading(true);
-    await Promise.all([loadProfile(), loadStats(), loadCheckin(), loadPatternVolume(), loadRirTrend(), loadReflection(), loadNotes(), loadMeta()]);
+    // Load profile first to confirm client exists
+    let profileData: any = null;
+    try {
+      const { data } = await supabase.from('profiles').select('*').eq('id', userId!).single();
+      profileData = data;
+      setProfile(data);
+    } catch { setProfile(null); }
+
+    if (!profileData) {
+      // Minimum delay to prevent flash
+      await new Promise(r => setTimeout(r, 300));
+      setLoading(false);
+      return;
+    }
+
+    await Promise.all([loadStats(), loadCheckin(), loadPatternVolume(), loadRirTrend(), loadReflection(), loadNotes(), loadMeta()]);
     setLoading(false);
   };
 
-  const loadProfile = async () => {
-    try {
-      const { data } = await supabase.from('profiles').select('*').eq('id', userId!).single();
-      setProfile(data);
-    } catch { setProfile(null); }
-  };
 
   const loadStats = async () => {
     try {
@@ -250,7 +259,8 @@ const AdminClientProfile = () => {
   const suspendClient = async () => {
     try {
       await supabase.from('profiles').update({ role: 'suspended' }).eq('id', userId!);
-      loadProfile();
+      const { data } = await supabase.from('profiles').select('*').eq('id', userId!).single();
+      setProfile(data);
     } catch { /* silent */ }
   };
 
@@ -278,6 +288,16 @@ const AdminClientProfile = () => {
   const tc = tierColors[profile?.tier || 'free'] || tierColors.free;
   const maxVol = Math.max(...Object.values(patternVolume), 1);
   const lowPatterns = Object.entries(patternVolume).filter(([, v]) => v < maxVol * 0.1).map(([k]) => k);
+
+  if (loading && !profile) {
+    return (
+      <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: 16, display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 60 }}>
+        <div style={{ height: 20, width: '50%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
+        <div style={{ height: 14, width: '100%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
+        <div style={{ height: 14, width: '66%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
+      </div>
+    );
+  }
 
   if (!loading && !profile) {
     return (
