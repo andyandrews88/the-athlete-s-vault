@@ -641,6 +641,73 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount: number
+          client_id: string
+          coach_id: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          invoice_url: string | null
+          notes: string | null
+          package_id: string | null
+          paid_at: string | null
+          sessions_count: number | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          coach_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          invoice_url?: string | null
+          notes?: string | null
+          package_id?: string | null
+          paid_at?: string | null
+          sessions_count?: number | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          coach_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          invoice_url?: string | null
+          notes?: string | null
+          package_id?: string | null
+          paid_at?: string | null
+          sessions_count?: number | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "pt_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       macro_logs: {
         Row: {
           calories: number | null
@@ -880,6 +947,130 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      pt_packages: {
+        Row: {
+          client_id: string
+          coach_id: string | null
+          created_at: string | null
+          currency: string | null
+          expiry_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          price_per_session: number | null
+          sessions_total: number
+          sessions_used: number | null
+          start_date: string | null
+          status: string | null
+        }
+        Insert: {
+          client_id: string
+          coach_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          expiry_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          price_per_session?: number | null
+          sessions_total: number
+          sessions_used?: number | null
+          start_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          client_id?: string
+          coach_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          expiry_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          price_per_session?: number | null
+          sessions_total?: number
+          sessions_used?: number | null
+          start_date?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pt_packages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pt_packages_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pt_sessions: {
+        Row: {
+          client_id: string
+          coach_id: string | null
+          completed: boolean | null
+          created_at: string | null
+          date: string
+          duration_mins: number | null
+          focus_areas: string | null
+          id: string
+          notes: string | null
+          package_id: string | null
+        }
+        Insert: {
+          client_id: string
+          coach_id?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          date: string
+          duration_mins?: number | null
+          focus_areas?: string | null
+          id?: string
+          notes?: string | null
+          package_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          coach_id?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string
+          duration_mins?: number | null
+          focus_areas?: string | null
+          id?: string
+          notes?: string | null
+          package_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pt_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pt_sessions_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pt_sessions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "pt_packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       session_exercises: {
         Row: {

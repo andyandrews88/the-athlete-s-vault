@@ -75,6 +75,23 @@ const AdminClientProfile = () => {
   const [programmeName, setProgrammeName] = useState('');
   const [daysPerWk, setDaysPerWk] = useState(0);
 
+  // Main tab
+  const [mainTab, setMainTab] = useState<'overview' | 'pt'>('overview');
+
+  // PT Sessions state
+  const [ptSubTab, setPtSubTab] = useState<'packages' | 'sessions' | 'invoices'>('packages');
+  const [ptPackages, setPtPackages] = useState<any[]>([]);
+  const [ptSessions, setPtSessions] = useState<any[]>([]);
+  const [ptInvoices, setPtInvoices] = useState<any[]>([]);
+  const [ptLoading, setPtLoading] = useState(false);
+  const [showPkgForm, setShowPkgForm] = useState(false);
+  const [showSessForm, setShowSessForm] = useState(false);
+  const [showInvForm, setShowInvForm] = useState(false);
+  const [pkgForm, setPkgForm] = useState({ name: '', sessions_total: '', price_per_session: '', start_date: '', notes: '' });
+  const [sessForm, setSessForm] = useState({ date: new Date().toISOString().slice(0, 10), workout_id: '', notes: '' });
+  const [invForm, setInvForm] = useState({ invoice_url: '', amount: '', currency: 'LKR', status: 'draft', date: new Date().toISOString().slice(0, 10), package_id: '' });
+  const [clientWorkouts, setClientWorkouts] = useState<any[]>([]);
+
   const now = useMemo(() => new Date(), []);
   const getMonday = (d: Date) => {
     const dt = new Date(d); const day = dt.getDay();
@@ -234,6 +251,87 @@ const AdminClientProfile = () => {
     } catch { setStreak(0); }
   };
 
+  // PT data loaders
+  const loadPtData = async () => {
+    setPtLoading(true);
+    try {
+      const [pkgRes, sessRes, invRes, wkRes] = await Promise.all([
+        supabase.from('pt_packages').select('*').eq('client_id', userId!).order('created_at', { ascending: false }),
+        supabase.from('pt_sessions').select('*').eq('client_id', userId!).order('date', { ascending: false }),
+        supabase.from('invoices').select('*').eq('client_id', userId!).order('created_at', { ascending: false }),
+        supabase.from('training_sessions').select('id, date, session_type').eq('user_id', userId!).order('date', { ascending: false }).limit(30),
+      ]);
+      setPtPackages(pkgRes.data ?? []);
+      setPtSessions(sessRes.data ?? []);
+      setPtInvoices(invRes.data ?? []);
+      setClientWorkouts(wkRes.data ?? []);
+    } catch { /* silent */ }
+    setPtLoading(false);
+  };
+
+  useEffect(() => { if (mainTab === 'pt' && userId) loadPtData(); }, [mainTab, userId]);
+
+  const activePackage = ptPackages.find(p => p.status === 'active');
+  const totalBilled = ptInvoices.reduce((a, i) => a + (Number(i.amount) || 0), 0);
+  const outstanding = ptInvoices.filter(i => i.status !== 'paid').reduce((a, i) => a + (Number(i.amount) || 0), 0);
+
+  const savePkg = async () => {
+    if (!pkgForm.name || !pkgForm.sessions_total || !user) return;
+    try {
+      await supabase.from('pt_packages').insert({
+        client_id: userId!, coach_id: user.id, name: pkgForm.name,
+        sessions_total: Number(pkgForm.sessions_total), sessions_used: 0,
+        price_per_session: pkgForm.price_per_session ? Number(pkgForm.price_per_session) : null,
+        currency: 'LKR', start_date: pkgForm.start_date || null, status: 'active', notes: pkgForm.notes || null,
+      });
+      setPkgForm({ name: '', sessions_total: '', price_per_session: '', start_date: '', notes: '' });
+      setShowPkgForm(false);
+      loadPtData();
+    } catch { /* silent */ }
+  };
+
+  const logSession = async () => {
+    if (!user || !activePackage) return;
+    try {
+      await supabase.from('pt_sessions').insert({
+        package_id: activePackage.id, client_id: userId!, coach_id: user.id,
+        date: sessForm.date, notes: sessForm.notes || null, completed: true,
+      });
+      await supabase.from('pt_packages').update({ sessions_used: (activePackage.sessions_used || 0) + 1 }).eq('id', activePackage.id);
+      setSessForm({ date: new Date().toISOString().slice(0, 10), workout_id: '', notes: '' });
+      setShowSessForm(false);
+      loadPtData();
+    } catch { /* silent */ }
+  };
+
+  const saveInvoice = async () => {
+    if (!invForm.amount || !user) return;
+    try {
+      await supabase.from('invoices').insert({
+        client_id: userId!, coach_id: user.id, amount: Number(invForm.amount),
+        currency: invForm.currency, status: invForm.status,
+        invoice_url: invForm.invoice_url || null, package_id: invForm.package_id || null,
+        created_at: invForm.date ? new Date(invForm.date).toISOString() : new Date().toISOString(),
+      });
+      setInvForm({ invoice_url: '', amount: '', currency: 'LKR', status: 'draft', date: new Date().toISOString().slice(0, 10), package_id: '' });
+      setShowInvForm(false);
+      loadPtData();
+    } catch { /* silent */ }
+  };
+
+  const deletePtSession = async (id: string) => {
+    try {
+      const sess = ptSessions.find(s => s.id === id);
+      await supabase.from('pt_sessions').delete().eq('id', id);
+      if (sess?.package_id) {
+        const pkg = ptPackages.find(p => p.id === sess.package_id);
+        if (pkg) await supabase.from('pt_packages').update({ sessions_used: Math.max(0, (pkg.sessions_used || 0) - 1) }).eq('id', pkg.id);
+      }
+      loadPtData();
+    } catch { /* silent */ }
+  };
+
+
   const sendDm = async () => {
     if (!dmText.trim() || !user) return;
     setSending(true);
@@ -361,6 +459,19 @@ const AdminClientProfile = () => {
         </div>
       )}
 
+      {/* TAB BAR */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid hsl(var(--border))' }}>
+        {(['overview', 'pt'] as const).map(t => (
+          <button key={t} onClick={() => setMainTab(t)} style={{
+            ...mono, fontSize: 9, padding: '8px 14px', cursor: 'pointer', border: 'none', background: 'transparent',
+            color: mainTab === t ? 'hsl(var(--primary))' : 'hsl(var(--dim))',
+            borderBottom: mainTab === t ? '2px solid hsl(var(--primary))' : '2px solid transparent',
+            textTransform: 'uppercase', letterSpacing: 1,
+          }}>{t === 'overview' ? 'OVERVIEW' : 'PT SESSIONS'}</button>
+        ))}
+      </div>
+
+      {mainTab === 'overview' && <>
       {/* READINESS & LIFESTYLE */}
       <div style={cardStyle}>
         <div style={sectionLabel('hsl(var(--dim))')}>READINESS & LIFESTYLE</div>
@@ -611,6 +722,274 @@ const AdminClientProfile = () => {
           </AlertDialog>
         </div>
       </div>
+      </>}
+
+      {/* PT SESSIONS TAB */}
+      {mainTab === 'pt' && (
+        <div>
+          {/* PT Sub-tabs */}
+          <div style={{ display: 'flex', gap: 0, marginBottom: 14, borderBottom: '1px solid hsl(var(--border))' }}>
+            {(['packages', 'sessions', 'invoices'] as const).map(t => (
+              <button key={t} onClick={() => setPtSubTab(t)} style={{
+                ...mono, fontSize: 8, padding: '6px 12px', cursor: 'pointer', border: 'none', background: 'transparent',
+                color: ptSubTab === t ? 'hsl(var(--primary))' : 'hsl(var(--dim))',
+                borderBottom: ptSubTab === t ? '2px solid hsl(var(--primary))' : '2px solid transparent',
+                textTransform: 'uppercase', letterSpacing: 1,
+              }}>{t}</button>
+            ))}
+          </div>
+
+          {ptLoading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-[60px] rounded-lg" />)}
+            </div>
+          ) : (
+            <>
+              {/* PACKAGES SUB-TAB */}
+              {ptSubTab === 'packages' && (
+                <div>
+                  {/* Stats */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+                    <div style={cardStyle}>
+                      <div style={{ ...mono, fontSize: 20, color: 'hsl(var(--primary))', lineHeight: 1 }}>{totalBilled.toLocaleString()}</div>
+                      <div style={{ ...mono, fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>TOTAL BILLED (LKR)</div>
+                    </div>
+                    <div style={cardStyle}>
+                      <div style={{ ...mono, fontSize: 20, color: outstanding > 0 ? 'hsl(var(--warn))' : 'hsl(var(--primary))', lineHeight: 1 }}>{outstanding.toLocaleString()}</div>
+                      <div style={{ ...mono, fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>OUTSTANDING (LKR)</div>
+                    </div>
+                  </div>
+
+                  {/* Package list */}
+                  {ptPackages.map(pkg => {
+                    const pct = pkg.sessions_total > 0 ? (pkg.sessions_used / pkg.sessions_total) * 100 : 0;
+                    const remaining = Math.max(0, pkg.sessions_total - (pkg.sessions_used || 0));
+                    const statusBadge = (s: string) => {
+                      if (s === 'active') return { bg: 'hsla(142,71%,45%,0.1)', color: 'hsl(var(--ok))', border: 'hsla(142,71%,45%,0.2)' };
+                      if (s === 'complete') return { bg: 'hsla(215,14%,50%,0.1)', color: 'hsl(var(--dim))', border: 'hsla(215,14%,50%,0.2)' };
+                      return { bg: 'hsla(0,72%,51%,0.1)', color: 'hsl(var(--bad))', border: 'hsla(0,72%,51%,0.2)' };
+                    };
+                    const sb = statusBadge(pkg.status);
+                    return (
+                      <div key={pkg.id} style={{ ...cardStyle, marginBottom: 8 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))' }}>{pkg.name}</div>
+                          <span style={{ ...mono, fontSize: 8, padding: '2px 6px', borderRadius: 3, background: sb.bg, color: sb.color, border: `1px solid ${sb.border}` }}>{pkg.status.toUpperCase()}</span>
+                        </div>
+                        <div style={{ height: 4, background: 'hsl(var(--bg4))', borderRadius: 2, overflow: 'hidden', marginBottom: 6 }}>
+                          <div style={{ height: '100%', width: `${Math.min(100, pct)}%`, background: 'hsl(var(--primary))', borderRadius: 2 }} />
+                        </div>
+                        <div style={{ ...mono, fontSize: 9, color: 'hsl(var(--dim))' }}>
+                          {pkg.sessions_used}/{pkg.sessions_total} used · {remaining} remaining
+                        </div>
+                        <div style={{ ...mono, fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
+                          {pkg.start_date ? `Purchased ${new Date(pkg.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                          {pkg.price_per_session ? ` · ${Number(pkg.price_per_session).toLocaleString()} LKR/session` : ''}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {ptPackages.length === 0 && <div style={{ ...mono, fontSize: 11, color: 'hsl(var(--dim))', marginBottom: 12 }}>No packages yet</div>}
+
+                  {/* Create Package button + form */}
+                  <button onClick={() => setShowPkgForm(!showPkgForm)} style={{
+                    width: '100%', padding: '10px 0', borderRadius: 8, cursor: 'pointer', fontSize: 12,
+                    background: 'transparent', border: '1px solid hsla(192,91%,54%,0.3)', color: 'hsl(var(--primary))',
+                  }}>+ Create New Package</button>
+
+                  {showPkgForm && (
+                    <div style={{ ...cardStyle, marginTop: 10 }}>
+                      <div style={sectionLabel('hsl(var(--dim))')}>NEW PACKAGE</div>
+                      {[
+                        { label: 'Package Name', key: 'name', type: 'text' },
+                        { label: 'Sessions Purchased', key: 'sessions_total', type: 'number' },
+                        { label: 'Price per session (LKR)', key: 'price_per_session', type: 'number' },
+                        { label: 'Purchase Date', key: 'start_date', type: 'date' },
+                      ].map(f => (
+                        <div key={f.key} style={{ marginBottom: 8 }}>
+                          <label style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', display: 'block', marginBottom: 3 }}>{f.label}</label>
+                          <input type={f.type} value={(pkgForm as any)[f.key]} onChange={e => setPkgForm(p => ({ ...p, [f.key]: e.target.value }))}
+                            style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', boxSizing: 'border-box' }} />
+                        </div>
+                      ))}
+                      <textarea value={pkgForm.notes} onChange={e => setPkgForm(p => ({ ...p, notes: e.target.value }))} placeholder="Notes (optional)" rows={2}
+                        style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', resize: 'vertical', marginBottom: 8, boxSizing: 'border-box' }} />
+                      <button onClick={savePkg} disabled={!pkgForm.name || !pkgForm.sessions_total} style={{
+                        width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+                        background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 12,
+                        opacity: !pkgForm.name || !pkgForm.sessions_total ? 0.5 : 1,
+                      }}>Save Package</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SESSIONS SUB-TAB */}
+              {ptSubTab === 'sessions' && (
+                <div>
+                  {activePackage && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <div style={{ fontSize: 12, color: 'hsl(var(--text))' }}>Active: <span style={{ fontWeight: 600 }}>{activePackage.name}</span></div>
+                      <span style={{ ...mono, fontSize: 10, color: 'hsl(var(--primary))' }}>{activePackage.sessions_used}/{activePackage.sessions_total}</span>
+                    </div>
+                  )}
+
+                  <button onClick={() => setShowSessForm(!showSessForm)} disabled={!activePackage} style={{
+                    width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', cursor: activePackage ? 'pointer' : 'not-allowed',
+                    background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 12, marginBottom: 14,
+                    opacity: activePackage ? 1 : 0.5,
+                  }}>+ Log Session</button>
+
+                  {showSessForm && (
+                    <div style={{ ...cardStyle, marginBottom: 14 }}>
+                      <div style={sectionLabel('hsl(var(--dim))')}>LOG SESSION</div>
+                      <div style={{ marginBottom: 8 }}>
+                        <label style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', display: 'block', marginBottom: 3 }}>Date</label>
+                        <input type="date" value={sessForm.date} onChange={e => setSessForm(p => ({ ...p, date: e.target.value }))}
+                          style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                      <div style={{ marginBottom: 8 }}>
+                        <label style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', display: 'block', marginBottom: 3 }}>Link to Workout</label>
+                        <select value={sessForm.workout_id} onChange={e => setSessForm(p => ({ ...p, workout_id: e.target.value }))}
+                          style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', boxSizing: 'border-box' }}>
+                          <option value="">None</option>
+                          {clientWorkouts.map(w => <option key={w.id} value={w.id}>{w.date} — {w.session_type || 'Workout'}</option>)}
+                        </select>
+                      </div>
+                      <textarea value={sessForm.notes} onChange={e => setSessForm(p => ({ ...p, notes: e.target.value }))} placeholder="Session notes..." rows={2}
+                        style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', resize: 'vertical', marginBottom: 8, boxSizing: 'border-box' }} />
+                      <button onClick={logSession} style={{
+                        width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+                        background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 12,
+                      }}>Log Session</button>
+                    </div>
+                  )}
+
+                  {/* Session list */}
+                  {ptSessions.length === 0 ? (
+                    <div style={{ ...mono, fontSize: 11, color: 'hsl(var(--dim))' }}>No sessions logged yet</div>
+                  ) : (
+                    ptSessions.map((s, i) => (
+                      <div key={s.id} style={{ padding: '10px 0', borderBottom: '1px solid hsl(var(--border))' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))' }}>Session {ptSessions.length - i}</div>
+                          <div style={{ ...mono, fontSize: 9, color: 'hsl(var(--dim))' }}>{new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
+                        </div>
+                        {s.notes && <div style={{ fontSize: 12, color: 'hsl(var(--mid))', marginTop: 4 }}>{s.notes}</div>}
+                        <button onClick={() => deletePtSession(s.id)} style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>Delete</button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* INVOICES SUB-TAB */}
+              {ptSubTab === 'invoices' && (
+                <div>
+                  {/* Stats */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+                    <div style={cardStyle}>
+                      <div style={{ ...mono, fontSize: 20, color: 'hsl(var(--primary))', lineHeight: 1 }}>{totalBilled.toLocaleString()}</div>
+                      <div style={{ ...mono, fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>TOTAL BILLED</div>
+                    </div>
+                    <div style={cardStyle}>
+                      <div style={{ ...mono, fontSize: 20, color: outstanding > 0 ? 'hsl(var(--warn))' : 'hsl(var(--primary))', lineHeight: 1 }}>{outstanding.toLocaleString()}</div>
+                      <div style={{ ...mono, fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>OUTSTANDING</div>
+                    </div>
+                  </div>
+
+                  <button onClick={() => setShowInvForm(!showInvForm)} style={{
+                    width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 12, marginBottom: 14,
+                  }}>+ Add Invoice</button>
+
+                  {showInvForm && (
+                    <div style={{ ...cardStyle, marginBottom: 14 }}>
+                      <div style={sectionLabel('hsl(var(--dim))')}>NEW INVOICE</div>
+                      <div style={{ marginBottom: 8 }}>
+                        <label style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', display: 'block', marginBottom: 3 }}>Amount</label>
+                        <input type="number" value={invForm.amount} onChange={e => setInvForm(p => ({ ...p, amount: e.target.value }))}
+                          style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                        <div>
+                          <label style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', display: 'block', marginBottom: 3 }}>Currency</label>
+                          <select value={invForm.currency} onChange={e => setInvForm(p => ({ ...p, currency: e.target.value }))}
+                            style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', boxSizing: 'border-box' }}>
+                            <option value="LKR">LKR</option><option value="USD">USD</option><option value="GBP">GBP</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', display: 'block', marginBottom: 3 }}>Status</label>
+                          <select value={invForm.status} onChange={e => setInvForm(p => ({ ...p, status: e.target.value }))}
+                            style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', boxSizing: 'border-box' }}>
+                            <option value="draft">DRAFT</option><option value="sent">SENT</option><option value="paid">PAID</option><option value="overdue">OVERDUE</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div style={{ marginBottom: 8 }}>
+                        <label style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', display: 'block', marginBottom: 3 }}>Date</label>
+                        <input type="date" value={invForm.date} onChange={e => setInvForm(p => ({ ...p, date: e.target.value }))}
+                          style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                      <div style={{ marginBottom: 8 }}>
+                        <label style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', display: 'block', marginBottom: 3 }}>Link to Package</label>
+                        <select value={invForm.package_id} onChange={e => setInvForm(p => ({ ...p, package_id: e.target.value }))}
+                          style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', boxSizing: 'border-box' }}>
+                          <option value="">None</option>
+                          {ptPackages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ marginBottom: 8 }}>
+                        <label style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', display: 'block', marginBottom: 3 }}>Invoice URL</label>
+                        <input type="text" value={invForm.invoice_url} onChange={e => setInvForm(p => ({ ...p, invoice_url: e.target.value }))} placeholder="https://..."
+                          style={{ width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none', boxSizing: 'border-box' }} />
+                      </div>
+                      <button onClick={saveInvoice} disabled={!invForm.amount} style={{
+                        width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+                        background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 12,
+                        opacity: !invForm.amount ? 0.5 : 1,
+                      }}>Save Invoice</button>
+                    </div>
+                  )}
+
+                  {/* Invoice list */}
+                  {ptInvoices.length === 0 ? (
+                    <div style={{ ...mono, fontSize: 11, color: 'hsl(var(--dim))' }}>No invoices yet</div>
+                  ) : (
+                    ptInvoices.map(inv => {
+                      const invStatus = (s: string) => {
+                        if (s === 'paid') return { bg: 'hsla(142,71%,45%,0.1)', color: 'hsl(var(--ok))' };
+                        if (s === 'sent') return { bg: 'hsla(192,91%,54%,0.1)', color: 'hsl(var(--primary))' };
+                        if (s === 'overdue') return { bg: 'hsla(0,72%,51%,0.1)', color: 'hsl(var(--bad))' };
+                        return { bg: 'hsla(215,14%,50%,0.1)', color: 'hsl(var(--dim))' };
+                      };
+                      const is = invStatus(inv.status);
+                      const pkg = ptPackages.find(p => p.id === inv.package_id);
+                      return (
+                        <div key={inv.id} style={{ padding: '10px 0', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontSize: 12, color: 'hsl(var(--text))' }}>
+                              {new Date(inv.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                              {pkg ? ` · ${pkg.name}` : ''}
+                            </div>
+                            <span style={{ ...mono, fontSize: 8, padding: '1px 5px', borderRadius: 3, background: is.bg, color: is.color }}>{inv.status.toUpperCase()}</span>
+                          </div>
+                          <div style={{ ...mono, fontSize: 14, color: 'hsl(var(--text))' }}>
+                            {Number(inv.amount).toLocaleString()} {inv.currency}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
     </div>
   );
 };
