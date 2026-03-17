@@ -576,7 +576,7 @@ export const LogTab = () => {
 
   const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; color: string; bannerStyle: React.CSSProperties }> = {
     warmup:    { label: 'WARM UP',        emoji: '🔥', color: 'hsl(var(--warn))',    bannerStyle: { padding: '4px 7px', background: 'hsla(38,92%,50%,0.06)', border: '1px solid hsla(38,92%,50%,0.15)', borderRadius: 6 } },
-    exercises: { label: 'MAIN EXERCISES', emoji: '🏋️', color: 'hsl(var(--primary))', bannerStyle: { padding: '4px 7px', background: 'hsl(var(--pgb))', border: '1px solid hsla(192,91%,54%,0.2)', borderRadius: 6 } },
+    exercises: { label: 'MAIN EXERCISES', emoji: '🏋️', color: 'hsl(var(--primary))', bannerStyle: { padding: '4px 7px', background: 'hsla(192,91%,54%,0.07)', border: '1px solid hsla(192,91%,54%,0.2)', borderRadius: 6 } },
     cooldown:  { label: 'COOL DOWN',      emoji: '🧊', color: 'hsl(200,60%,60%)',   bannerStyle: { padding: '4px 7px', background: 'hsla(200,60%,50%,0.06)', border: '1px solid hsla(200,60%,50%,0.15)', borderRadius: 6 } },
   };
 
