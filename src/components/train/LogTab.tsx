@@ -408,6 +408,7 @@ export const LogTab = () => {
             onChange={e => updateSet(exIdx, setIdx, 'weight_kg', toKg(e.target.value ? parseFloat(e.target.value) : null))}
             disabled={set.completed}
             className={inputCls(set.completed) + ' flex-1'}
+            style={set.completed ? { color: 'hsl(var(--ok))' } : (!set.completed && !set.weight_kg ? undefined : undefined)}
           />
         )}
 
