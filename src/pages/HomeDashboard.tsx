@@ -183,6 +183,17 @@ const HomeDashboard = () => {
     <div className="min-h-screen bg-vault-bg pt-12 pb-24">
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
 
+        {/* Announcement banner */}
+        {announcement && !announcementDismissed && (
+          <div className="flex items-start gap-2 rounded-lg px-[14px] py-[10px]" style={{ background: 'hsla(192,91%,54%,0.07)', border: '1px solid hsl(var(--primary)/0.2)' }}>
+            <span className="text-sm shrink-0">📢</span>
+            <p className="text-[12px] flex-1" style={{ color: 'hsl(var(--mid))' }}>{announcement.content}</p>
+            <button onClick={() => { setAnnouncementDismissed(true); localStorage.setItem('dismissed_announcement', announcement.id); }} className="p-0.5 shrink-0" style={{ color: 'hsl(var(--dim))' }}>
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         {/* SECTION 1 - Greeting */}
         <div>
           <p className="font-mono text-[10px] text-vault-dim uppercase tracking-[2px] mb-1">{dayLabel} · TODAY</p>
