@@ -356,9 +356,8 @@ const HomeDashboard = () => {
                 <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
                   <circle cx="28" cy="28" r="22" fill="none" stroke="hsl(var(--bg4))" strokeWidth="5" />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-mono text-[16px] font-semibold text-vault-dim leading-none">0</span>
-                  <span className="font-mono text-[8px] text-vault-dim">%</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="font-mono text-[16px] font-semibold text-vault-dim leading-none">0%</span>
                 </div>
               </div>
               <button onClick={() => navigate('/lifestyle')} className="w-full py-2 border rounded-lg font-mono text-[10px] text-primary uppercase tracking-widest" style={{ borderColor: 'hsla(192,91%,54%,0.3)' }}>
