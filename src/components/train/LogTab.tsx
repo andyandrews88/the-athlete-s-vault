@@ -597,10 +597,10 @@ export const LogTab = () => {
     );
   };
 
-  const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; bgCls: string; textCls: string; borderCls: string }> = {
-    warmup:    { label: 'WARM UP',        emoji: '🔥', bgCls: 'bg-amber-500/10', textCls: 'text-amber-500', borderCls: 'border-amber-500/20' },
-    exercises: { label: 'MAIN EXERCISES', emoji: '⚡', bgCls: 'bg-primary/10',   textCls: 'text-primary',   borderCls: 'border-primary/20' },
-    cooldown:  { label: 'COOL DOWN',      emoji: '🧊', bgCls: 'bg-sky-500/10',   textCls: 'text-sky-500',   borderCls: 'border-sky-500/20' },
+  const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; textCls: string; bannerStyle: React.CSSProperties }> = {
+    warmup:    { label: 'WARM UP',        emoji: '🔥', textCls: 'text-amber-500', bannerStyle: { background: 'hsla(38,92%,50%,0.06)', border: '1px solid hsla(38,92%,50%,0.15)' } },
+    exercises: { label: 'MAIN EXERCISES', emoji: '⚡', textCls: 'text-primary',   bannerStyle: { background: 'hsl(var(--pgb))', border: '1px solid hsla(192,91%,54%,0.2)' } },
+    cooldown:  { label: 'COOL DOWN',      emoji: '🧊', textCls: 'text-sky-500',   bannerStyle: { background: 'hsla(14,100%,57%,0.06)', border: '1px solid hsla(14,100%,57%,0.15)' } },
   };
 
   const renderSection = (sectionKey: WorkoutSection, items: { ex: SessionExercise; globalIdx: number }[]) => {
