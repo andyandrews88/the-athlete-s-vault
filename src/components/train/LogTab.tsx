@@ -370,10 +370,10 @@ export const LogTab = () => {
     const isConditioning = ex.exercise.exercise_type === 'conditioning';
     const canComplete = setHasData(set, ex.exercise.exercise_type);
 
-    const completedCls = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
-    const normalCls = 'bg-secondary border-border text-foreground';
     const inputCls = (done: boolean) =>
-      `w-full rounded-xl px-2 py-3.5 font-mono text-sm text-center border focus:border-primary focus:outline-none disabled:opacity-100 ${done ? completedCls : normalCls}`;
+      done
+        ? 'w-full rounded-lg px-2 py-2 font-mono text-[9px] text-center border focus:outline-none bg-transparent border-[hsl(var(--border))]'
+        : 'w-full rounded-lg px-2 py-2 font-mono text-[9px] text-center border focus:outline-none bg-[hsl(var(--bg3))] border-[hsl(var(--border2))] text-[hsl(var(--text))] focus:border-[hsl(var(--primary))]';
 
     return (
       <div key={setIdx} className="flex items-center gap-3 mb-2">
