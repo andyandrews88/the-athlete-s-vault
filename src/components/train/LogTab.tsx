@@ -613,33 +613,41 @@ export const LogTab = () => {
           />
         </div>
 
-        <div className="w-full p-8 text-center" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsla(192,91%,54%,0.2)', boxShadow: '0 0 30px hsla(192,91%,54%,0.06)', borderRadius: 16 }}>
-          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
-            <Dumbbell size={28} className="text-primary" />
-          </div>
-          <h2 className="font-display text-4xl tracking-[2px] mb-2">START WORKOUT</h2>
-          <p className="font-mono text-[10px] text-muted-foreground mb-5 uppercase tracking-widest">Log your training session</p>
+        <div className="w-full" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsla(192,91%,54%,0.2)', boxShadow: '0 0 30px hsla(192,91%,54%,0.06)', borderRadius: 16, padding: 24 }}>
+          {/* Programme header */}
+          <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 22, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1, marginBottom: 4 }}>
+            {activeProgramme ? activeProgramme.name.toUpperCase() : 'FREE SESSION'}
+          </h2>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginBottom: 16 }}>
+            {activeProgramme && selectedWorkout
+              ? `Week 1 · Day ${selectedWorkout.day_number} · Main Block`
+              : activeProgramme
+                ? 'Select a workout day below'
+                : 'No programme · Free session'}
+          </p>
 
           {/* Programme selector */}
           {programmes.length > 0 && (
             <div className="mb-5">
               <button
                 onClick={() => setShowProgrammeSelector(!showProgrammeSelector)}
-                className="w-full flex items-center justify-between bg-secondary border border-border rounded-xl px-4 py-3 text-left"
+                className="w-full flex items-center justify-between rounded-xl px-4 py-3 text-left"
+                style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))' }}
               >
                 <div className="flex items-center gap-2">
                   <ListChecks size={14} className="text-primary" />
-                  <span className="font-mono text-xs text-foreground">
+                  <span className="font-mono text-xs" style={{ color: 'hsl(var(--text))' }}>
                     {selectedProgrammeId ? programmes.find(p => p.id === selectedProgrammeId)?.name : 'No Programme'}
                   </span>
                 </div>
-                <ChevronDown size={14} className="text-muted-foreground" />
+                <ChevronDown size={14} style={{ color: 'hsl(var(--dim))' }} />
               </button>
               {showProgrammeSelector && (
-                <div className="mt-1 bg-card border border-border rounded-xl overflow-hidden">
+                <div className="mt-1 overflow-hidden" style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', borderRadius: 10 }}>
                   <button
                     onClick={() => { setSelectedProgrammeId(null); setShowProgrammeSelector(false); }}
-                    className={`w-full text-left px-4 py-3 font-mono text-xs border-b border-border transition-colors ${!selectedProgrammeId ? 'text-primary bg-primary/5' : 'text-foreground hover:bg-secondary'}`}
+                    className="w-full text-left px-4 py-3 font-mono text-xs transition-colors"
+                    style={{ color: !selectedProgrammeId ? 'hsl(var(--primary))' : 'hsl(var(--text))', borderBottom: '1px solid hsl(var(--border))' }}
                   >
                     No Programme (Free Session)
                   </button>
@@ -647,10 +655,11 @@ export const LogTab = () => {
                     <button
                       key={p.id}
                       onClick={() => { setSelectedProgrammeId(p.id); setShowProgrammeSelector(false); }}
-                      className={`w-full text-left px-4 py-3 font-mono text-xs border-b border-border last:border-b-0 transition-colors ${selectedProgrammeId === p.id ? 'text-primary bg-primary/5' : 'text-foreground hover:bg-secondary'}`}
+                      className="w-full text-left px-4 py-3 font-mono text-xs transition-colors"
+                      style={{ color: selectedProgrammeId === p.id ? 'hsl(var(--primary))' : 'hsl(var(--text))', borderBottom: '1px solid hsl(var(--border))' }}
                     >
                       {p.name}
-                      {p.is_active && <span className="ml-2 text-[8px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-full border border-primary/20">ACTIVE</span>}
+                      {p.is_active && <span className="ml-2" style={{ fontSize: 8, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '1px 5px', borderRadius: 9, border: '1px solid hsla(192,91%,54%,0.2)' }}>ACTIVE</span>}
                     </button>
                   ))}
                 </div>
@@ -661,25 +670,33 @@ export const LogTab = () => {
           {/* Workout day picker */}
           {workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && (
             <div className="mb-5">
-              <p className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest mb-2 text-left">Select today's workout</p>
+              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Select today's workout</p>
               <div className="grid grid-cols-1 gap-1.5">
                 {workouts.map(w => (
                   <button
                     key={w.id}
                     onClick={() => setSelectedWorkout(selectedWorkout?.id === w.id ? null : w)}
-                    className={`w-full text-left px-4 py-3 rounded-xl font-mono text-xs border transition-colors ${
-                      selectedWorkout?.id === w.id ? 'text-primary bg-primary/5 border-primary/40' : 'text-foreground bg-secondary border-border hover:border-primary/20'
-                    }`}
+                    className="w-full text-left px-4 py-3 rounded-lg font-mono text-xs transition-colors"
+                    style={{
+                      background: selectedWorkout?.id === w.id ? 'hsla(192,91%,54%,0.05)' : 'hsl(var(--bg3))',
+                      border: selectedWorkout?.id === w.id ? '1px solid hsla(192,91%,54%,0.4)' : '1px solid hsl(var(--border))',
+                      color: selectedWorkout?.id === w.id ? 'hsl(var(--primary))' : 'hsl(var(--text))',
+                    }}
                   >
                     <span className="font-bold">Day {w.day_number}</span>
-                    <span className="text-muted-foreground ml-2">— {w.name}</span>
+                    <span style={{ color: 'hsl(var(--dim))', marginLeft: 8 }}>— {w.name}</span>
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          <button onClick={startSession} className="w-full bg-primary text-primary-foreground font-bold text-xs py-4 rounded-xl uppercase tracking-widest">Begin Session →</button>
+          <button
+            onClick={startSession}
+            style={{ width: '100%', background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 11, padding: '12px 0', borderRadius: 8, border: 'none', textTransform: 'uppercase', letterSpacing: 1 }}
+          >
+            Begin Session →
+          </button>
         </div>
       </div>
     );
