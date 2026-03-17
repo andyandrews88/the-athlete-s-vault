@@ -75,6 +75,23 @@ const AdminClientProfile = () => {
   const [programmeName, setProgrammeName] = useState('');
   const [daysPerWk, setDaysPerWk] = useState(0);
 
+  // Main tab
+  const [mainTab, setMainTab] = useState<'overview' | 'pt'>('overview');
+
+  // PT Sessions state
+  const [ptSubTab, setPtSubTab] = useState<'packages' | 'sessions' | 'invoices'>('packages');
+  const [ptPackages, setPtPackages] = useState<any[]>([]);
+  const [ptSessions, setPtSessions] = useState<any[]>([]);
+  const [ptInvoices, setPtInvoices] = useState<any[]>([]);
+  const [ptLoading, setPtLoading] = useState(false);
+  const [showPkgForm, setShowPkgForm] = useState(false);
+  const [showSessForm, setShowSessForm] = useState(false);
+  const [showInvForm, setShowInvForm] = useState(false);
+  const [pkgForm, setPkgForm] = useState({ name: '', sessions_total: '', price_per_session: '', start_date: '', notes: '' });
+  const [sessForm, setSessForm] = useState({ date: new Date().toISOString().slice(0, 10), workout_id: '', notes: '' });
+  const [invForm, setInvForm] = useState({ invoice_url: '', amount: '', currency: 'LKR', status: 'draft', date: new Date().toISOString().slice(0, 10), package_id: '' });
+  const [clientWorkouts, setClientWorkouts] = useState<any[]>([]);
+
   const now = useMemo(() => new Date(), []);
   const getMonday = (d: Date) => {
     const dt = new Date(d); const day = dt.getDay();
