@@ -370,10 +370,10 @@ export const LogTab = () => {
     const isConditioning = ex.exercise.exercise_type === 'conditioning';
     const canComplete = setHasData(set, ex.exercise.exercise_type);
 
-    const completedCls = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
-    const normalCls = 'bg-secondary border-border text-foreground';
     const inputCls = (done: boolean) =>
-      `w-full rounded-xl px-2 py-3.5 font-mono text-sm text-center border focus:border-primary focus:outline-none disabled:opacity-100 ${done ? completedCls : normalCls}`;
+      done
+        ? 'w-full rounded-lg px-2 py-2 font-mono text-[9px] text-center border focus:outline-none bg-transparent border-[hsl(var(--border))]'
+        : 'w-full rounded-lg px-2 py-2 font-mono text-[9px] text-center border focus:outline-none bg-[hsl(var(--bg3))] border-[hsl(var(--border2))] text-[hsl(var(--text))] focus:border-[hsl(var(--primary))]';
 
     return (
       <div key={setIdx} className="flex items-center gap-3 mb-2">
@@ -398,6 +398,7 @@ export const LogTab = () => {
             value={set.duration_secs ?? ''} disabled={set.completed}
             onChange={e => updateSet(exIdx, setIdx, 'duration_secs', e.target.value ? parseInt(e.target.value) : null)}
             className={inputCls(set.completed) + ' flex-1'}
+            style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
           />
         ) : (
           <input
@@ -407,6 +408,7 @@ export const LogTab = () => {
             onChange={e => updateSet(exIdx, setIdx, 'weight_kg', toKg(e.target.value ? parseFloat(e.target.value) : null))}
             disabled={set.completed}
             className={inputCls(set.completed) + ' flex-1'}
+            style={set.completed ? { color: 'hsl(var(--ok))' } : (!set.completed && !set.weight_kg ? undefined : undefined)}
           />
         )}
 
@@ -417,6 +419,7 @@ export const LogTab = () => {
             value={set.reps ?? ''} disabled={set.completed}
             onChange={e => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
             className={inputCls(set.completed) + ' flex-1'}
+            style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
           />
         )}
 
@@ -428,12 +431,14 @@ export const LogTab = () => {
               value={set.distance_m ?? ''} disabled={set.completed}
               onChange={e => updateSet(exIdx, setIdx, 'distance_m', e.target.value ? parseFloat(e.target.value) : null)}
               className={inputCls(set.completed) + ' flex-1'}
+              style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
             />
             <input
               type="number" inputMode="numeric" placeholder="cal"
               value={set.calories ?? ''} disabled={set.completed}
               onChange={e => updateSet(exIdx, setIdx, 'calories', e.target.value ? parseInt(e.target.value) : null)}
               className={inputCls(set.completed) + ' flex-1'}
+              style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
             />
           </>
         )}
@@ -444,9 +449,28 @@ export const LogTab = () => {
           value={set.rir ?? ''} disabled={set.completed}
           onChange={e => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
           className={inputCls(set.completed) + ' w-14 shrink-0'}
+          style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
         />
       </div>
     );
+  };
+
+  const pipColor = (pattern: string) => {
+    const map: Record<string, string> = {
+      'Hinge':      'hsl(0,72%,51%)',
+      'Squat':      'hsl(262,60%,55%)',
+      'Push':       'hsl(var(--primary))',
+      'Pull':       'hsl(var(--ok))',
+      'Single Leg': 'hsl(38,92%,50%)',
+      'Carry':      'hsl(38,92%,50%)',
+      'Core':       'hsl(215,14%,50%)',
+      'Olympic':    'hsl(var(--gold))',
+      'Isolation':  'hsl(215,14%,50%)',
+      'Plyometric': 'hsl(var(--gold))',
+      'Rotational': 'hsl(var(--primary))',
+      'Conditioning':'hsl(var(--warn))',
+    };
+    return map[pattern] || 'hsl(var(--primary))';
   };
 
   const renderExerciseCard = (ex: SessionExercise, exIdx: number) => {
@@ -460,11 +484,13 @@ export const LogTab = () => {
       : `${ex.sets.length} × ${firstReps ?? '–'} · ${ex.exercise.movement_pattern || ''}`;
 
     const ssColor = ex.supersetGroup ? 'border-l-2 border-l-amber-500' : '';
+    const lastSetRir = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].rir : null;
 
     return (
-      <div key={exIdx} className={`bg-card border border-border rounded-2xl overflow-hidden ${ssColor}`}>
+      <div key={exIdx} className={`rounded-2xl overflow-hidden ${ssColor}`} style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
         {/* Header — tap to expand */}
-        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center justify-between px-4 py-3 text-left">
+        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center gap-3 px-4 py-3 text-left">
+          <div style={{ width: 3, minWidth: 3, height: 26, borderRadius: 2, flexShrink: 0, background: pipColor(ex.exercise.movement_pattern || '') }} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="font-semibold text-sm text-foreground truncate">{ex.exercise.name}</p>
@@ -478,6 +504,11 @@ export const LogTab = () => {
             {completedSets.length > 0 && (
               <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 {completedSets.length}/{ex.sets.length}
+              </span>
+            )}
+            {!ex.expanded && lastSetRir !== null && lastSetRir !== undefined && (
+              <span style={{ background: 'hsla(38,92%,50%,0.1)', color: 'hsl(var(--warn))', border: '1px solid hsla(38,92%,50%,0.3)', fontFamily: 'JetBrains Mono, monospace', fontSize: 8, padding: '1px 4px', borderRadius: 3 }}>
+                RIR {lastSetRir}
               </span>
             )}
             {ex.isPr && (
@@ -566,10 +597,10 @@ export const LogTab = () => {
     );
   };
 
-  const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; bgCls: string; textCls: string; borderCls: string }> = {
-    warmup:    { label: 'WARM UP',        emoji: '🔥', bgCls: 'bg-amber-500/10', textCls: 'text-amber-500', borderCls: 'border-amber-500/20' },
-    exercises: { label: 'MAIN EXERCISES', emoji: '⚡', bgCls: 'bg-primary/10',   textCls: 'text-primary',   borderCls: 'border-primary/20' },
-    cooldown:  { label: 'COOL DOWN',      emoji: '🧊', bgCls: 'bg-sky-500/10',   textCls: 'text-sky-500',   borderCls: 'border-sky-500/20' },
+  const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; textCls: string; bannerStyle: React.CSSProperties }> = {
+    warmup:    { label: 'WARM UP',        emoji: '🔥', textCls: 'text-amber-500', bannerStyle: { background: 'hsla(38,92%,50%,0.06)', border: '1px solid hsla(38,92%,50%,0.15)' } },
+    exercises: { label: 'MAIN EXERCISES', emoji: '⚡', textCls: 'text-primary',   bannerStyle: { background: 'hsl(var(--pgb))', border: '1px solid hsla(192,91%,54%,0.2)' } },
+    cooldown:  { label: 'COOL DOWN',      emoji: '🧊', textCls: 'text-sky-500',   bannerStyle: { background: 'hsla(14,100%,57%,0.06)', border: '1px solid hsla(14,100%,57%,0.15)' } },
   };
 
   const renderSection = (sectionKey: WorkoutSection, items: { ex: SessionExercise; globalIdx: number }[]) => {
@@ -579,10 +610,10 @@ export const LogTab = () => {
         open={sectionsOpen[sectionKey]}
         onOpenChange={open => setSectionsOpen(prev => ({ ...prev, [sectionKey]: open }))}
       >
-        <CollapsibleTrigger className={`w-full flex items-center justify-between py-2.5 px-4 rounded-xl border ${cfg.bgCls} ${cfg.borderCls} mb-2`}>
+        <CollapsibleTrigger className="w-full flex items-center justify-between py-2.5 px-4 rounded-xl mb-2" style={cfg.bannerStyle}>
           <div className="flex items-center gap-2">
             <span className="text-sm">{cfg.emoji}</span>
-            <span className={`font-mono text-[10px] ${cfg.textCls} uppercase tracking-widest font-semibold`}>{cfg.label}</span>
+            <span className={`${cfg.textCls} uppercase font-semibold`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, letterSpacing: 1 }}>{cfg.label}</span>
             {items.length > 0 && (
               <span className={`font-mono text-[9px] ${cfg.textCls} opacity-60`}>{items.length}</span>
             )}
@@ -613,7 +644,7 @@ export const LogTab = () => {
           />
         </div>
 
-        <div className="w-full bg-card border border-primary/20 rounded-2xl p-8 text-center" style={{ boxShadow: '0 0 30px hsl(var(--primary) / 0.06)' }}>
+        <div className="w-full p-8 text-center" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsla(192,91%,54%,0.2)', boxShadow: '0 0 30px hsla(192,91%,54%,0.06)', borderRadius: 16 }}>
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
             <Dumbbell size={28} className="text-primary" />
           </div>
@@ -739,9 +770,9 @@ export const LogTab = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 bg-card border border-primary/20 rounded-xl px-3 py-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="font-mono text-sm text-primary font-semibold">{timer}</span>
+          <div className="flex items-center gap-1.5 px-2 py-0.5" style={{ background: 'transparent', border: '1px solid hsl(var(--warn))', borderRadius: 6, padding: '3px 8px' }}>
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--warn))' }} />
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, fontSize: 11, color: 'hsl(var(--warn))' }}>{timer}</span>
           </div>
           <button
             onClick={cancelSession}
@@ -768,9 +799,10 @@ export const LogTab = () => {
       {!showSearch ? (
         <button
           onClick={() => setShowSearch(true)}
-          className="w-full py-3 rounded-2xl text-xs font-medium flex items-center justify-center gap-2 border-2 border-dashed border-border text-muted-foreground bg-transparent"
+          className="w-full flex items-center justify-center gap-2 bg-transparent"
+          style={{ border: '1px dashed hsl(var(--border2))', color: 'hsl(var(--dim))', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: 8, borderRadius: 8 }}
         >
-          <Plus size={14} /> Add Exercise
+          <Plus size={14} /> ADD EXERCISE
         </button>
       ) : (
         <div className="space-y-1">
@@ -805,7 +837,7 @@ export const LogTab = () => {
       )}
 
       {/* Workout notes */}
-      <div className="bg-card border border-border rounded-2xl p-4">
+      <div className="rounded-2xl p-4" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
         <div className="flex items-center gap-1.5 mb-2">
           <MessageSquare size={12} className="text-muted-foreground" />
           <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest">Workout Notes</span>
