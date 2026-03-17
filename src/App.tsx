@@ -52,6 +52,7 @@ const App = () => (
             <Route path="/referral" element={<ProtectedRoute><StubPage icon={Users} name="Refer a Friend" /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/client/:userId" element={<AdminRoute><AdminClientProfile /></AdminRoute>} />
+            <Route path="/admin/clients" element={<AdminRoute><StubPage icon={Users} name="All Clients" /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
