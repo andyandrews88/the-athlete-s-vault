@@ -487,59 +487,53 @@ export const LogTab = () => {
     const lastSetRir = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].rir : null;
 
     return (
-      <div key={exIdx} className={`rounded-2xl overflow-hidden ${ssColor}`} style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
-        {/* Header — tap to expand */}
-        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center gap-3 px-4 py-3 text-left">
+      <div key={exIdx} className={ssColor} style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+        {/* Header — flat row */}
+        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center gap-[6px] text-left" style={{ padding: '7px 0' }}>
           <div style={{ width: 3, minWidth: 3, height: 26, borderRadius: 2, flexShrink: 0, background: pipColor(ex.exercise.movement_pattern || '') }} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="font-semibold text-sm text-foreground truncate">{ex.exercise.name}</p>
+              <p className="truncate" style={{ fontSize: 10, fontWeight: 500, color: 'hsl(var(--text))' }}>{ex.exercise.name}</p>
               {ex.supersetGroup && (
-                <span className="font-mono text-[8px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">SS</span>
+                <span className="font-mono" style={{ fontSize: 8, padding: '0.5px 4px', borderRadius: 9, background: 'hsla(38,92%,50%,0.1)', color: 'hsl(var(--warn))', border: '1px solid hsla(38,92%,50%,0.2)' }}>SS</span>
               )}
             </div>
-            <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{summaryLine}</p>
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', marginTop: 1 }}>{summaryLine}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {completedSets.length > 0 && (
-              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: '1px 5px', borderRadius: 9, background: 'hsla(142,71%,45%,0.1)', color: 'hsl(var(--ok))', border: '1px solid hsla(142,71%,45%,0.2)' }}>
                 {completedSets.length}/{ex.sets.length}
               </span>
             )}
             {!ex.expanded && lastSetRir !== null && lastSetRir !== undefined && (
-              <span style={{ background: 'hsla(38,92%,50%,0.1)', color: 'hsl(var(--warn))', border: '1px solid hsla(38,92%,50%,0.3)', fontFamily: 'JetBrains Mono, monospace', fontSize: 8, padding: '1px 4px', borderRadius: 3 }}>
+              <span style={{ background: 'hsla(38,92%,50%,0.1)', color: 'hsl(var(--warn))', fontFamily: 'JetBrains Mono, monospace', fontSize: 8, padding: '1px 3px', borderRadius: 3 }}>
                 RIR {lastSetRir}
               </span>
             )}
             {ex.isPr && (
-              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">PR ↑</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, padding: '1px 3px', borderRadius: 3, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', border: '1px solid hsla(192,91%,54%,0.25)' }}>PR ↑</span>
             )}
           </div>
         </button>
 
         {ex.expanded && (
-          <div className="px-4 pb-4 space-y-2">
+          <div style={{ padding: '0 0 8px 9px' }} className="space-y-1">
             {/* Column headers */}
-            <div className="flex items-center gap-3 mb-1">
-              <span className="font-mono text-[8px] text-muted-foreground uppercase w-8 text-center shrink-0">Set</span>
-              <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">
-                {isTimed ? 'Secs' : weightUnit.toUpperCase()}
+            <div style={{ display: 'grid', gridTemplateColumns: isTimed ? '28px 1fr 40px' : '28px 1fr 1fr 40px', gap: 4, padding: '4px 0 0 0' }}>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>Set</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>
+                {isTimed ? 'Secs' : 'Weight'}
               </span>
-              {!isTimed && <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">Reps</span>}
-              {ex.exercise.exercise_type === 'conditioning' && (
-                <>
-                  <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">Dist</span>
-                  <span className="font-mono text-[8px] text-muted-foreground uppercase flex-1 text-center">Cal</span>
-                </>
-              )}
-              <span className="font-mono text-[8px] text-muted-foreground uppercase w-14 text-center shrink-0">RIR</span>
+              {!isTimed && <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>Reps</span>}
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>RIR</span>
             </div>
 
             {/* Sets */}
             {ex.sets.map((set, setIdx) => renderSetRow(ex, exIdx, set, setIdx))}
 
             {/* Add Set */}
-            <button onClick={() => addSet(exIdx)} className="w-full font-mono text-[10px] text-primary py-2 rounded-lg border border-dashed border-primary/20 hover:bg-primary/5 transition-colors">
+            <button onClick={() => addSet(exIdx)} className="w-full text-primary" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: '5px 0', border: '1px dashed hsla(192,91%,54%,0.2)', borderRadius: 5, background: 'transparent' }}>
               + Set
             </button>
 
@@ -547,9 +541,8 @@ export const LogTab = () => {
             <div>
               <button
                 onClick={() => toggleNotesVisibility(exIdx)}
-                className={`flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider transition-colors ${
-                  ex.showNotes ? 'text-primary' : 'text-muted-foreground'
-                }`}
+                className="flex items-center gap-1.5 transition-colors"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.05em', color: ex.showNotes ? 'hsl(var(--primary))' : 'hsl(var(--dim))' }}
               >
                 <StickyNote size={10} /> {ex.showNotes ? 'Hide Notes' : 'Notes'}
               </button>
@@ -559,34 +552,35 @@ export const LogTab = () => {
                   onChange={e => updateNotes(exIdx, e.target.value)}
                   placeholder="Exercise notes..."
                   rows={2}
-                  className="w-full mt-1 bg-secondary border border-border rounded-lg px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none resize-none"
+                  className="w-full mt-1 focus:outline-none resize-none"
+                  style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', borderRadius: 6, padding: '6px 8px', fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'hsl(var(--text))' }}
                 />
               )}
             </div>
 
             {/* Overflow actions — compact row */}
-            <div className="flex items-center gap-2 pt-1 border-t border-border/50">
+            <div className="flex items-center gap-2 pt-1" style={{ borderTop: '1px solid hsl(var(--border))' }}>
               <button
                 onClick={() => removeExercise(exIdx)}
-                className="font-mono text-[8px] text-destructive/60 hover:text-destructive flex items-center gap-1 transition-colors"
+                className="flex items-center gap-1 transition-colors"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--bad))' }}
               >
                 <Trash2 size={10} /> Remove
               </button>
-              <span className="text-border">|</span>
+              <span style={{ color: 'hsl(var(--border))' }}>|</span>
               {ex.section !== 'warmup' && (
-                <button onClick={() => moveExercise(exIdx, 'warmup')} className="font-mono text-[8px] text-muted-foreground hover:text-foreground transition-colors">→ Warm Up</button>
+                <button onClick={() => moveExercise(exIdx, 'warmup')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>→ Warm Up</button>
               )}
               {ex.section !== 'exercises' && (
-                <button onClick={() => moveExercise(exIdx, 'exercises')} className="font-mono text-[8px] text-muted-foreground hover:text-foreground transition-colors">→ Main</button>
+                <button onClick={() => moveExercise(exIdx, 'exercises')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>→ Main</button>
               )}
               {ex.section !== 'cooldown' && (
-                <button onClick={() => moveExercise(exIdx, 'cooldown')} className="font-mono text-[8px] text-muted-foreground hover:text-foreground transition-colors">→ Cool Down</button>
+                <button onClick={() => moveExercise(exIdx, 'cooldown')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>→ Cool Down</button>
               )}
               <button
                 onClick={() => handleSupersetLink(exIdx)}
-                className={`font-mono text-[8px] flex items-center gap-1 transition-colors ${
-                  linkingSuperset === exIdx ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className="flex items-center gap-1 transition-colors"
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: linkingSuperset === exIdx ? 'hsl(var(--warn))' : 'hsl(var(--dim))' }}
               >
                 <Link2 size={8} /> {linkingSuperset === exIdx ? 'Pick pair…' : 'SS'}
               </button>
