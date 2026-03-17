@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Dumbbell, BookOpen, TrendingUp, MoreHorizontal, Leaf, Apple, Users, User, Settings, Gift } from 'lucide-react';
+import { Home, Dumbbell, BookOpen, TrendingUp, MoreHorizontal, Leaf, Apple, Users, User, Settings, Gift, Briefcase } from 'lucide-react';
 
 const navTabs = [
   { path: '/home', label: 'Home', icon: Home },
@@ -13,13 +13,14 @@ const navTabs = [
 const moreItems = [
   { path: '/lifestyle', label: 'Lifestyle', icon: Leaf },
   { path: '/nutrition', label: 'Nutrition', icon: Apple },
+  { path: '/my-coaching', label: 'My Coaching', icon: Briefcase },
   { path: '/community', label: 'Community', icon: Users },
   { path: '/profile', label: 'Profile', icon: User },
   { path: '/settings', label: 'Settings', icon: Settings },
   { path: '/referral', label: 'Refer a Friend', icon: Gift },
 ];
 
-const VISIBLE_ROUTES = ['/home', '/train', '/library', '/progress', '/lifestyle', '/nutrition', '/community', '/profile', '/settings', '/referral'];
+const VISIBLE_ROUTES = ['/home', '/train', '/library', '/progress', '/lifestyle', '/nutrition', '/community', '/profile', '/settings', '/referral', '/my-coaching'];
 
 export const BottomNav = () => {
   const location = useLocation();
