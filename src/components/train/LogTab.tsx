@@ -724,7 +724,7 @@ export const LogTab = () => {
      STATE 2 — Active session
      ═══════════════════════════════════════════ */
   return (
-    <div className="max-w-lg mx-auto px-4 space-y-4">
+    <div className="max-w-lg mx-auto space-y-4" style={{ padding: '8px 11px 64px', background: 'hsl(var(--bg))' }}>
       {/* Week strip */}
       <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} workoutDays={workouts.map(w => w.day_number)} />
 
@@ -732,31 +732,26 @@ export const LogTab = () => {
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           {activeProgramme && (
-            <h2 className="font-display text-3xl tracking-[1.5px] text-foreground leading-none">{activeProgramme.name.toUpperCase()}</h2>
+            <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1 }}>{activeProgramme.name.toUpperCase()}</h2>
           )}
-          <p className="font-mono text-[10px] text-muted-foreground mt-1">
-            {selectedWorkout ? `Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
+            {selectedWorkout ? `Week 1 · Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 px-2 py-0.5" style={{ background: 'transparent', border: '1px solid hsl(var(--warn))', borderRadius: 6, padding: '3px 8px' }}>
+          <div className="flex items-center gap-1.5" style={{ background: 'transparent', border: '1px solid hsl(var(--warn))', borderRadius: 6, padding: '3px 8px' }}>
             <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--warn))' }} />
             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, fontSize: 11, color: 'hsl(var(--warn))' }}>{timer}</span>
           </div>
           <button
             onClick={cancelSession}
-            className="w-9 h-9 rounded-xl border border-destructive/20 flex items-center justify-center text-destructive/60 hover:text-destructive hover:bg-destructive/5 transition-colors"
+            className="w-9 h-9 flex items-center justify-center transition-colors"
+            style={{ borderRadius: 8, border: '1px solid hsl(var(--border))', color: 'hsl(var(--bad))' }}
           >
             <X size={14} />
           </button>
-          <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold text-[10px] px-4 py-2.5 rounded-xl uppercase tracking-widest">FINISH</button>
+          <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold uppercase" style={{ fontSize: 10, padding: '7px 14px', borderRadius: 8, letterSpacing: 1 }}>FINISH</button>
         </div>
-      </div>
-
-      {/* NTU counter */}
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest">Total NTU</span>
-        <span className="font-mono text-sm text-primary font-semibold">{Math.round(totalNtu)}</span>
       </div>
 
       {/* ─── Sections ─── */}
@@ -768,10 +763,10 @@ export const LogTab = () => {
       {!showSearch ? (
         <button
           onClick={() => setShowSearch(true)}
-          className="w-full flex items-center justify-center gap-2 bg-transparent"
-          style={{ border: '1px dashed hsl(var(--border2))', color: 'hsl(var(--dim))', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: 8, borderRadius: 8 }}
+          className="w-full flex items-center justify-center gap-2"
+          style={{ border: '1px solid hsl(var(--border2))', color: 'hsl(var(--dim))', fontFamily: 'Inter, sans-serif', fontSize: 9, padding: 7, borderRadius: 8, background: 'transparent', marginTop: 7 }}
         >
-          <Plus size={14} /> ADD EXERCISE
+          <Plus size={12} /> + Add Exercise
         </button>
       ) : (
         <div className="space-y-1">
