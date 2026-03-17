@@ -17,6 +17,7 @@ import HomeDashboard from "./pages/HomeDashboard";
 import PricingPage from "./pages/PricingPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminClientProfile from "./pages/AdminClientProfile";
+import AdminClientsPage from "./pages/AdminClientsPage";
 import TrainPage from "./pages/TrainPage";
 import LifestylePage from "./pages/LifestylePage";
 import NutritionPage from "./pages/NutritionPage";
