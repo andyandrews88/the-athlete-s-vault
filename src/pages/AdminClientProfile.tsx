@@ -459,6 +459,19 @@ const AdminClientProfile = () => {
         </div>
       )}
 
+      {/* TAB BAR */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid hsl(var(--border))' }}>
+        {(['overview', 'pt'] as const).map(t => (
+          <button key={t} onClick={() => setMainTab(t)} style={{
+            ...mono, fontSize: 9, padding: '8px 14px', cursor: 'pointer', border: 'none', background: 'transparent',
+            color: mainTab === t ? 'hsl(var(--primary))' : 'hsl(var(--dim))',
+            borderBottom: mainTab === t ? '2px solid hsl(var(--primary))' : '2px solid transparent',
+            textTransform: 'uppercase', letterSpacing: 1,
+          }}>{t === 'overview' ? 'OVERVIEW' : 'PT SESSIONS'}</button>
+        ))}
+      </div>
+
+      {mainTab === 'overview' && <>
       {/* READINESS & LIFESTYLE */}
       <div style={cardStyle}>
         <div style={sectionLabel('hsl(var(--dim))')}>READINESS & LIFESTYLE</div>
