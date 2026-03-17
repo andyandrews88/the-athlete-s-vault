@@ -409,7 +409,7 @@ const HomeDashboard = () => {
             <p className="font-mono text-[7px] text-vault-dim">kg total</p>
           </div>
           <div className="bg-vault-bg3 border border-vault-border rounded-lg p-2 text-center">
-            <p className="font-mono text-[15px] font-semibold text-vault-warn leading-none">{weekAvgRir !== null ? weekAvgRir : '—'}</p>
+            <p className={`font-mono text-[15px] font-semibold leading-none ${weekAvgRir !== null ? 'text-vault-warn' : 'text-vault-dim'}`}>{weekAvgRir !== null ? weekAvgRir : '—'}</p>
             <p className="font-mono text-[7px] text-vault-dim uppercase tracking-widest mt-1">AVG RIR</p>
             <p className="font-mono text-[7px] text-vault-dim">this week</p>
           </div>
