@@ -56,11 +56,13 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><StubPage icon={Users} name="Profile" /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><StubPage icon={Users} name="Settings" /></ProtectedRoute>} />
             <Route path="/referral" element={<ProtectedRoute><StubPage icon={Users} name="Refer a Friend" /></ProtectedRoute>} />
+            <Route path="/my-coaching" element={<ProtectedRoute><MyCoachingPage /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/client/:userId" element={<AdminRoute><AdminClientProfile /></AdminRoute>} />
             <Route path="/admin/clients" element={<AdminRoute><AdminClientsPage /></AdminRoute>} />
             <Route path="/admin/workout-builder" element={<AdminRoute><AdminWorkoutBuilder /></AdminRoute>} />
             <Route path="/admin/library" element={<AdminRoute><AdminLibraryPage /></AdminRoute>} />
+            <Route path="/admin/business" element={<AdminRoute><AdminBusinessDashboard /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
