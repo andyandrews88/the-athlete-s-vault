@@ -1,134 +1,134 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import {
-  format, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
-  addDays, isToday, isSameDay, eachDayOfInterval, getDay,
+  format, startOfWeek, addDays, isToday, isSameDay,
+  differenceInWeeks,
 } from 'date-fns';
 import { Trophy } from 'lucide-react';
 
-interface DaySession {
+interface DayData {
+  date: Date;
+  hasWorkout: boolean;
+  isToday: boolean;
+}
+
+interface PRRecord {
+  exercise_name: string;
+  weight_kg: number;
+  reps: number | null;
+  achieved_at: string;
+}
+
+interface ProgrammeWorkout {
   id: string;
-  total_ntu: number | null;
-  completed: boolean;
-  date: string;
+  day_number: number;
+  name: string;
+  prescribed_exercises: Array<{ name: string; sets: number; reps: string; notes: string }>;
 }
 
 export const CalendarTab = () => {
   const { user } = useAuth();
-  const [view, setView] = useState<'week' | 'month'>('month');
-  const [currentDate] = useState(new Date());
-  const [sessionMap, setSessionMap] = useState<Record<string, DaySession[]>>({});
+  const navigate = useNavigate();
+  const [activeProgramme, setActiveProgramme] = useState<{ id: string; name: string; weeks: number | null; created_at: string | null } | null>(null);
+  const [workouts, setWorkouts] = useState<ProgrammeWorkout[]>([]);
+  const [sessionDates, setSessionDates] = useState<Set<string>>(new Set());
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
-  const [dayExercises, setDayExercises] = useState<any[]>([]);
+  const [prs, setPrs] = useState<PRRecord[]>([]);
 
-  useEffect(() => {
-    if (!user) return;
-    loadSessions();
-  }, [user, view]);
-
-  useEffect(() => {
-    if (!user || !selectedDay) return;
-    loadDayDetail(selectedDay);
-  }, [selectedDay, user, sessionMap]);
-
-  const loadSessions = async () => {
-    if (!user) return;
-    const start = view === 'week'
-      ? startOfWeek(currentDate, { weekStartsOn: 1 })
-      : startOfMonth(currentDate);
-    const end = view === 'week'
-      ? endOfWeek(currentDate, { weekStartsOn: 1 })
-      : endOfMonth(currentDate);
-
-    const { data } = await supabase
-      .from('training_sessions')
-      .select('id, date, total_ntu, completed')
-      .eq('user_id', user.id)
-      .gte('date', format(start, 'yyyy-MM-dd'))
-      .lte('date', format(end, 'yyyy-MM-dd'));
-
-    const map: Record<string, DaySession[]> = {};
-    data?.forEach(s => {
-      if (!map[s.date]) map[s.date] = [];
-      map[s.date].push(s);
-    });
-    setSessionMap(map);
-  };
-
-  const loadDayDetail = async (day: Date) => {
-    if (!user) return;
-    const dateStr = format(day, 'yyyy-MM-dd');
-    const sessions = sessionMap[dateStr];
-    if (!sessions?.length) { setDayExercises([]); return; }
-
-    const details: any[] = [];
-    for (const s of sessions) {
-      const { data: exs } = await supabase
-        .from('session_exercises')
-        .select('exercises(name), exercise_sets(reps, weight_kg, completed)')
-        .eq('session_id', s.id) as any;
-      details.push(...(exs || []));
-    }
-    setDayExercises(details);
-  };
-
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-  // Pad start of month to align with Monday
-  const firstDayOfWeek = getDay(monthStart); // 0=Sun
-  const padStart = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-
   const dayLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  const displayDays = view === 'week' ? weekDays : monthDays;
+
+  // Current programme week
+  const currentWeek = activeProgramme?.created_at
+    ? Math.max(1, differenceInWeeks(now, new Date(activeProgramme.created_at)) + 1)
+    : 1;
+
+  useEffect(() => {
+    if (!user) return;
+    loadData();
+  }, [user]);
+
+  const loadData = async () => {
+    if (!user) return;
+
+    // Load active programme
+    const { data: progData } = await supabase
+      .from('training_programmes')
+      .select('id, name, weeks, created_at')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+    if (progData) {
+      setActiveProgramme(progData);
+      const { data: wkData } = await supabase
+        .from('programme_workouts')
+        .select('id, day_number, name, prescribed_exercises')
+        .eq('programme_id', progData.id)
+        .order('day_number');
+      if (wkData) setWorkouts(wkData as ProgrammeWorkout[]);
+    }
+
+    // Load completed sessions this week
+    const ws = format(weekStart, 'yyyy-MM-dd');
+    const we = format(addDays(weekStart, 6), 'yyyy-MM-dd');
+    const { data: sessions } = await supabase
+      .from('training_sessions')
+      .select('date')
+      .eq('user_id', user.id)
+      .eq('completed', true)
+      .gte('date', ws)
+      .lte('date', we);
+    setSessionDates(new Set((sessions || []).map(s => s.date)));
+
+    // Load PRs
+    const { data: prData } = await supabase
+      .from('personal_records')
+      .select('weight_kg, reps, achieved_at, exercises(name)')
+      .eq('user_id', user.id)
+      .order('achieved_at', { ascending: false })
+      .limit(10) as any;
+    setPrs((prData || []).map((pr: any) => ({
+      exercise_name: pr.exercises?.name || '',
+      weight_kg: Number(pr.weight_kg),
+      reps: pr.reps,
+      achieved_at: pr.achieved_at,
+    })));
+  };
+
+  // Selected day's workout
+  const selectedDayOfWeek = selectedDay.getDay(); // 0=Sun
+  const selectedDayNum = selectedDayOfWeek === 0 ? 7 : selectedDayOfWeek;
+  const todayWorkout = workouts.find(w => w.day_number === selectedDayNum);
+  const selectedDateStr = format(selectedDay, 'yyyy-MM-dd');
+  const dayCompleted = sessionDates.has(selectedDateStr);
+
+  const weeksAgo = (dateStr: string) => {
+    const w = differenceInWeeks(now, new Date(dateStr));
+    if (w === 0) return 'This week';
+    if (w === 1) return '1 week ago';
+    return `${w} weeks ago`;
+  };
 
   return (
-    <div className="max-w-lg mx-auto px-4 space-y-4">
-      {/* View toggle */}
-      <div className="inline-flex bg-vault-bg3 border border-vault-border rounded-lg p-1">
-        {(['week', 'month'] as const).map((v) => (
-          <button
-            key={v}
-            onClick={() => setView(v)}
-            className={`px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider rounded-md transition-all ${
-              view === v
-                ? 'bg-primary text-primary-foreground font-bold'
-                : 'text-vault-dim'
-            }`}
-          >
-            {v}
-          </button>
-        ))}
+    <div className="max-w-lg mx-auto px-4 space-y-5">
+      {/* Programme header */}
+      <div>
+        <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, color: 'hsl(var(--text))', letterSpacing: 1 }}>PROGRAMME</h2>
+        <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))' }}>
+          {activeProgramme ? `${activeProgramme.name} · Week ${currentWeek} of ${activeProgramme.weeks || '∞'}` : 'No active programme'}
+        </p>
       </div>
 
-      {/* Month header */}
-      <h2 className="font-display text-3xl tracking-[2px] text-center">
-        {format(currentDate, 'MMMM yyyy').toUpperCase()}
-      </h2>
-
-      {/* Day column headers */}
-      <div className="grid grid-cols-7 mb-2">
-        {dayLabels.map((d) => (
-          <span key={d} className="font-mono text-[9px] text-vault-dim uppercase text-center">{d}</span>
-        ))}
-      </div>
-
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1">
-        {/* Padding for month view */}
-        {view === 'month' && Array.from({ length: padStart }).map((_, i) => (
-          <div key={`pad-${i}`} className="aspect-square" />
-        ))}
-
-        {displayDays.map((day, i) => {
+      {/* Horizontal day strip */}
+      <div className="flex gap-1">
+        {weekDays.map((day, i) => {
           const dateStr = format(day, 'yyyy-MM-dd');
-          const sessions = sessionMap[dateStr];
-          const hasWorkout = sessions?.some(s => s.completed);
+          const completed = sessionDates.has(dateStr);
           const today = isToday(day);
           const selected = isSameDay(day, selectedDay);
 
@@ -136,109 +136,98 @@ export const CalendarTab = () => {
             <button
               key={i}
               onClick={() => setSelectedDay(day)}
-              className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs font-mono relative transition-all ${
-                today
-                  ? 'bg-primary text-primary-foreground font-bold'
-                  : hasWorkout
-                    ? 'bg-vault-bg3 border border-vault-border'
-                    : 'bg-vault-bg2 border border-vault-border text-vault-dim'
-              } ${selected && !today ? 'ring-1 ring-primary' : ''}`}
+              className="flex-1 flex flex-col items-center gap-1 py-2 rounded-lg transition-all"
+              style={{
+                background: selected ? 'hsla(192,91%,54%,0.08)' : 'transparent',
+                border: selected ? '1px solid hsla(192,91%,54%,0.3)' : '1px solid transparent',
+              }}
             >
-              {format(day, 'd')}
-              {hasWorkout && !today && (
-                <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-primary" />
-              )}
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase' }}>{dayLabels[i]}</span>
+              <span style={{ fontSize: 13, fontWeight: today ? 700 : 400, color: today ? 'hsl(var(--primary))' : 'hsl(var(--text))' }}>{format(day, 'd')}</span>
+              {/* Status square */}
+              <div
+                style={{
+                  width: 6, height: 6, borderRadius: 1,
+                  background: completed ? 'hsl(var(--primary))' : 'transparent',
+                  border: today && !completed ? '1px solid hsl(var(--primary))' : completed ? 'none' : '1px solid hsl(var(--dim))',
+                  opacity: completed || today ? 1 : 0.3,
+                }}
+              />
             </button>
           );
         })}
       </div>
 
-      {/* Tapped day expansion */}
-      <div className="bg-vault-bg2 border border-primary/20 rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <p className="text-sm font-medium text-foreground">{format(selectedDay, 'EEEE')}</p>
-            <p className="font-mono text-[10px] text-vault-dim">{format(selectedDay, 'dd MMM yyyy')}</p>
-          </div>
+      {/* Today's workout card */}
+      <div style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 10, padding: 14 }}>
+        <div className="flex items-center justify-between mb-2">
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))' }}>
+            {format(selectedDay, 'EEEE')}, {format(selectedDay, 'dd MMM')} {todayWorkout ? `— ${todayWorkout.name}` : ''}
+          </p>
           {isToday(selectedDay) && (
-            <span className="font-mono text-[9px] text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">TODAY</span>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>TODAY</span>
           )}
         </div>
 
-        {dayExercises.length > 0 ? (
-          <div className="space-y-2">
-            {dayExercises.map((ex: any, i: number) => (
-              <div key={i} className="flex items-center justify-between py-1">
-                <span className="text-sm text-foreground">{ex.exercises?.name}</span>
-                <span className="font-mono text-[10px] text-vault-dim">
-                  {ex.exercise_sets?.filter((s: any) => s.completed).length || 0} sets
-                </span>
-              </div>
-            ))}
-          </div>
+        {todayWorkout ? (
+          <>
+            <div className="space-y-1 mb-3">
+              {todayWorkout.prescribed_exercises.slice(0, 2).map((ex, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div style={{ width: 3, height: 16, borderRadius: 2, background: 'hsl(var(--primary))' }} />
+                  <span style={{ fontSize: 10, color: 'hsl(var(--text))' }}>{ex.name}</span>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>{ex.sets}×{ex.reps}</span>
+                </div>
+              ))}
+              {todayWorkout.prescribed_exercises.length > 2 && (
+                <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', paddingLeft: 11 }}>
+                  +{todayWorkout.prescribed_exercises.length - 2} more exercises...
+                </p>
+              )}
+            </div>
+            {dayCompleted ? (
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'hsl(var(--ok))', textAlign: 'center', padding: '8px 0' }}>✓ Completed</div>
+            ) : (
+              <button
+                onClick={() => navigate('/train')}
+                style={{ width: '100%', background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 11, padding: 8, borderRadius: 8, border: 'none' }}
+              >
+                Begin Workout →
+              </button>
+            )}
+          </>
         ) : (
-          <p className="font-mono text-[10px] text-vault-dim text-center py-4">No session logged</p>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'hsl(var(--dim))', textAlign: 'center', padding: '16px 0' }}>
+            {dayCompleted ? '✓ Session completed' : 'Rest day — no workout scheduled'}
+          </p>
         )}
       </div>
 
       {/* PR Board */}
-      <PRBoard />
-    </div>
-  );
-};
-
-const PRBoard = () => {
-  const { user } = useAuth();
-  const [prs, setPrs] = useState<{ exercise_name: string; weight_kg: number; reps: number | null; achieved_at: string }[]>([]);
-
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data } = await supabase
-        .from('personal_records')
-        .select('weight_kg, reps, achieved_at, exercises(name)')
-        .eq('user_id', user.id)
-        .order('achieved_at', { ascending: false })
-        .limit(10) as any;
-
-      setPrs((data || []).map((pr: any) => ({
-        exercise_name: pr.exercises?.name || '',
-        weight_kg: Number(pr.weight_kg),
-        reps: pr.reps,
-        achieved_at: pr.achieved_at,
-      })));
-    })();
-  }, [user]);
-
-  return (
-    <div>
-      <h3 className="font-mono text-[10px] text-vault-dim uppercase tracking-widest mb-3">PR BOARD</h3>
-      {prs.length > 0 ? (
-        <div className="space-y-2">
-          {prs.map((pr, i) => (
-            <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-vault-bg2 border border-vault-gold/20">
-              <div className="flex items-center gap-2">
-                <Trophy size={14} className="text-vault-gold" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{pr.exercise_name}</p>
-                  <p className="font-mono text-[10px] text-vault-dim">
-                    {format(new Date(pr.achieved_at), 'dd MMM yyyy')}
-                  </p>
+      <div>
+        <h3 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, color: 'hsl(var(--text))', letterSpacing: 1, marginBottom: 10 }}>PR BOARD</h3>
+        {prs.length > 0 ? (
+          <div className="space-y-[6px]">
+            {prs.map((pr, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 8, padding: '10px 14px' }}>
+                <div className="flex items-center gap-3">
+                  <Trophy size={14} style={{ color: 'hsl(var(--gold))' }} />
+                  <div>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: 'hsl(var(--text))' }}>{pr.exercise_name}</p>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>{weeksAgo(pr.achieved_at)}</p>
+                  </div>
                 </div>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: 'hsl(var(--primary))', fontWeight: 600 }}>{pr.weight_kg}kg</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-sm text-primary font-bold">{pr.weight_kg}kg</span>
-                <span className="font-mono text-[9px] text-vault-gold bg-vault-gold/10 px-1.5 py-0.5 rounded">PR</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-vault-bg2 border border-vault-border rounded-2xl p-6 text-center">
-          <Trophy size={24} className="mx-auto mb-2 text-vault-dim" />
-          <p className="font-mono text-[10px] text-vault-dim">No PRs yet. Start logging to track your bests.</p>
-        </div>
-      )}
+            ))}
+          </div>
+        ) : (
+          <div style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 10, padding: '24px 16px', textAlign: 'center' }}>
+            <Trophy size={24} style={{ color: 'hsl(var(--dim))', margin: '0 auto 8px' }} />
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'hsl(var(--dim))' }}>No PRs yet. Log sets to track your bests.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
