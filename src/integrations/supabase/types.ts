@@ -269,6 +269,42 @@ export type Database = {
         }
         Relationships: []
       }
+      bookmarks: {
+        Row: {
+          content_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       breathwork_sessions: {
         Row: {
           completed_at: string | null
@@ -319,6 +355,108 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      content_items: {
+        Row: {
+          content_type: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          duration: string | null
+          id: string
+          is_new_drop: boolean | null
+          source: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          content_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          is_new_drop?: boolean | null
+          source?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          content_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          is_new_drop?: boolean | null
+          source?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_sends: {
+        Row: {
+          content_id: string
+          id: string
+          sent_at: string | null
+          sent_by: string | null
+          sent_to: string | null
+          sent_to_all: boolean | null
+        }
+        Insert: {
+          content_id: string
+          id?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          sent_to?: string | null
+          sent_to_all?: boolean | null
+        }
+        Update: {
+          content_id?: string
+          id?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          sent_to?: string | null
+          sent_to_all?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_sends_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_sends_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_sends_sent_to_fkey"
+            columns: ["sent_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       daily_checkins: {
         Row: {
