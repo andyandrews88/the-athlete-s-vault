@@ -999,6 +999,36 @@ export type Database = {
           },
         ]
       }
+      pricing_settings: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          price_lkr: number | null
+          price_usd: number | null
+          service_name: string
+          show_on_landing: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          price_lkr?: number | null
+          price_usd?: number | null
+          service_name: string
+          show_on_landing?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          price_lkr?: number | null
+          price_usd?: number | null
+          service_name?: string
+          show_on_landing?: boolean | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           audit_score: number | null
