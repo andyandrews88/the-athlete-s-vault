@@ -370,23 +370,30 @@ export const LogTab = () => {
     const isConditioning = ex.exercise.exercise_type === 'conditioning';
     const canComplete = setHasData(set, ex.exercise.exercise_type);
 
-    const inputCls = (done: boolean) =>
-      done
-        ? 'w-full rounded-lg px-2 py-2 font-mono text-[9px] text-center border focus:outline-none bg-transparent border-[hsl(var(--border))]'
-        : 'w-full rounded-lg px-2 py-2 font-mono text-[9px] text-center border focus:outline-none bg-[hsl(var(--bg3))] border-[hsl(var(--border2))] text-[hsl(var(--text))] focus:border-[hsl(var(--primary))]';
+    const cellBase: React.CSSProperties = {
+      background: 'hsl(var(--bg3))',
+      border: '1px solid hsl(var(--border))',
+      borderRadius: 5,
+      padding: '3px 6px',
+      fontFamily: 'JetBrains Mono, monospace',
+      fontSize: 9,
+      textAlign: 'center' as const,
+      width: '100%',
+      outline: 'none',
+    };
+    const cellDone: React.CSSProperties = { ...cellBase, color: 'hsl(var(--ok))' };
+    const cellActive: React.CSSProperties = { ...cellBase, color: 'hsl(var(--primary))', borderColor: 'hsla(192,91%,54%,0.3)' };
+    const cellDefault: React.CSSProperties = { ...cellBase, color: 'hsl(var(--text))' };
+    const rirStyle: React.CSSProperties = { ...cellBase, fontSize: 8, padding: '3px 5px' };
+
+    const getStyle = (done: boolean) => done ? cellDone : cellDefault;
 
     return (
-      <div key={setIdx} className="flex items-center gap-3 mb-2">
+      <div key={setIdx} style={{ display: 'grid', gridTemplateColumns: isTimed ? '28px 1fr 40px' : '28px 1fr 1fr 40px', gap: 4, marginBottom: 2 }}>
         {/* Set label — tap to toggle completion */}
         <button
           onClick={() => set.completed ? uncompleteSet(exIdx, setIdx) : (canComplete ? completeSet(exIdx, setIdx) : null)}
-          className={`font-mono text-xs w-8 text-center shrink-0 py-2 rounded-lg transition-colors ${
-            set.completed
-              ? 'bg-emerald-500/20 text-emerald-400 font-bold'
-              : set.set_type === 'warmup'
-                ? 'text-amber-500'
-                : 'text-muted-foreground'
-          }`}
+          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: set.completed ? 'hsl(var(--ok))' : set.set_type === 'warmup' ? 'hsl(var(--warn))' : 'hsl(var(--dim))', textAlign: 'center', fontWeight: set.completed ? 700 : 400, background: 'transparent', border: 'none' }}
         >
           {set.completed ? '✓' : set.set_type === 'warmup' ? 'W' : `S${set.set_num}`}
         </button>
@@ -397,18 +404,16 @@ export const LogTab = () => {
             type="number" inputMode="numeric" placeholder="sec"
             value={set.duration_secs ?? ''} disabled={set.completed}
             onChange={e => updateSet(exIdx, setIdx, 'duration_secs', e.target.value ? parseInt(e.target.value) : null)}
-            className={inputCls(set.completed) + ' flex-1'}
-            style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
+            style={getStyle(set.completed)}
           />
         ) : (
           <input
             type="number" inputMode="decimal"
             placeholder={weightUnit === 'lbs' ? 'lbs' : 'kg'}
-            value={toDisplay(set.weight_kg) ?? ''}
+            value={set.completed && set.weight_kg ? `${toDisplay(set.weight_kg)}` : (toDisplay(set.weight_kg) ?? '')}
             onChange={e => updateSet(exIdx, setIdx, 'weight_kg', toKg(e.target.value ? parseFloat(e.target.value) : null))}
             disabled={set.completed}
-            className={inputCls(set.completed) + ' flex-1'}
-            style={set.completed ? { color: 'hsl(var(--ok))' } : (!set.completed && !set.weight_kg ? undefined : undefined)}
+            style={getStyle(set.completed)}
           />
         )}
 
@@ -418,29 +423,8 @@ export const LogTab = () => {
             type="number" inputMode="numeric" placeholder="reps"
             value={set.reps ?? ''} disabled={set.completed}
             onChange={e => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
-            className={inputCls(set.completed) + ' flex-1'}
-            style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
+            style={getStyle(set.completed)}
           />
-        )}
-
-        {/* Conditioning extras */}
-        {isConditioning && (
-          <>
-            <input
-              type="number" inputMode="decimal" placeholder="m"
-              value={set.distance_m ?? ''} disabled={set.completed}
-              onChange={e => updateSet(exIdx, setIdx, 'distance_m', e.target.value ? parseFloat(e.target.value) : null)}
-              className={inputCls(set.completed) + ' flex-1'}
-              style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
-            />
-            <input
-              type="number" inputMode="numeric" placeholder="cal"
-              value={set.calories ?? ''} disabled={set.completed}
-              onChange={e => updateSet(exIdx, setIdx, 'calories', e.target.value ? parseInt(e.target.value) : null)}
-              className={inputCls(set.completed) + ' flex-1'}
-              style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
-            />
-          </>
         )}
 
         {/* RIR */}
@@ -448,8 +432,7 @@ export const LogTab = () => {
           type="number" inputMode="numeric" min={0} max={5} placeholder="RIR"
           value={set.rir ?? ''} disabled={set.completed}
           onChange={e => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
-          className={inputCls(set.completed) + ' w-14 shrink-0'}
-          style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
+          style={set.completed ? { ...rirStyle, color: 'hsl(var(--ok))' } : rirStyle}
         />
       </div>
     );
