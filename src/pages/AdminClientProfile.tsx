@@ -110,12 +110,6 @@ const AdminClientProfile = () => {
     setLoading(false);
   };
 
-  const loadProfile = async () => {
-    try {
-      const { data } = await supabase.from('profiles').select('*').eq('id', userId!).single();
-      setProfile(data);
-    } catch { setProfile(null); }
-  };
 
   const loadStats = async () => {
     try {
