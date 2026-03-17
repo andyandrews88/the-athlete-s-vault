@@ -91,7 +91,22 @@ const AdminClientProfile = () => {
 
   const loadAll = async () => {
     setLoading(true);
-    await Promise.all([loadProfile(), loadStats(), loadCheckin(), loadPatternVolume(), loadRirTrend(), loadReflection(), loadNotes(), loadMeta()]);
+    // Load profile first to confirm client exists
+    let profileData: any = null;
+    try {
+      const { data } = await supabase.from('profiles').select('*').eq('id', userId!).single();
+      profileData = data;
+      setProfile(data);
+    } catch { setProfile(null); }
+
+    if (!profileData) {
+      // Minimum delay to prevent flash
+      await new Promise(r => setTimeout(r, 300));
+      setLoading(false);
+      return;
+    }
+
+    await Promise.all([loadStats(), loadCheckin(), loadPatternVolume(), loadRirTrend(), loadReflection(), loadNotes(), loadMeta()]);
     setLoading(false);
   };
 
