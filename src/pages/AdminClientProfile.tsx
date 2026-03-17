@@ -294,6 +294,16 @@ const AdminClientProfile = () => {
   const maxVol = Math.max(...Object.values(patternVolume), 1);
   const lowPatterns = Object.entries(patternVolume).filter(([, v]) => v < maxVol * 0.1).map(([k]) => k);
 
+  if (loading && !profile) {
+    return (
+      <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: 16, display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 60 }}>
+        <div style={{ height: 20, width: '50%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
+        <div style={{ height: 14, width: '100%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
+        <div style={{ height: 14, width: '66%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
+      </div>
+    );
+  }
+
   if (!loading && !profile) {
     return (
       <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
