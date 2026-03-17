@@ -259,7 +259,8 @@ const AdminClientProfile = () => {
   const suspendClient = async () => {
     try {
       await supabase.from('profiles').update({ role: 'suspended' }).eq('id', userId!);
-      loadProfile();
+      const { data } = await supabase.from('profiles').select('*').eq('id', userId!).single();
+      setProfile(data);
     } catch { /* silent */ }
   };
 
