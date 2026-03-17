@@ -142,6 +142,18 @@ const HomeDashboard = () => {
     // Total PRs
     supabase.from('personal_records').select('id', { count: 'exact', head: true }).eq('user_id', uid)
       .then(({ count }) => { setTotalPrs(count ?? 0); });
+
+    // Announcement
+    supabase.from('announcements').select('id, content').eq('is_active', true).limit(1).single()
+      .then(({ data }) => {
+        if (data) {
+          const dismissedId = localStorage.getItem('dismissed_announcement');
+          if (dismissedId === data.id) {
+            setAnnouncementDismissed(true);
+          }
+          setAnnouncement(data as { id: string; content: string });
+        }
+      });
   }, [user, weekDates]);
 
   const completedThisWeek = sessions.filter(s => s.completed).length;
