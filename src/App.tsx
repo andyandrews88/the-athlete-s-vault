@@ -58,6 +58,7 @@ const App = () => (
             <Route path="/admin/client/:userId" element={<AdminRoute><AdminClientProfile /></AdminRoute>} />
             <Route path="/admin/clients" element={<AdminRoute><AdminClientsPage /></AdminRoute>} />
             <Route path="/admin/workout-builder" element={<AdminRoute><AdminWorkoutBuilder /></AdminRoute>} />
+            <Route path="/admin/library" element={<AdminRoute><AdminLibraryPage /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
