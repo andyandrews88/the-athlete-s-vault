@@ -398,6 +398,7 @@ export const LogTab = () => {
             value={set.duration_secs ?? ''} disabled={set.completed}
             onChange={e => updateSet(exIdx, setIdx, 'duration_secs', e.target.value ? parseInt(e.target.value) : null)}
             className={inputCls(set.completed) + ' flex-1'}
+            style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
           />
         ) : (
           <input
