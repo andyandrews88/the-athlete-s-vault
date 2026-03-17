@@ -770,9 +770,9 @@ export const LogTab = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 bg-card border border-primary/20 rounded-xl px-3 py-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="font-mono text-sm text-primary font-semibold">{timer}</span>
+          <div className="flex items-center gap-1.5 px-2 py-0.5" style={{ background: 'transparent', border: '1px solid hsl(var(--warn))', borderRadius: 6, padding: '3px 8px' }}>
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--warn))' }} />
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, fontSize: 11, color: 'hsl(var(--warn))' }}>{timer}</span>
           </div>
           <button
             onClick={cancelSession}
