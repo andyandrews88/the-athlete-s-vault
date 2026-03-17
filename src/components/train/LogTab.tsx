@@ -449,6 +449,7 @@ export const LogTab = () => {
           value={set.rir ?? ''} disabled={set.completed}
           onChange={e => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
           className={inputCls(set.completed) + ' w-14 shrink-0'}
+          style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
         />
       </div>
     );
