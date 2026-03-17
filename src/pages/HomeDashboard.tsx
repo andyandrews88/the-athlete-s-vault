@@ -326,9 +326,8 @@ const HomeDashboard = () => {
                   <circle cx="28" cy="28" r="22" fill="none" stroke="hsl(var(--bg4))" strokeWidth="5" />
                   <circle cx="28" cy="28" r="22" fill="none" stroke={strokeColor} strokeWidth="5" strokeDasharray={circumference} strokeDashoffset={scoreOffset} strokeLinecap="round" />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-mono text-[16px] font-semibold text-primary leading-none">{readinessScore}</span>
-                  <span className="font-mono text-[8px] text-vault-dim">%</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="font-mono text-[16px] font-semibold text-primary leading-none">{readinessScore}%</span>
                 </div>
               </div>
               {/* 2×2 metric tiles */}
@@ -357,9 +356,8 @@ const HomeDashboard = () => {
                 <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
                   <circle cx="28" cy="28" r="22" fill="none" stroke="hsl(var(--bg4))" strokeWidth="5" />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-mono text-[16px] font-semibold text-vault-dim leading-none">0</span>
-                  <span className="font-mono text-[8px] text-vault-dim">%</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="font-mono text-[16px] font-semibold text-vault-dim leading-none">0%</span>
                 </div>
               </div>
               <button onClick={() => navigate('/lifestyle')} className="w-full py-2 border rounded-lg font-mono text-[10px] text-primary uppercase tracking-widest" style={{ borderColor: 'hsla(192,91%,54%,0.3)' }}>
@@ -410,7 +408,7 @@ const HomeDashboard = () => {
             <p className="font-mono text-[7px] text-vault-dim">kg total</p>
           </div>
           <div className="bg-vault-bg3 border border-vault-border rounded-lg p-2 text-center">
-            <p className="font-mono text-[15px] font-semibold text-vault-warn leading-none">{weekAvgRir !== null ? weekAvgRir : '—'}</p>
+            <p className={`font-mono text-[15px] font-semibold leading-none ${weekAvgRir !== null ? 'text-vault-warn' : 'text-vault-dim'}`}>{weekAvgRir !== null ? weekAvgRir : '—'}</p>
             <p className="font-mono text-[7px] text-vault-dim uppercase tracking-widest mt-1">AVG RIR</p>
             <p className="font-mono text-[7px] text-vault-dim">this week</p>
           </div>
