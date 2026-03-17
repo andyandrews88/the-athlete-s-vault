@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_responses: {
         Row: {
           age: number | null
@@ -567,6 +599,7 @@ export type Database = {
       }
       exercises: {
         Row: {
+          approved: boolean | null
           category: string | null
           created_by: string | null
           difficulty_coefficient: number | null
@@ -578,6 +611,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          approved?: boolean | null
           category?: string | null
           created_by?: string | null
           difficulty_coefficient?: number | null
@@ -589,6 +623,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          approved?: boolean | null
           category?: string | null
           created_by?: string | null
           difficulty_coefficient?: number | null
