@@ -20,11 +20,13 @@ import AdminClientProfile from "./pages/AdminClientProfile";
 import AdminClientsPage from "./pages/AdminClientsPage";
 import AdminWorkoutBuilder from "./pages/AdminWorkoutBuilder";
 import AdminLibraryPage from "./pages/AdminLibraryPage";
+import AdminBusinessDashboard from "./pages/AdminBusinessDashboard";
 import LibraryPage from "./pages/LibraryPage";
 import TrainPage from "./pages/TrainPage";
 import LifestylePage from "./pages/LifestylePage";
 import NutritionPage from "./pages/NutritionPage";
 import ProgressPage from "./pages/ProgressPage";
+import MyCoachingPage from "./pages/MyCoachingPage";
 import StubPage from "./pages/stubs/StubPage";
 import NotFound from "./pages/NotFound";
 
