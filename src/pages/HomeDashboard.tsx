@@ -67,6 +67,8 @@ const HomeDashboard = () => {
   const [weeklyReview, setWeeklyReview] = useState<string | null>(null);
   const [readiness, setReadiness] = useState<{ score: number; sleep_hours: number | null; energy: number; stress: number; drive: number; hasCheckin: boolean } | null>(null);
   const [totalPrs, setTotalPrs] = useState(0);
+  const [announcement, setAnnouncement] = useState<{ id: string; content: string } | null>(null);
+  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
 
   const weekDates = useMemo(() => getWeekDates(), []);
   const today = new Date().toISOString().split('T')[0];
