@@ -17,6 +17,7 @@ import HomeDashboard from "./pages/HomeDashboard";
 import PricingPage from "./pages/PricingPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminClientProfile from "./pages/AdminClientProfile";
+import AdminClientsPage from "./pages/AdminClientsPage";
 import TrainPage from "./pages/TrainPage";
 import LifestylePage from "./pages/LifestylePage";
 import NutritionPage from "./pages/NutritionPage";
@@ -52,7 +53,7 @@ const App = () => (
             <Route path="/referral" element={<ProtectedRoute><StubPage icon={Users} name="Refer a Friend" /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/client/:userId" element={<AdminRoute><AdminClientProfile /></AdminRoute>} />
-            <Route path="/admin/clients" element={<AdminRoute><StubPage icon={Users} name="All Clients" /></AdminRoute>} />
+            <Route path="/admin/clients" element={<AdminRoute><AdminClientsPage /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
