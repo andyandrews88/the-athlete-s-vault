@@ -431,12 +431,14 @@ export const LogTab = () => {
               value={set.distance_m ?? ''} disabled={set.completed}
               onChange={e => updateSet(exIdx, setIdx, 'distance_m', e.target.value ? parseFloat(e.target.value) : null)}
               className={inputCls(set.completed) + ' flex-1'}
+              style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
             />
             <input
               type="number" inputMode="numeric" placeholder="cal"
               value={set.calories ?? ''} disabled={set.completed}
               onChange={e => updateSet(exIdx, setIdx, 'calories', e.target.value ? parseInt(e.target.value) : null)}
               className={inputCls(set.completed) + ' flex-1'}
+              style={set.completed ? { color: 'hsl(var(--ok))' } : undefined}
             />
           </>
         )}
