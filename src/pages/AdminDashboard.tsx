@@ -216,7 +216,29 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* NEEDS ATTENTION */}
+      {/* DEV: Add Test Client */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+        <button onClick={async () => {
+          try {
+            const id = crypto.randomUUID();
+            const today = new Date().toISOString().slice(0, 10);
+            await supabase.from('profiles').insert({
+              id, email: 'testclient@vault.com', full_name: 'James D',
+              role: 'client', tier: 'basic', audit_score: 72, audit_tier: 'PERFORMANCE', onboarding_complete: true,
+            });
+            await supabase.from('daily_checkins').insert({
+              user_id: id, date: today, sleep: 7, energy: 8, stress: 3, mood: 8, soreness: 4,
+            });
+            toast({ title: 'Test client created' });
+            loadData();
+          } catch { toast({ title: 'Failed to create test client', variant: 'destructive' }); }
+        }} style={{
+          fontFamily: "'JetBrains Mono', monospace", fontSize: 10, padding: '4px 10px', borderRadius: 4,
+          background: 'transparent', border: '1px solid hsl(var(--border))', color: 'hsl(var(--dim))', cursor: 'pointer',
+        }}>＋ Add Test Client</button>
+      </div>
+
+
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
           <AlertTriangle size={12} style={{ color: 'hsl(var(--warn))' }} />
