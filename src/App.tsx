@@ -19,6 +19,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminClientProfile from "./pages/AdminClientProfile";
 import AdminClientsPage from "./pages/AdminClientsPage";
 import AdminWorkoutBuilder from "./pages/AdminWorkoutBuilder";
+import AdminLibraryPage from "./pages/AdminLibraryPage";
+import LibraryPage from "./pages/LibraryPage";
 import TrainPage from "./pages/TrainPage";
 import LifestylePage from "./pages/LifestylePage";
 import NutritionPage from "./pages/NutritionPage";
