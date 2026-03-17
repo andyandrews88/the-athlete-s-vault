@@ -610,10 +610,10 @@ export const LogTab = () => {
         open={sectionsOpen[sectionKey]}
         onOpenChange={open => setSectionsOpen(prev => ({ ...prev, [sectionKey]: open }))}
       >
-        <CollapsibleTrigger className={`w-full flex items-center justify-between py-2.5 px-4 rounded-xl border ${cfg.bgCls} ${cfg.borderCls} mb-2`}>
+        <CollapsibleTrigger className="w-full flex items-center justify-between py-2.5 px-4 rounded-xl mb-2" style={cfg.bannerStyle}>
           <div className="flex items-center gap-2">
             <span className="text-sm">{cfg.emoji}</span>
-            <span className={`font-mono text-[10px] ${cfg.textCls} uppercase tracking-widest font-semibold`}>{cfg.label}</span>
+            <span className={`${cfg.textCls} uppercase font-semibold`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, letterSpacing: 1 }}>{cfg.label}</span>
             {items.length > 0 && (
               <span className={`font-mono text-[9px] ${cfg.textCls} opacity-60`}>{items.length}</span>
             )}
