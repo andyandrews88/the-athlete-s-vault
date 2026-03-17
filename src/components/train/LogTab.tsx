@@ -574,35 +574,27 @@ export const LogTab = () => {
     );
   };
 
-  const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; textCls: string; bannerStyle: React.CSSProperties }> = {
-    warmup:    { label: 'WARM UP',        emoji: '🔥', textCls: 'text-amber-500', bannerStyle: { background: 'hsla(38,92%,50%,0.06)', border: '1px solid hsla(38,92%,50%,0.15)' } },
-    exercises: { label: 'MAIN EXERCISES', emoji: '⚡', textCls: 'text-primary',   bannerStyle: { background: 'hsl(var(--pgb))', border: '1px solid hsla(192,91%,54%,0.2)' } },
-    cooldown:  { label: 'COOL DOWN',      emoji: '🧊', textCls: 'text-sky-500',   bannerStyle: { background: 'hsla(14,100%,57%,0.06)', border: '1px solid hsla(14,100%,57%,0.15)' } },
+  const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; color: string; bannerStyle: React.CSSProperties }> = {
+    warmup:    { label: 'WARM UP',        emoji: '🔥', color: 'hsl(var(--warn))',    bannerStyle: { padding: '4px 7px', background: 'hsla(38,92%,50%,0.06)', border: '1px solid hsla(38,92%,50%,0.15)', borderRadius: 6 } },
+    exercises: { label: 'MAIN EXERCISES', emoji: '🏋️', color: 'hsl(var(--primary))', bannerStyle: { padding: '4px 7px', background: 'hsl(var(--pgb))', border: '1px solid hsla(192,91%,54%,0.2)', borderRadius: 6 } },
+    cooldown:  { label: 'COOL DOWN',      emoji: '🧊', color: 'hsl(200,60%,60%)',   bannerStyle: { padding: '4px 7px', background: 'hsla(200,60%,50%,0.06)', border: '1px solid hsla(200,60%,50%,0.15)', borderRadius: 6 } },
   };
 
   const renderSection = (sectionKey: WorkoutSection, items: { ex: SessionExercise; globalIdx: number }[]) => {
     const cfg = sectionConfig[sectionKey];
     return (
-      <Collapsible
-        open={sectionsOpen[sectionKey]}
-        onOpenChange={open => setSectionsOpen(prev => ({ ...prev, [sectionKey]: open }))}
-      >
-        <CollapsibleTrigger className="w-full flex items-center justify-between py-2.5 px-4 rounded-xl mb-2" style={cfg.bannerStyle}>
-          <div className="flex items-center gap-2">
-            <span className="text-sm">{cfg.emoji}</span>
-            <span className={`${cfg.textCls} uppercase font-semibold`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, letterSpacing: 1 }}>{cfg.label}</span>
-            {items.length > 0 && (
-              <span className={`font-mono text-[9px] ${cfg.textCls} opacity-60`}>{items.length}</span>
-            )}
-          </div>
-          {sectionsOpen[sectionKey]
-            ? <ChevronUp size={14} className={cfg.textCls} />
-            : <ChevronDown size={14} className={cfg.textCls} />}
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-3 mb-4">
+      <div>
+        <div className="flex items-center gap-2 mb-2" style={cfg.bannerStyle}>
+          <span style={{ fontSize: 10 }}>{cfg.emoji}</span>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, letterSpacing: 1, color: cfg.color, textTransform: 'uppercase', fontWeight: 600 }}>{cfg.label}</span>
+          {items.length > 0 && (
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: cfg.color, opacity: 0.6 }}>{items.length}</span>
+          )}
+        </div>
+        <div className="mb-4">
           {items.map(({ ex, globalIdx }) => renderExerciseCard(ex, globalIdx))}
-        </CollapsibleContent>
-      </Collapsible>
+        </div>
+      </div>
     );
   };
 
