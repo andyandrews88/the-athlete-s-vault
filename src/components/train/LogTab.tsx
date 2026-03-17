@@ -644,7 +644,7 @@ export const LogTab = () => {
           />
         </div>
 
-        <div className="w-full bg-card border border-primary/20 rounded-2xl p-8 text-center" style={{ boxShadow: '0 0 30px hsl(var(--primary) / 0.06)' }}>
+        <div className="w-full p-8 text-center" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsla(192,91%,54%,0.2)', boxShadow: '0 0 30px hsla(192,91%,54%,0.06)', borderRadius: 16 }}>
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
             <Dumbbell size={28} className="text-primary" />
           </div>
