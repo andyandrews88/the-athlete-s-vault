@@ -67,6 +67,8 @@ const HomeDashboard = () => {
   const [weeklyReview, setWeeklyReview] = useState<string | null>(null);
   const [readiness, setReadiness] = useState<{ score: number; sleep_hours: number | null; energy: number; stress: number; drive: number; hasCheckin: boolean } | null>(null);
   const [totalPrs, setTotalPrs] = useState(0);
+  const [announcement, setAnnouncement] = useState<{ id: string; content: string } | null>(null);
+  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
 
   const weekDates = useMemo(() => getWeekDates(), []);
   const today = new Date().toISOString().split('T')[0];
@@ -140,6 +142,18 @@ const HomeDashboard = () => {
     // Total PRs
     supabase.from('personal_records').select('id', { count: 'exact', head: true }).eq('user_id', uid)
       .then(({ count }) => { setTotalPrs(count ?? 0); });
+
+    // Announcement
+    supabase.from('announcements').select('id, content').eq('is_active', true).limit(1).single()
+      .then(({ data }) => {
+        if (data) {
+          const dismissedId = localStorage.getItem('dismissed_announcement');
+          if (dismissedId === data.id) {
+            setAnnouncementDismissed(true);
+          }
+          setAnnouncement(data as { id: string; content: string });
+        }
+      });
   }, [user, weekDates]);
 
   const completedThisWeek = sessions.filter(s => s.completed).length;
@@ -168,6 +182,17 @@ const HomeDashboard = () => {
   return (
     <div className="min-h-screen bg-vault-bg pt-12 pb-24">
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+
+        {/* Announcement banner */}
+        {announcement && !announcementDismissed && (
+          <div className="flex items-start gap-2 rounded-lg px-[14px] py-[10px]" style={{ background: 'hsla(192,91%,54%,0.07)', border: '1px solid hsl(var(--primary)/0.2)' }}>
+            <span className="text-sm shrink-0">📢</span>
+            <p className="text-[12px] flex-1" style={{ color: 'hsl(var(--mid))' }}>{announcement.content}</p>
+            <button onClick={() => { setAnnouncementDismissed(true); localStorage.setItem('dismissed_announcement', announcement.id); }} className="p-0.5 shrink-0" style={{ color: 'hsl(var(--dim))' }}>
+              <X size={14} />
+            </button>
+          </div>
+        )}
 
         {/* SECTION 1 - Greeting */}
         <div>
