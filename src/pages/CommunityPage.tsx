@@ -565,9 +565,6 @@ const CommunityPage = () => {
       </button>
     </div>
   );
-      </button>
-    </div>
-  );
 
   return (
     <div style={{ display: 'flex', height: '100%', minHeight: 0, overflow: 'hidden' }}>
