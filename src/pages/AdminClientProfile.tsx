@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -389,24 +390,29 @@ const AdminClientProfile = () => {
 
   if (loading && !profile) {
     return (
+      <AdminLayout>
       <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: 16, display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 60 }}>
         <div style={{ height: 20, width: '50%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
         <div style={{ height: 14, width: '100%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
         <div style={{ height: 14, width: '66%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
       </div>
+      </AdminLayout>
     );
   }
 
   if (!loading && !profile) {
     return (
+      <AdminLayout>
       <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
         <div style={{ ...mono, fontSize: 14, color: 'hsl(var(--dim))' }}>Client not found</div>
         <button onClick={() => navigate('/admin')} style={{ ...mono, fontSize: 11, color: 'hsl(var(--primary))', background: 'none', border: 'none', cursor: 'pointer' }}>← Back to Admin</button>
       </div>
+      </AdminLayout>
     );
   }
 
   return (
+    <AdminLayout>
     <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: 16, paddingBottom: 80 }}>
       {/* TOP BAR */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
@@ -991,6 +997,7 @@ const AdminClientProfile = () => {
       )}
 
     </div>
+    </AdminLayout>
   );
 };
 

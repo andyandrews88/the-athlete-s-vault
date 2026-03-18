@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Search, Users } from 'lucide-react';
+import { Search, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 
 interface ClientRow {
   id: string;
@@ -169,12 +170,10 @@ const AdminClientsPage = () => {
   ];
 
   return (
+    <AdminLayout>
     <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: 16, paddingBottom: 80 }}>
       {/* TOP BAR */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-        <button onClick={() => navigate('/admin')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-          <ArrowLeft size={20} style={{ color: 'hsl(var(--dim))' }} />
-        </button>
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: 'hsl(var(--text))', margin: 0, flex: 1 }}>CLIENTS</h1>
         <span style={{
           ...mono, fontSize: 10, padding: '2px 8px', borderRadius: 4,
@@ -284,6 +283,7 @@ const AdminClientsPage = () => {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 };
 

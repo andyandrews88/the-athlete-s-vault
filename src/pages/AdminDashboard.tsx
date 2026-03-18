@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Dumbbell, Target, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 
 interface ClientProfile {
   id: string;
@@ -174,6 +175,7 @@ const AdminDashboard = () => {
   ];
 
   return (
+    <AdminLayout>
     <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: '16px', paddingBottom: 80 }}>
       {/* TOP BAR */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -336,6 +338,7 @@ const AdminDashboard = () => {
           }}>View All Clients</button>
       </div>
     </div>
+    </AdminLayout>
   );
 };
 
