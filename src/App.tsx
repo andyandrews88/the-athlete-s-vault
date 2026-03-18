@@ -47,6 +47,7 @@ const App = () => (
       <BrowserRouter>
         <OfflineIndicator />
         <PWAInstallPrompt />
+        <PWAUpdatePrompt />
         <AppLayout>
           <Routes>
             <Route path="/" element={<LandingPage />} />
