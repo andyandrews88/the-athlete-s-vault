@@ -288,8 +288,7 @@ export const AnalyticsTab = () => {
           <div className="relative">
             <button
               onClick={() => setShowExPicker(!showExPicker)}
-              className="flex items-center gap-1"
-              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', padding: '2px 6px', borderRadius: 4, border: '1px solid hsla(192,91%,54%,0.25)', textTransform: 'uppercase', cursor: 'pointer' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'JetBrains Mono, monospace', fontSize: 8, fontWeight: 700, background: 'hsla(192,91%,54%,0.15)', color: 'hsl(192,91%,54%)', padding: '2px 6px', borderRadius: 4, border: '1px solid hsla(192,91%,54%,0.25)', textTransform: 'uppercase', cursor: 'pointer', width: 'auto' }}
             >
               {selectedStrengthExercise}
               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
