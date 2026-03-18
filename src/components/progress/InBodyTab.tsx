@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { Pencil } from 'lucide-react';
 
 const SCAN_FIELDS = [
   { key: 'weight_kg', label: 'Weight', unit: 'kg' },
@@ -24,6 +25,8 @@ const InBodyTab = () => {
   );
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const fetchScans = useCallback(async () => {
     if (!user) return;
@@ -43,15 +46,27 @@ const InBodyTab = () => {
     const hasAny = Object.values(values).some(v => v !== '');
     if (!hasAny) return;
     setSaving(true);
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const payload: any = { user_id: user.id, date: today, notes };
+    const payload: any = { user_id: user.id, date: selectedDate, notes };
     SCAN_FIELDS.forEach(f => { if (values[f.key]) payload[f.key] = parseFloat(values[f.key]); });
     await (supabase.from('inbody_scans' as any) as any).upsert(payload, { onConflict: 'user_id,date' });
     setValues(Object.fromEntries(SCAN_FIELDS.map(f => [f.key, ''])) as Record<FieldKey, string>);
     setNotes('');
+    setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
+    setEditingId(null);
     setSaving(false);
     fetchScans();
     toast({ title: 'InBody scan saved ✓' });
+  };
+
+  const handleEdit = (scan: any) => {
+    setSelectedDate(scan.date);
+    setEditingId(scan.id);
+    setNotes(scan.notes || '');
+    const newVals = {} as Record<FieldKey, string>;
+    SCAN_FIELDS.forEach(f => {
+      newVals[f.key] = scan[f.key] != null ? String(scan[f.key]) : '';
+    });
+    setValues(newVals);
   };
 
   const getChange = (key: string): string | null => {
@@ -68,6 +83,16 @@ const InBodyTab = () => {
       {/* Input */}
       <div className="rounded-xl p-4 space-y-3" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
         <span className="text-[9px] font-mono tracking-wider" style={{ color: 'hsl(var(--primary))' }}>LOG INBODY SCAN</span>
+        
+        {/* Date selector */}
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="w-full h-9 rounded-lg px-2.5 text-sm font-mono"
+          style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', color: 'hsl(var(--text))', borderRadius: 6 }}
+        />
+
         <div className="grid grid-cols-2 gap-3">
           {SCAN_FIELDS.map(f => (
             <div key={f.key} className="space-y-1">
@@ -92,7 +117,7 @@ const InBodyTab = () => {
           className="w-full py-2.5 rounded-xl text-xs font-semibold tracking-wider disabled:opacity-50"
           style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
         >
-          {saving ? 'Saving...' : 'Save Scan'}
+          {saving ? 'Saving...' : editingId ? 'Update Scan' : 'Save Scan'}
         </button>
       </div>
 
@@ -127,15 +152,20 @@ const InBodyTab = () => {
       <div>
         <span className="text-[9px] font-mono tracking-wider block mb-2" style={{ color: 'hsl(var(--primary))' }}>SCAN HISTORY</span>
         {scans.slice(1, 10).map((s: any) => (
-          <div key={s.id} className="py-2 px-3 mb-1.5 rounded-lg" style={{ background: 'hsl(var(--bg2))' }}>
-            <span className="text-[10px] font-mono block mb-1" style={{ color: 'hsl(var(--dim))' }}>{format(new Date(s.date), 'dd MMM yyyy')}</span>
-            <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-              {SCAN_FIELDS.map(f => s[f.key] != null && (
-                <span key={f.key} className="text-[10px] font-mono" style={{ color: 'hsl(var(--mid))' }}>
-                  {f.label}: <span style={{ color: 'hsl(var(--text))' }}>{s[f.key]}{f.unit}</span>
-                </span>
-              ))}
+          <div key={s.id} className="py-2 px-3 mb-1.5 rounded-lg flex items-start justify-between" style={{ background: 'hsl(var(--bg2))' }}>
+            <div>
+              <span className="text-[10px] font-mono block mb-1" style={{ color: 'hsl(var(--dim))' }}>{format(new Date(s.date), 'dd MMM yyyy')}</span>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                {SCAN_FIELDS.map(f => s[f.key] != null && (
+                  <span key={f.key} className="text-[10px] font-mono" style={{ color: 'hsl(var(--mid))' }}>
+                    {f.label}: <span style={{ color: 'hsl(var(--text))' }}>{s[f.key]}{f.unit}</span>
+                  </span>
+                ))}
+              </div>
             </div>
+            <button onClick={() => handleEdit(s)} className="mt-1" style={{ color: 'hsl(var(--dim))' }}>
+              <Pencil size={12} />
+            </button>
           </div>
         ))}
         {scans.length === 0 && <p className="text-xs text-center py-6" style={{ color: 'hsl(var(--dim))' }}>No scans yet</p>}
