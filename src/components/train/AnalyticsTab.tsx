@@ -288,15 +288,17 @@ export const AnalyticsTab = () => {
           <div className="relative">
             <button
               onClick={() => setShowExPicker(!showExPicker)}
-              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', padding: '2px 8px', borderRadius: 4, border: 'none', textTransform: 'uppercase' }}
+              className="flex items-center gap-1"
+              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', padding: '2px 6px', borderRadius: 4, border: '1px solid hsla(192,91%,54%,0.25)', textTransform: 'uppercase', cursor: 'pointer' }}
             >
               {selectedStrengthExercise}
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </button>
             {showExPicker && (
-              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', borderRadius: 8, maxHeight: 200, overflowY: 'auto', zIndex: 20, minWidth: 160 }}>
-                {availableExercises.map(ex => (
+              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 8, maxHeight: 200, overflowY: 'auto', zIndex: 20, minWidth: 160 }}>
+                {availableExercises.map((ex, idx) => (
                   <button key={ex} onClick={() => { setSelectedStrengthExercise(ex); setShowExPicker(false); }}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: ex === selectedStrengthExercise ? 'hsl(var(--primary))' : 'hsl(var(--text))', background: 'transparent', border: 'none', borderBottom: '1px solid hsl(var(--border))' }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', fontFamily: 'Inter, sans-serif', fontSize: 12, color: ex === selectedStrengthExercise ? 'hsl(var(--primary))' : 'hsl(var(--text))', background: 'transparent', border: 'none', borderBottom: idx < availableExercises.length - 1 ? '1px solid hsl(var(--border))' : 'none', cursor: 'pointer' }}
                   >{ex}</button>
                 ))}
               </div>
