@@ -1,1 +1,10 @@
 project_id = "aojmxhvfpxshmoetzlef"
+
+[functions.ai-chat]
+verify_jwt = false
+
+[functions.ai-weekly-review]
+verify_jwt = false
+
+[functions.ai-audit-recommendations]
+verify_jwt = false

@@ -90,6 +90,8 @@ const AuditResults = () => {
   const { user, profile, refetchProfile } = useAuth();
   const [enrolling, setEnrolling] = useState(false);
   const [recProgramme, setRecProgramme] = useState<{ id: string; name: string; description: string | null; days: number } | null>(null);
+  const [aiRecs, setAiRecs] = useState<any>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const state = location.state as any;
   const score = state?.score ?? profile?.audit_score ?? 0;
@@ -120,6 +122,23 @@ const AuditResults = () => {
         }
       });
   }, [tier]);
+
+  // Fetch AI recommendations
+  useEffect(() => {
+    if (!user) return;
+    setAiLoading(true);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-audit-recommendations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ userId: user.id, auditData: { score, tier, strengthScore, engineScore, movementScore, lifestyleScore, nutritionScore } }),
+      })
+        .then(r => r.json())
+        .then(data => { if (!data.error) setAiRecs(data); })
+        .catch(() => {})
+        .finally(() => setAiLoading(false));
+    });
+  }, [user, score, tier, strengthScore, engineScore, movementScore, lifestyleScore, nutritionScore]);
 
   const handleEnrol = async () => {
     if (!user || !recProgramme) return;
@@ -199,11 +218,28 @@ const AuditResults = () => {
             <h3 className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase mb-4 flex items-center gap-2">
               <span>🤖</span> AI RECOMMENDATION
             </h3>
-            <p className="text-xs text-vault-mid leading-relaxed">
-              Based on your audit, focus on building a consistent training base. Prioritise compound lifts 3-4 days per week, 
-              add 2 sessions of zone-2 cardio, and aim for 7-8 hours of sleep consistently. 
-              Track your nutrition for at least 2 weeks to establish your baseline before making changes.
-            </p>
+            {aiLoading ? (
+              <div className="flex items-center gap-2 py-2">
+                <Loader2 size={14} className="animate-spin text-primary" />
+                <span className="text-xs text-vault-dim font-mono">Analysing your audit...</span>
+              </div>
+            ) : aiRecs ? (
+              <div className="space-y-3">
+                <p className="text-xs text-vault-mid leading-relaxed mb-2">{aiRecs.summary}</p>
+                {[aiRecs.priority_1, aiRecs.priority_2, aiRecs.priority_3].filter(Boolean).map((p: any, i: number) => (
+                  <div key={i} className="bg-vault-bg3 rounded-lg p-3">
+                    <p className="text-[10px] font-semibold text-foreground mb-0.5">{i + 1}. {p.title}</p>
+                    <p className="text-[9px] text-vault-mid leading-relaxed">{p.description}</p>
+                    <p className="text-[9px] text-primary mt-1 font-mono">→ {p.action}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-vault-mid leading-relaxed">
+                Based on your audit, focus on building a consistent training base. Prioritise compound lifts 3-4 days per week,
+                add 2 sessions of zone-2 cardio, and aim for 7-8 hours of sleep consistently.
+              </p>
+            )}
           </div>
 
           {/* Leaks */}

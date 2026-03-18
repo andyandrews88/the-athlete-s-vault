@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Dumbbell, BookOpen, TrendingUp, MoreHorizontal, Leaf, Apple, Users, User, Settings, Gift, Briefcase, Shield } from 'lucide-react';
+import { Home, Dumbbell, BookOpen, TrendingUp, MoreHorizontal, Leaf, Apple, Users, User, Settings, Gift, Briefcase, Shield, Bot } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const navTabs = [
@@ -21,7 +21,7 @@ const moreItems = [
   { path: '/referral', label: 'Refer a Friend', icon: Gift },
 ];
 
-const VISIBLE_ROUTES = ['/home', '/train', '/library', '/progress', '/lifestyle', '/nutrition', '/community', '/profile', '/settings', '/referral', '/my-coaching', '/admin', '/admin/clients', '/admin/workout-builder', '/admin/library', '/admin/business'];
+const VISIBLE_ROUTES = ['/home', '/train', '/library', '/progress', '/lifestyle', '/nutrition', '/community', '/profile', '/settings', '/referral', '/my-coaching', '/ai', '/admin', '/admin/clients', '/admin/workout-builder', '/admin/library', '/admin/business'];
 
 export const BottomNav = () => {
   const location = useLocation();
@@ -31,10 +31,12 @@ export const BottomNav = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const gridItems = useMemo(() => {
+    const aiItem = { path: '/ai', label: 'AI Coach', icon: Bot, isAI: true };
+    const base = [aiItem, ...moreItems];
     if (isAdmin) {
-      return [{ path: '/admin', label: 'Admin', icon: Shield, isAdmin: true }, ...moreItems];
+      return [{ path: '/admin', label: 'Admin', icon: Shield, isAdmin: true }, ...base];
     }
-    return moreItems;
+    return base;
   }, [isAdmin]);
 
   const handleMoreTap = useCallback((e: React.MouseEvent) => {
@@ -90,8 +92,8 @@ export const BottomNav = () => {
               onClick={() => handleItemTap(item.path)}
               className="flex flex-col items-center justify-center gap-2 rounded-[12px] p-4 transition-colors active:opacity-70"
               style={{
-                background: 'hsl(var(--bg3))',
-                border: `1px solid hsl(var(--${'isAdmin' in item && item.isAdmin ? 'warn' : 'border'}))`,
+                background: 'isAI' in item && item.isAI ? 'hsla(192,91%,54%,0.06)' : 'hsl(var(--bg3))',
+                border: `1px solid hsl(var(--${'isAdmin' in item && item.isAdmin ? 'warn' : 'isAI' in item && item.isAI ? 'primary' : 'border'}))`,
               }}
             >
               <item.icon size={24} style={{ color: 'isAdmin' in item && item.isAdmin ? 'hsl(var(--warn))' : 'hsl(var(--primary))' }} />
