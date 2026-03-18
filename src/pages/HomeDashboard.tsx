@@ -511,13 +511,7 @@ const HomeDashboard = () => {
         )}
 
         {/* WEEKLY AI REVIEW */}
-        <div className="bg-vault-bg2 border border-vault-border rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">✨</span>
-            <p className="font-mono text-[10px] text-primary uppercase tracking-[2px]">WEEKLY AI REVIEW</p>
-          </div>
-          <p className="text-sm text-vault-mid leading-relaxed">{weeklyReview || "Your first weekly review generates after 7 days of training data."}</p>
-        </div>
+        <WeeklyAIReview userId={user?.id} weeklyReview={weeklyReview} setWeeklyReview={setWeeklyReview} />
 
         {/* FROM ANDY */}
         <div className="bg-vault-bg2 border border-vault-border rounded-2xl p-5">
