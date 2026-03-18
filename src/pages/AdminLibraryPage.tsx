@@ -109,7 +109,6 @@ const AdminLibraryPage = () => {
   const [editChannelName, setEditChannelName] = useState('');
 
   const EXERCISE_PAGE_SIZE = 20;
-  const EXERCISE_PAGE_SIZE = 20;
 
   const loadData = useCallback(async () => {
     const [{ data: c }, { data: p }] = await Promise.all([
