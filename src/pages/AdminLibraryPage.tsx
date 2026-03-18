@@ -49,6 +49,21 @@ interface Exercise {
 const TYPES = ['video', 'podcast', 'article', 'pdf', 'newsletter'] as const;
 const SOURCES = ['andy', 'curated'] as const;
 
+const channelColorMap: Record<string, string> = {
+  primary: 'hsl(192,91%,54%)',
+  ok: 'hsl(142,71%,45%)',
+  gold: 'hsl(45,93%,58%)',
+  warn: 'hsl(38,92%,50%)',
+  purple: 'hsl(262,60%,55%)',
+  bad: 'hsl(0,72%,51%)',
+};
+
+interface CommunityChannel {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
 const AdminLibraryPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
