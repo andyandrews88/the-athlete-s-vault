@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Send, Plus, X, Search, FileText, Link2, StickyNote, RefreshCw } from 'lucide-react';
+import { Trash2, Send, Plus, X, Search, FileText, Link2, StickyNote, RefreshCw } from 'lucide-react';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
