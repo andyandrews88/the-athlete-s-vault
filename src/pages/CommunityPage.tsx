@@ -573,7 +573,7 @@ const CommunityPage = () => {
     <div style={{ display: 'flex', height: '100%', minHeight: 0, overflow: 'hidden' }}>
       {/* Channels sidebar */}
       <div style={{
-        width: isMobile ? 72 : 200, flexShrink: 0,
+        width: isMobile ? 100 : 200, flexShrink: 0,
         background: 'hsl(220,16%,9%)', borderRight: '1px solid hsl(215,14%,16%)',
         overflowY: 'auto',
       }}>
