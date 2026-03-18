@@ -402,10 +402,12 @@ const AdminClientProfile = () => {
 
   if (!loading && !profile) {
     return (
+      <AdminLayout>
       <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
         <div style={{ ...mono, fontSize: 14, color: 'hsl(var(--dim))' }}>Client not found</div>
         <button onClick={() => navigate('/admin')} style={{ ...mono, fontSize: 11, color: 'hsl(var(--primary))', background: 'none', border: 'none', cursor: 'pointer' }}>← Back to Admin</button>
       </div>
+      </AdminLayout>
     );
   }
 
