@@ -311,10 +311,11 @@ export const AnalyticsTab = () => {
             <div className="flex items-end gap-1" style={{ height: 80 }}>
               {strengthData.map((d, i) => {
                 const h = maxStrength > 0 ? (d.weight / maxStrength) * 100 : 0;
-                const opacity = 0.3 + (i / (strengthData.length - 1)) * 0.7;
+                const isLast = i === strengthData.length - 1;
+                const opacity = isLast ? 1 : 0.25 + (i / (strengthData.length - 1)) * 0.75;
                 return (
                   <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                    <div style={{ width: '100%', height: `${Math.max(h, 2)}%`, background: `hsla(192,91%,54%,${opacity})`, borderRadius: '3px 3px 0 0' }} />
+                    <div style={{ width: '100%', height: `${Math.max(h, 2)}%`, background: `hsla(192,91%,54%,${opacity})`, borderRadius: '3px 3px 0 0', ...(isLast ? { filter: 'drop-shadow(0 0 4px hsl(192,91%,54%))' } : {}) }} />
                   </div>
                 );
               })}
