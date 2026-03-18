@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Dumbbell, BookOpen, TrendingUp, MoreHorizontal, Leaf, Apple, Users, User, Settings, Gift, Briefcase, Shield } from 'lucide-react';
+import { Home, Dumbbell, BookOpen, TrendingUp, MoreHorizontal, Leaf, Apple, Users, User, Settings, Gift, Briefcase, Shield, Bot } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const navTabs = [
