@@ -997,6 +997,7 @@ const AdminClientProfile = () => {
       )}
 
     </div>
+    </AdminLayout>
   );
 };
 
