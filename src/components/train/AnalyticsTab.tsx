@@ -57,7 +57,7 @@ export const AnalyticsTab = () => {
   const { user } = useAuth();
   const [weeklyData, setWeeklyData] = useState<WeekData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedStrengthExercise, setSelectedStrengthExercise] = useState<string>('Back Squat');
+  const [selectedStrengthExercise, setSelectedStrengthExercise] = useState<string>('');
   const [availableExercises, setAvailableExercises] = useState<string[]>([]);
   const [showExPicker, setShowExPicker] = useState(false);
   // Heatmap: 12 weeks × 7 days
@@ -65,8 +65,27 @@ export const AnalyticsTab = () => {
 
   useEffect(() => {
     if (!user) return;
+    loadExerciseOptions();
     loadData();
   }, [user]);
+
+  const loadExerciseOptions = async () => {
+    if (!user) return;
+    const { data: prs } = await supabase
+      .from('personal_records')
+      .select('exercise_id, achieved_at, exercises(name)')
+      .eq('user_id', user.id)
+      .order('achieved_at', { ascending: false }) as any;
+    if (prs?.length) {
+      const names = Array.from(new Set(prs.map((pr: any) => pr.exercises?.name).filter(Boolean))) as string[];
+      setAvailableExercises(names.sort());
+      if (!selectedStrengthExercise) {
+        setSelectedStrengthExercise(prs[0].exercises?.name || names[0] || 'Back Squat');
+      }
+    } else {
+      if (!selectedStrengthExercise) setSelectedStrengthExercise('Back Squat');
+    }
+  };
 
   const loadData = async () => {
     if (!user) return;
@@ -269,15 +288,17 @@ export const AnalyticsTab = () => {
           <div className="relative">
             <button
               onClick={() => setShowExPicker(!showExPicker)}
-              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', padding: '2px 8px', borderRadius: 4, border: 'none', textTransform: 'uppercase' }}
+              className="flex items-center gap-1"
+              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', padding: '2px 6px', borderRadius: 4, border: '1px solid hsla(192,91%,54%,0.25)', textTransform: 'uppercase', cursor: 'pointer' }}
             >
               {selectedStrengthExercise}
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </button>
             {showExPicker && (
-              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', borderRadius: 8, maxHeight: 200, overflowY: 'auto', zIndex: 20, minWidth: 160 }}>
-                {availableExercises.map(ex => (
+              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', borderRadius: 8, maxHeight: 200, overflowY: 'auto', zIndex: 20, minWidth: 160 }}>
+                {availableExercises.map((ex, idx) => (
                   <button key={ex} onClick={() => { setSelectedStrengthExercise(ex); setShowExPicker(false); }}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: ex === selectedStrengthExercise ? 'hsl(var(--primary))' : 'hsl(var(--text))', background: 'transparent', border: 'none', borderBottom: '1px solid hsl(var(--border))' }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', fontFamily: 'Inter, sans-serif', fontSize: 12, color: ex === selectedStrengthExercise ? 'hsl(var(--primary))' : 'hsl(var(--text))', background: 'transparent', border: 'none', borderBottom: idx < availableExercises.length - 1 ? '1px solid hsl(var(--border))' : 'none', cursor: 'pointer' }}
                   >{ex}</button>
                 ))}
               </div>
@@ -290,10 +311,11 @@ export const AnalyticsTab = () => {
             <div className="flex items-end gap-1" style={{ height: 80 }}>
               {strengthData.map((d, i) => {
                 const h = maxStrength > 0 ? (d.weight / maxStrength) * 100 : 0;
-                const opacity = 0.3 + (i / (strengthData.length - 1)) * 0.7;
+                const isLast = i === strengthData.length - 1;
+                const opacity = isLast ? 1 : 0.25 + (i / (strengthData.length - 1)) * 0.75;
                 return (
                   <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                    <div style={{ width: '100%', height: `${Math.max(h, 2)}%`, background: `hsla(192,91%,54%,${opacity})`, borderRadius: '3px 3px 0 0' }} />
+                    <div style={{ width: '100%', height: `${Math.max(h, 2)}%`, background: `hsla(192,91%,54%,${opacity})`, borderRadius: '3px 3px 0 0', ...(isLast ? { filter: 'drop-shadow(0 0 4px hsl(192,91%,54%))' } : {}) }} />
                   </div>
                 );
               })}
@@ -328,17 +350,18 @@ export const AnalyticsTab = () => {
       {/* 2. WEEKLY VOLUME */}
       <ChartCard
         label="Weekly Volume"
-        badge={<span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', padding: '2px 6px', borderRadius: 4 }}>NTU</span>}
+        badge={<span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, fontWeight: 700, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', padding: '2px 6px', borderRadius: 4, border: '1px solid hsla(192,91%,54%,0.25)', display: 'inline-block' }}>NTU</span>}
       >
         {weeklyData.some(d => d.ntu > 0) ? (
           <>
             <div className="flex items-end gap-1" style={{ height: 80 }}>
               {weeklyData.slice(-8).map((d, i, arr) => {
                 const h = maxNtu > 0 ? (d.ntu / maxNtu) * 100 : 0;
-                const opacity = 0.3 + (i / (arr.length - 1)) * 0.7;
+                const isLast = i === arr.length - 1;
+                const opacity = isLast ? 1 : 0.25 + (i / (arr.length - 1)) * 0.75;
                 return (
                   <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                    <div style={{ width: '100%', height: `${Math.max(h, 2)}%`, background: `hsla(192,91%,54%,${opacity})`, borderRadius: '3px 3px 0 0' }} />
+                    <div style={{ width: '100%', height: `${Math.max(h, 2)}%`, background: `hsla(192,91%,54%,${opacity})`, borderRadius: '3px 3px 0 0', ...(isLast ? { filter: 'drop-shadow(0 0 4px hsl(192,91%,54%))' } : {}) }} />
                   </div>
                 );
               })}
