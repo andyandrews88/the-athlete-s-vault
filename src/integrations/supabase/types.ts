@@ -1114,6 +1114,44 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          checkin_reminder: boolean | null
+          coaching_notes: boolean | null
+          id: string
+          streak_reminder: boolean | null
+          updated_at: string | null
+          user_id: string
+          weekly_review: boolean | null
+        }
+        Insert: {
+          checkin_reminder?: boolean | null
+          coaching_notes?: boolean | null
+          id?: string
+          streak_reminder?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          weekly_review?: boolean | null
+        }
+        Update: {
+          checkin_reminder?: boolean | null
+          coaching_notes?: boolean | null
+          id?: string
+          streak_reminder?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          weekly_review?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nutrition_targets: {
         Row: {
           calories: number | null
