@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Progress } from '@/components/ui/progress';
+import { ArrowLeft } from 'lucide-react';
 
 interface Programme {
   id: string; name: string; weeks: number | null;

@@ -72,9 +72,10 @@ export const BottomNav = () => {
 
       {/* Bottom sheet */}
       <div
-        className="fixed left-0 right-0 z-[70] transition-transform duration-300 ease-out"
+        className="fixed left-0 right-0 z-[70] transition-transform duration-300 ease-out mx-auto"
         style={{
           bottom: 60,
+          maxWidth: 480,
           transform: sheetOpen ? 'translateY(0)' : 'translateY(100%)',
           background: 'hsl(var(--bg2))',
           borderRadius: '20px 20px 0 0',

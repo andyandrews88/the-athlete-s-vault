@@ -31,6 +31,10 @@ const PricingPage = () => {
   return (
     <div className="min-h-screen bg-vault-bg px-4 py-20">
       <div className="max-w-4xl mx-auto">
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/home')} className="flex items-center gap-2 mb-6 p-0">
+          <ArrowLeft size={18} className="text-primary" />
+          <span className="text-xs" style={{ color: 'hsl(var(--dim))' }}>Back</span>
+        </button>
         <h1 className="font-display text-5xl tracking-wide text-center mb-4">CHOOSE YOUR PATH</h1>
         <p className="text-vault-dim text-center mb-12 text-sm">All plans include your initial movement audit</p>
         <div className="grid md:grid-cols-3 gap-6">
