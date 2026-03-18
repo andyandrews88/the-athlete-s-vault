@@ -74,6 +74,10 @@ const MyCoachingPage = () => {
   return (
     <div className="min-h-screen pb-24 pt-14" style={{ background: 'hsl(var(--bg))' }}>
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/home')} className="flex items-center gap-2 p-0">
+          <ArrowLeft size={18} className="text-primary" />
+          <span className="text-xs" style={{ color: 'hsl(var(--dim))' }}>Back</span>
+        </button>
         <div>
           <h1 className="font-display text-[28px] tracking-wide" style={{ color: 'hsl(var(--text))' }}>MY COACHING</h1>
           <p className="text-[11px]" style={{ color: 'hsl(var(--dim))' }}>Your programme, sessions & billing</p>
