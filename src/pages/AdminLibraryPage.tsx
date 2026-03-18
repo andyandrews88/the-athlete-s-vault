@@ -487,6 +487,68 @@ const AdminLibraryPage = () => {
               </div>
             )}
           </div>
+
+          {/* COMMUNITY CHANNELS */}
+          <div>
+            <h2 className="font-display text-[20px] tracking-wide mb-0.5" style={{ color: 'hsl(var(--text))' }}>COMMUNITY CHANNELS</h2>
+            <p className="text-[11px] mb-4" style={{ color: 'hsl(var(--dim))' }}>Manage community chat channels</p>
+
+            <div className="space-y-1.5 mb-4">
+              {communityChannels.map(ch => (
+                <div key={ch.id} className="flex items-center gap-2 p-2.5 rounded-lg" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ background: channelColorMap[ch.color || 'primary'] || channelColorMap.primary }} />
+                  {editingChannelId === ch.id ? (
+                    <div className="flex-1 flex gap-1.5">
+                      <Input value={editChannelName} onChange={e => setEditChannelName(e.target.value)} className="h-7 text-xs flex-1" style={{ background: 'hsl(var(--bg3))', borderColor: 'hsl(var(--border2))' }} />
+                      <button onClick={async () => {
+                        if (!editChannelName.trim()) return;
+                        await supabase.from('channels').update({ name: editChannelName.trim() } as any).eq('id', ch.id);
+                        setCommunityChannels(prev => prev.map(c => c.id === ch.id ? { ...c, name: editChannelName.trim() } : c));
+                        setEditingChannelId(null);
+                        toast({ title: 'Channel renamed' });
+                      }} className="px-2 py-1 rounded text-[9px] font-bold" style={{ background: 'hsl(var(--ok)/0.1)', color: 'hsl(var(--ok))' }}>Save</button>
+                      <button onClick={() => setEditingChannelId(null)} className="px-2 py-1 rounded text-[9px]" style={{ color: 'hsl(var(--dim))' }}>Cancel</button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-[12px] font-semibold flex-1 truncate" style={{ color: 'hsl(var(--text))' }}>{ch.name}</span>
+                      <button onClick={() => { setEditingChannelId(ch.id); setEditChannelName(ch.name); }} className="font-mono text-[8px] px-2 py-0.5 rounded" style={{ color: 'hsl(var(--primary))' }}>Rename</button>
+                      <button onClick={async () => {
+                        if (!confirm(`Delete channel "${ch.name}"?`)) return;
+                        await supabase.from('channels').delete().eq('id', ch.id);
+                        setCommunityChannels(prev => prev.filter(c => c.id !== ch.id));
+                        toast({ title: 'Channel deleted' });
+                      }} className="font-mono text-[8px] px-2 py-0.5 rounded" style={{ color: 'hsl(var(--bad))' }}>Delete</button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Add channel */}
+            <div className="rounded-[10px] p-3 space-y-2" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+              <p className="font-mono text-[8px] uppercase tracking-wider" style={{ color: 'hsl(var(--dim))' }}>+ ADD CHANNEL</p>
+              <Input value={newChannelName} onChange={e => setNewChannelName(e.target.value)} placeholder="Channel name" className="h-8 text-xs" style={{ background: 'hsl(var(--bg3))', borderColor: 'hsl(var(--border2))' }} />
+              <div className="flex gap-1.5">
+                {Object.entries(channelColorMap).map(([key, val]) => (
+                  <button key={key} onClick={() => setNewChannelColor(key)} className="w-6 h-6 rounded-full border-2" style={{
+                    background: val,
+                    borderColor: newChannelColor === key ? 'hsl(var(--text))' : 'transparent',
+                  }} />
+                ))}
+              </div>
+              <Button onClick={async () => {
+                if (!newChannelName.trim()) { toast({ title: 'Name required' }); return; }
+                const { data, error } = await supabase.from('channels').insert({ name: newChannelName.trim().toLowerCase().replace(/\s+/g, '-'), color: newChannelColor } as any).select().single();
+                if (error) { toast({ title: 'Error', description: error.message }); return; }
+                if (data) setCommunityChannels(prev => [...prev, data as any]);
+                setNewChannelName('');
+                toast({ title: 'Channel created' });
+              }} className="w-full font-bold h-8 text-xs" style={{ background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)' }}>
+                Create Channel
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
