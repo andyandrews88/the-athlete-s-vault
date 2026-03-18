@@ -566,11 +566,6 @@ const CommunityPage = () => {
     </div>
   );
       </button>
-      {!isAdmin && (
-        <p style={{ fontFamily: 'Inter', fontSize: 10, color: 'hsl(215,14%,50%)', padding: '4px 7px' }}>
-          Direct messages are only available with Andy
-        </p>
-      )}
     </div>
   );
 
