@@ -26,7 +26,16 @@ const VISIBLE_ROUTES = ['/home', '/train', '/library', '/progress', '/lifestyle'
 export const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  const gridItems = useMemo(() => {
+    if (isAdmin) {
+      return [{ path: '/admin', label: 'Admin', icon: Shield, isAdmin: true }, ...moreItems];
+    }
+    return moreItems;
+  }, [isAdmin]);
 
   const handleMoreTap = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
