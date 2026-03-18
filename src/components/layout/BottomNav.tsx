@@ -20,7 +20,7 @@ const moreItems = [
   { path: '/referral', label: 'Refer a Friend', icon: Gift },
 ];
 
-const VISIBLE_ROUTES = ['/home', '/train', '/library', '/progress', '/lifestyle', '/nutrition', '/community', '/profile', '/settings', '/referral', '/my-coaching'];
+const VISIBLE_ROUTES = ['/home', '/train', '/library', '/progress', '/lifestyle', '/nutrition', '/community', '/profile', '/settings', '/referral', '/my-coaching', '/admin', '/admin/clients', '/admin/workout-builder', '/admin/library', '/admin/business'];
 
 export const BottomNav = () => {
   const location = useLocation();
