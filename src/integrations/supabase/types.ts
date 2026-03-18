@@ -367,6 +367,8 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          is_pinned: boolean | null
+          parent_message_id: string | null
           user_id: string
         }
         Insert: {
@@ -374,6 +376,8 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          is_pinned?: boolean | null
+          parent_message_id?: string | null
           user_id: string
         }
         Update: {
@@ -381,6 +385,8 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          is_pinned?: boolean | null
+          parent_message_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -389,6 +395,13 @@ export type Database = {
             columns: ["channel_id"]
             isOneToOne: false
             referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "channel_messages"
             referencedColumns: ["id"]
           },
           {
@@ -1100,6 +1113,97 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poll_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          option_index: number
+          poll_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          option_index: number
+          poll_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          option_index?: number
+          poll_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      polls: {
+        Row: {
+          channel_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          message_id: string | null
+          options: Json
+          question: string
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          message_id?: string | null
+          options?: Json
+          question: string
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          message_id?: string | null
+          options?: Json
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "polls_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "polls_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "polls_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "channel_messages"
             referencedColumns: ["id"]
           },
         ]
