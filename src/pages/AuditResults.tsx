@@ -180,7 +180,7 @@ const AuditResults = () => {
     }
 
     refetchProfile?.();
-    navigate('/home');
+    navigate('/home', { replace: true });
   };
 
   return (
