@@ -31,10 +31,12 @@ export const BottomNav = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const gridItems = useMemo(() => {
+    const aiItem = { path: '/ai', label: 'AI Coach', icon: Bot, isAI: true };
+    const base = [aiItem, ...moreItems];
     if (isAdmin) {
-      return [{ path: '/admin', label: 'Admin', icon: Shield, isAdmin: true }, ...moreItems];
+      return [{ path: '/admin', label: 'Admin', icon: Shield, isAdmin: true }, ...base];
     }
-    return moreItems;
+    return base;
   }, [isAdmin]);
 
   const handleMoreTap = useCallback((e: React.MouseEvent) => {
