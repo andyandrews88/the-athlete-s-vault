@@ -92,8 +92,8 @@ export const BottomNav = () => {
               onClick={() => handleItemTap(item.path)}
               className="flex flex-col items-center justify-center gap-2 rounded-[12px] p-4 transition-colors active:opacity-70"
               style={{
-                background: 'hsl(var(--bg3))',
-                border: `1px solid hsl(var(--${'isAdmin' in item && item.isAdmin ? 'warn' : 'border'}))`,
+                background: 'isAI' in item && item.isAI ? 'hsla(192,91%,54%,0.06)' : 'hsl(var(--bg3))',
+                border: `1px solid hsl(var(--${'isAdmin' in item && item.isAdmin ? 'warn' : 'isAI' in item && item.isAI ? 'primary' : 'border'}))`,
               }}
             >
               <item.icon size={24} style={{ color: 'isAdmin' in item && item.isAdmin ? 'hsl(var(--warn))' : 'hsl(var(--primary))' }} />
