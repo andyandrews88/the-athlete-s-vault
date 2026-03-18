@@ -56,7 +56,8 @@ export const BottomNav = () => {
     setSheetOpen(false);
   }, []);
 
-  if (!VISIBLE_ROUTES.includes(location.pathname) && !location.pathname.startsWith('/admin')) return null;
+  if (location.pathname.startsWith('/admin')) return null;
+  if (!VISIBLE_ROUTES.includes(location.pathname)) return null;
 
   return (
     <>
