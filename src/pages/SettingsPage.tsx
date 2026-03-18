@@ -39,12 +39,12 @@ const SettingsPage = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase
+    (supabase as any)
       .from('notification_preferences')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         if (data) {
           setNotifPrefs({
             checkin_reminder: data.checkin_reminder ?? true,
