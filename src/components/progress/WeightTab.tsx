@@ -144,8 +144,8 @@ const WeightTab = () => {
           {/* Stats row */}
           <div className="flex justify-between" style={{ borderTop: '1px solid hsl(var(--border))', marginTop: 6, paddingTop: 6 }}>
             <div className="text-center">
-              <span className="text-[7px] font-mono block" style={{ color: 'hsl(var(--dim))' }}>Start</span>
-              <span className="text-xs font-mono" style={{ color: 'hsl(var(--dim))' }}>{startWeight ?? '—'}</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', display: 'block' }}>Start</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'hsl(var(--dim))' }}>{startWeight ?? '—'}</span>
             </div>
             <div className="text-center">
               <span className="text-[7px] font-mono block" style={{ color: 'hsl(var(--dim))' }}>Current</span>
