@@ -66,7 +66,7 @@ const SettingsPage = () => {
     if (!user) return;
     const updated = { ...notifPrefs, [key]: value };
     setNotifPrefs(updated);
-    await supabase.from('notification_preferences').upsert({
+    await (supabase as any).from('notification_preferences').upsert({
       user_id: user.id,
       ...updated,
       updated_at: new Date().toISOString(),

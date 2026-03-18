@@ -57,8 +57,8 @@ const App = () => (
             <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
             <Route path="/library" element={<ProtectedRoute><LibraryPage /></ProtectedRoute>} />
             <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><StubPage icon={Users} name="Profile" /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><StubPage icon={Users} name="Settings" /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/referral" element={<ProtectedRoute><StubPage icon={Users} name="Refer a Friend" /></ProtectedRoute>} />
             <Route path="/my-coaching" element={<ProtectedRoute><MyCoachingPage /></ProtectedRoute>} />
             <Route path="/ai" element={<ProtectedRoute><AIChatPage /></ProtectedRoute>} />
