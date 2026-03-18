@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Dumbbell, Target, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 
 interface ClientProfile {
   id: string;
