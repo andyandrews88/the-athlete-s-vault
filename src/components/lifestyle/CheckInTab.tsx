@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
-import { Droplets, Moon, Zap, Brain, Flame, Activity } from 'lucide-react';
+import { Droplets, Moon, Zap, Brain, Flame } from 'lucide-react';
 
 /* ── Nutrition habits from Precision Nutrition ── */
 const PN_HABITS = [
@@ -49,9 +49,6 @@ const DEFAULT_VALUES: CheckInValues = {
 
 /* ── Readiness Score (Matthew Walker formula from spec) ── */
 const calcReadiness = (v: CheckInValues): number => {
-  // (sleep_hours * 2 + sleep_quality + energy + drive + stress) / 7 * 100
-  // Normalise sleep_hours to a 0-5 scale (14h max → 5 pts per 2.8h)
-  // But spec says raw formula, so we use it directly — score can exceed 100 if sleep_hours > ~10
   const raw = (v.sleep_hours * 2 + v.sleep_quality + v.energy + v.drive + v.stress) / 7 * 100;
   return Math.min(Math.round(raw), 100);
 };
@@ -108,8 +105,8 @@ const CheckInTab = () => {
       sleep: values.sleep_quality,
       energy: values.energy,
       stress: values.stress,
-      mood: values.sleep_quality, // keep legacy column populated
-      soreness: values.drive, // keep legacy column populated
+      mood: values.sleep_quality,
+      soreness: values.drive,
       sleep_hours: values.sleep_hours,
       drive: values.drive,
       hydration_litres: values.hydration_litres,
@@ -145,41 +142,39 @@ const CheckInTab = () => {
     }));
   };
 
-  /* ── Readiness circle ── */
-  const radius = 52;
-  const circumference = 2 * Math.PI * radius;
-  const strokeOffset = circumference - (readiness / 100) * circumference;
-
   return (
     <div className="px-4 py-5 pb-24 space-y-6">
       <h2 className="font-display text-2xl tracking-wide" style={{ color: 'hsl(var(--text))' }}>
         Today, {dayName}
       </h2>
 
-      {/* ── Readiness Score Circle ── */}
-      <div className="flex flex-col items-center">
-        <div className="relative w-32 h-32">
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r={radius} fill="none" strokeWidth="6" stroke="hsl(var(--bg4))" />
-            <circle
-              cx="60" cy="60" r={radius} fill="none" strokeWidth="6"
-              strokeDasharray={circumference} strokeDashoffset={strokeOffset}
-              strokeLinecap="round"
-              style={{ stroke: readinessColor(readiness), transition: 'stroke-dashoffset 0.5s ease' }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-display text-3xl leading-none" style={{ color: readinessColor(readiness) }}>
-              {readiness}
-            </span>
-            <span className="text-[9px] font-mono" style={{ color: 'hsl(var(--dim))' }}>READINESS</span>
-          </div>
+      {/* ── Readiness Score — simple large number card ── */}
+      <div
+        className="text-center"
+        style={{
+          background: 'hsla(192,91%,54%,0.06)',
+          border: '1px solid hsla(192,91%,54%,0.15)',
+          borderRadius: 10,
+          padding: 11,
+          marginBottom: 7,
+        }}
+      >
+        <div className="font-mono" style={{ fontSize: 8, color: 'hsl(var(--dim))', marginBottom: 3, letterSpacing: '0.1em' }}>
+          Readiness Score
         </div>
-        <div className="flex items-center gap-1.5 mt-2">
-          <Activity size={12} style={{ color: readinessColor(readiness) }} />
-          <span className="text-[10px] font-mono tracking-wider" style={{ color: readinessColor(readiness) }}>
-            {readiness >= 80 ? 'GO HARD' : readiness >= 60 ? 'MODERATE' : 'RECOVERY DAY'}
-          </span>
+        <div
+          className="font-display"
+          style={{
+            fontSize: 42,
+            letterSpacing: 2,
+            lineHeight: 1,
+            color: readinessColor(readiness),
+          }}
+        >
+          {readiness}
+        </div>
+        <div style={{ fontSize: 7, color: 'hsl(var(--dim))', marginTop: 3 }}>
+          Matthew Walker weighted formula
         </div>
       </div>
 
@@ -225,7 +220,6 @@ const CheckInTab = () => {
                   {val}/5
                 </span>
               </div>
-              {/* Segmented selector */}
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
@@ -283,31 +277,54 @@ const CheckInTab = () => {
         <span className="font-mono text-[10px] tracking-[0.2em] uppercase" style={{ color: 'hsl(var(--primary))' }}>
           NUTRITION HABITS
         </span>
-        <div className="space-y-2">
-          {PN_HABITS.map((habit) => {
+        <div
+          style={{
+            background: 'hsl(var(--bg2))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 10,
+            overflow: 'hidden',
+          }}
+        >
+          {PN_HABITS.map((habit, idx) => {
             const checked = values.nutrition_habits.includes(habit);
             return (
               <button
                 key={habit}
                 disabled={readOnly}
                 onClick={() => toggleHabit(habit)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all disabled:opacity-60"
+                className="w-full text-left disabled:opacity-60"
                 style={{
-                  background: checked ? 'hsla(var(--primary), 0.1)' : 'hsl(var(--bg3))',
-                  border: `1px solid ${checked ? 'hsl(var(--primary))' : 'hsl(var(--border))'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '4px 12px',
+                  borderBottom: idx < PN_HABITS.length - 1 ? '1px solid hsl(var(--border))' : 'none',
                 }}
               >
                 <div
-                  className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[11px]"
                   style={{
-                    background: checked ? 'hsl(var(--primary))' : 'transparent',
+                    width: 16,
+                    height: 16,
+                    borderRadius: 3,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 10,
+                    background: checked ? 'hsl(var(--ok))' : 'hsl(var(--bg3))',
                     border: checked ? 'none' : '1.5px solid hsl(var(--border2))',
-                    color: checked ? 'hsl(var(--primary-foreground))' : 'transparent',
+                    color: checked ? 'white' : 'transparent',
                   }}
                 >
                   {checked && '✓'}
                 </div>
-                <span className="text-xs" style={{ color: checked ? 'hsl(var(--text))' : 'hsl(var(--mid))' }}>
+                <span
+                  style={{
+                    fontSize: 8,
+                    color: checked ? 'hsl(var(--dim))' : 'hsl(var(--mid))',
+                    textDecoration: checked ? 'line-through' : 'none',
+                  }}
+                >
                   {habit}
                 </span>
               </button>

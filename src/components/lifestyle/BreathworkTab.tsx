@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { X } from 'lucide-react';
 
 interface Method {
   id: string;
@@ -11,17 +10,23 @@ interface Method {
   phases: Phase[];
   rounds: number;
   isWimHof?: boolean;
+  emoji: string;
+  badge: string;
+  badgeBg: string;
+  badgeColor: string;
 }
 
 interface Phase {
   label: string;
-  duration: number; // seconds
+  duration: number;
   scale: number;
 }
 
 const METHODS: Method[] = [
   {
-    id: 'box', name: 'Box Breathing', subtitle: '4-4-4-4', description: 'Calm & focus',
+    id: 'box', name: 'Box Breathing', subtitle: '4-4-4-4 · Focus · 5 rounds',
+    description: 'Calm & focus', emoji: '⬜',
+    badge: 'FOCUS', badgeBg: 'hsla(192,91%,54%,0.1)', badgeColor: 'hsl(var(--primary))',
     phases: [
       { label: 'INHALE', duration: 4, scale: 1.4 },
       { label: 'HOLD', duration: 4, scale: 1.4 },
@@ -31,7 +36,9 @@ const METHODS: Method[] = [
     rounds: 5,
   },
   {
-    id: '478', name: '4-7-8', subtitle: '4-7-8', description: 'Sleep & anxiety',
+    id: '478', name: '4-7-8', subtitle: '4-7-8 · Sleep · 4 rounds',
+    description: 'Sleep & anxiety', emoji: '🌙',
+    badge: 'SLEEP', badgeBg: 'hsla(262,60%,55%,0.1)', badgeColor: 'hsl(262,60%,70%)',
     phases: [
       { label: 'INHALE', duration: 4, scale: 1.4 },
       { label: 'HOLD', duration: 7, scale: 1.4 },
@@ -40,11 +47,15 @@ const METHODS: Method[] = [
     rounds: 4,
   },
   {
-    id: 'wimhof', name: 'Wim Hof', subtitle: '3 rounds', description: 'Energy & cold prep',
+    id: 'wimhof', name: 'Wim Hof', subtitle: '30 breaths · 3 rounds',
+    description: 'Energy & cold prep', emoji: '❄️',
+    badge: 'ACTIVTN', badgeBg: 'hsla(45,93%,58%,0.1)', badgeColor: 'hsl(var(--gold))',
     phases: [], rounds: 3, isWimHof: true,
   },
   {
-    id: 'sigh', name: 'Physiological Sigh', subtitle: '', description: 'Instant stress relief',
+    id: 'sigh', name: 'Cyclic Sighing', subtitle: '2-1-6 · Calm · 5 rounds',
+    description: 'Instant stress relief', emoji: '🌊',
+    badge: 'CALM', badgeBg: 'hsla(142,71%,45%,0.1)', badgeColor: 'hsl(var(--ok))',
     phases: [
       { label: 'INHALE', duration: 2, scale: 1.2 },
       { label: 'INHALE', duration: 1, scale: 1.4 },
@@ -53,7 +64,9 @@ const METHODS: Method[] = [
     rounds: 5,
   },
   {
-    id: 'resonance', name: 'Resonance', subtitle: '5.5s in/out', description: 'HRV & recovery',
+    id: 'resonance', name: 'Physiological Sigh', subtitle: '5.5s in/out · 6 rounds',
+    description: 'HRV & recovery', emoji: '🐢',
+    badge: 'RELAX', badgeBg: 'hsla(142,71%,45%,0.1)', badgeColor: 'hsl(var(--ok))',
     phases: [
       { label: 'INHALE', duration: 5.5, scale: 1.4 },
       { label: 'EXHALE', duration: 5.5, scale: 0.8 },
@@ -61,7 +74,9 @@ const METHODS: Method[] = [
     rounds: 6,
   },
   {
-    id: 'tactical', name: 'Tactical', subtitle: '4-4-4-4', description: 'Performance focus',
+    id: 'tactical', name: 'Alternate Nostril', subtitle: '4-4-4-4 · Balance · 5 rounds',
+    description: 'Performance focus', emoji: '🧘',
+    badge: 'BALANCE', badgeBg: 'hsla(38,92%,50%,0.1)', badgeColor: 'hsl(var(--warn))',
     phases: [
       { label: 'INHALE', duration: 4, scale: 1.4 },
       { label: 'HOLD', duration: 4, scale: 1.4 },
@@ -81,24 +96,48 @@ const BreathworkTab = () => {
       {active ? (
         <GuidedSession method={active} userId={user?.id} onEnd={() => setActive(null)} />
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-0">
           {METHODS.map((m) => (
             <button
               key={m.id}
               onClick={() => setActive(m)}
-              className="flex flex-col items-start p-4 rounded-[12px] text-left space-y-1"
-              style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))' }}
+              className="w-full text-left"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 14px',
+                background: 'hsl(var(--bg2))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: 10,
+                marginBottom: 6,
+              }}
             >
-              <span className="font-display text-base tracking-wide" style={{ color: 'hsl(var(--text))' }}>
-                {m.name}
+              <span style={{ fontSize: 20, width: 32, textAlign: 'center', flexShrink: 0 }}>
+                {m.emoji}
               </span>
-              {m.subtitle && (
-                <span className="font-mono text-[11px]" style={{ color: 'hsl(var(--primary))' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))' }}>
+                  {m.name}
+                </div>
+                <div className="font-mono" style={{ fontSize: 9, color: 'hsl(var(--dim))' }}>
                   {m.subtitle}
-                </span>
-              )}
-              <span className="text-[11px]" style={{ color: 'hsl(var(--dim))' }}>
-                {m.description}
+                </div>
+              </div>
+              <span
+                className="font-mono"
+                style={{
+                  fontSize: 8,
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  background: m.badgeBg,
+                  color: m.badgeColor,
+                  flexShrink: 0,
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {m.badge}
               </span>
             </button>
           ))}
@@ -125,22 +164,47 @@ const GuidedSession = ({ method, userId, onEnd }: GuidedProps) => {
   return <StandardSession method={method} userId={userId} onEnd={onEnd} startTime={startTime} />;
 };
 
+const formatTime = (secs: number) => {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
 const StandardSession = ({ method, userId, onEnd, startTime }: GuidedProps & { startTime: React.MutableRefObject<number> }) => {
   const [round, setRound] = useState(1);
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [countdown, setCountdown] = useState(Math.ceil(method.phases[0].duration));
+  const [paused, setPaused] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const audioCtx = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
-  const gainRef = useRef<GainNode | null>(null);
 
   const phase = method.phases[phaseIdx];
+  const totalPhaseTime = Math.ceil(phase.duration);
+  const phaseProgress = (totalPhaseTime - countdown) / totalPhaseTime;
+
+  // Total progress
+  const totalPhasesCount = method.phases.length * method.rounds;
+  const completedPhases = (round - 1) * method.phases.length + phaseIdx;
+  const overallProgress = (completedPhases + phaseProgress) / totalPhasesCount;
+
+  // SVG circle
+  const circleRadius = 62;
+  const circumference = 2 * Math.PI * circleRadius;
+  const strokeOffset = circumference - phaseProgress * circumference;
+
+  // Elapsed timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!paused) setElapsed(Math.round((Date.now() - startTime.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [paused, startTime]);
 
   const playTone = useCallback((freq: number, gain: number) => {
     try {
       if (!audioCtx.current) audioCtx.current = new AudioContext();
-      // Stop previous
       if (oscRef.current) { try { oscRef.current.stop(); } catch {} }
-      
       const osc = audioCtx.current.createOscillator();
       const g = audioCtx.current.createGain();
       osc.type = 'sine';
@@ -149,7 +213,6 @@ const StandardSession = ({ method, userId, onEnd, startTime }: GuidedProps & { s
       osc.connect(g).connect(audioCtx.current.destination);
       osc.start();
       oscRef.current = osc;
-      gainRef.current = g;
     } catch {}
   }, []);
 
@@ -158,21 +221,20 @@ const StandardSession = ({ method, userId, onEnd, startTime }: GuidedProps & { s
   }, []);
 
   useEffect(() => {
-    // Play sound based on phase
+    if (paused) { stopTone(); return; }
     if (phase.label === 'INHALE') playTone(440, 0.3);
     else if (phase.label === 'EXHALE') playTone(220, 0.2);
     else stopTone();
-
     return () => stopTone();
-  }, [phaseIdx, round, phase.label, playTone, stopTone]);
+  }, [phaseIdx, round, phase.label, playTone, stopTone, paused]);
 
   useEffect(() => {
+    if (paused) return;
     setCountdown(Math.ceil(phase.duration));
     const interval = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
           clearInterval(interval);
-          // Next phase
           const nextPhase = phaseIdx + 1;
           if (nextPhase >= method.phases.length) {
             if (round >= method.rounds) {
@@ -190,7 +252,7 @@ const StandardSession = ({ method, userId, onEnd, startTime }: GuidedProps & { s
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [phaseIdx, round]);
+  }, [phaseIdx, round, paused]);
 
   const endSession = async () => {
     stopTone();
@@ -203,48 +265,112 @@ const StandardSession = ({ method, userId, onEnd, startTime }: GuidedProps & { s
     onEnd();
   };
 
+  const phaseInstruction = phase.label === 'INHALE'
+    ? 'Breathe in slowly through your nose'
+    : phase.label === 'EXHALE'
+      ? 'Breathe out slowly through your mouth'
+      : 'Hold your breath gently';
+
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
-      style={{ background: 'hsl(var(--bg))' }}>
-      <button onClick={endSession} className="absolute top-4 right-4 p-2">
-        <X size={24} style={{ color: 'hsl(var(--dim))' }} />
-      </button>
-
-      <h2 className="font-display text-2xl tracking-wide mb-8" style={{ color: 'hsl(var(--text))' }}>
-        {method.name}
-      </h2>
-
-      {/* Breathing circle */}
-      <div className="relative w-40 h-40 flex items-center justify-center mb-8">
-        <div
-          className="w-full h-full rounded-full transition-transform duration-1000 ease-in-out"
-          style={{
-            background: `radial-gradient(circle, hsl(var(--primary)), hsla(var(--primary), 0.3))`,
-            transform: `scale(${phase.scale})`,
-            boxShadow: '0 0 30px hsla(192,91%,54%,0.4)',
-          }}
-        />
+    <div
+      className="fixed inset-0 z-[100] flex flex-col items-center"
+      style={{
+        background: 'radial-gradient(ellipse at 50% 40%, hsla(192,91%,54%,0.08), hsl(var(--bg)) 65%)',
+        padding: 16,
+      }}
+    >
+      {/* Top row */}
+      <div className="w-full flex items-center justify-between" style={{ marginBottom: 8 }}>
+        <button onClick={endSession} style={{ fontSize: 8, color: 'hsl(var(--dim))' }}>← Back</button>
+        <span style={{ fontSize: 9, fontWeight: 600, color: 'hsl(var(--text))' }}>{method.name}</span>
+        <span style={{ fontSize: 8, color: 'hsl(var(--dim))' }}>🔊</span>
       </div>
 
-      <span className="font-display text-[32px]" style={{ color: 'hsl(var(--text))' }}>
-        {phase.label}
-      </span>
+      {/* Round indicator */}
+      <div className="font-mono" style={{ fontSize: 9, color: 'hsl(var(--dim))', marginBottom: 12, letterSpacing: '0.1em' }}>
+        ROUND {round} OF {method.rounds}
+      </div>
 
-      <span className="font-mono text-4xl mt-2" style={{ color: 'hsl(var(--primary))' }}>
-        {countdown}
-      </span>
+      {/* SVG Circle */}
+      <div style={{ position: 'relative', width: 140, height: 140, marginBottom: 16 }}>
+        <svg width={140} height={140} style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx={70} cy={70} r={circleRadius} fill="none" strokeWidth={6} stroke="rgba(255,255,255,0.03)" />
+          <circle
+            cx={70} cy={70} r={circleRadius} fill="none" strokeWidth={6}
+            stroke="hsl(192,91%,54%)"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeOffset}
+            style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+          />
+        </svg>
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span className="font-display" style={{ fontSize: 36, letterSpacing: 3, color: 'hsl(var(--primary))', lineHeight: 1 }}>
+            {phase.label}
+          </span>
+          <span className="font-mono" style={{ fontSize: 22, fontWeight: 700, color: 'hsl(var(--text))', marginTop: 4 }}>
+            {countdown}
+          </span>
+          <span style={{ fontSize: 8, color: 'hsl(var(--dim))' }}>seconds</span>
+        </div>
+      </div>
 
-      <span className="text-sm mt-6" style={{ color: 'hsl(var(--dim))' }}>
-        Round {round} of {method.rounds}
-      </span>
+      {/* Phase indicators */}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${method.phases.length}, 1fr)`, gap: 8, marginBottom: 20, width: '100%', maxWidth: 280 }}>
+        {method.phases.map((p, i) => {
+          const isCompleted = i < phaseIdx || (i === phaseIdx && countdown === 0);
+          const isCurrent = i === phaseIdx && countdown > 0;
+          const color = isCompleted ? 'hsl(var(--ok))' : isCurrent ? 'hsl(var(--primary))' : 'hsl(var(--dim))';
+          const suffix = isCompleted ? ' ✓' : isCurrent ? ' ▶' : '';
+          return (
+            <div key={i} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 7, color }}>{p.label}</div>
+              <div className="font-mono" style={{ fontSize: 9, color }}>{p.duration}s{suffix}</div>
+            </div>
+          );
+        })}
+      </div>
 
-      <button
-        onClick={endSession}
-        className="mt-10 px-8 py-3 rounded-[12px] text-sm font-semibold"
-        style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text))' }}
-      >
-        End Session
-      </button>
+      {/* Instruction */}
+      <div style={{ fontSize: 9, color: 'hsl(var(--mid))', textAlign: 'center', marginBottom: 14 }}>
+        {phaseInstruction}
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ width: '100%', height: 2, background: 'hsl(var(--bg4))', borderRadius: 2, marginBottom: 14 }}>
+        <div style={{ width: `${overallProgress * 100}%`, height: '100%', background: 'hsl(var(--primary))', borderRadius: 2, transition: 'width 0.3s ease' }} />
+      </div>
+
+      {/* Buttons */}
+      <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+        <button
+          onClick={() => setPaused(!paused)}
+          style={{
+            flex: 1, padding: 8, textAlign: 'center', fontSize: 9,
+            background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))',
+            borderRadius: 8, color: 'hsl(var(--dim))',
+          }}
+        >
+          {paused ? '▶ Resume' : '⏸ Pause'}
+        </button>
+        <button
+          onClick={endSession}
+          style={{
+            flex: 1, padding: 8, textAlign: 'center', fontSize: 9, fontWeight: 600,
+            background: 'hsl(var(--bad))', borderRadius: 8, color: 'white', border: 'none',
+          }}
+        >
+          ✕ End
+        </button>
+      </div>
+
+      {/* Total time */}
+      <div className="font-mono" style={{ fontSize: 8, color: 'hsl(var(--dim))', marginTop: 9 }}>
+        Total: {formatTime(elapsed)}
+      </div>
     </div>
   );
 };
@@ -257,9 +383,16 @@ const WimHofSession = ({ userId, onEnd, startTime }: { userId?: string; onEnd: (
   const [holdTimer, setHoldTimer] = useState(0);
   const [holdTimes, setHoldTimes] = useState<number[]>([]);
   const [recoveryCountdown, setRecoveryCountdown] = useState(15);
+  const [elapsed, setElapsed] = useState(0);
   const holdInterval = useRef<ReturnType<typeof setInterval>>();
 
-  // Breathing phase: 30 rapid breaths
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsed(Math.round((Date.now() - startTime.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startTime]);
+
   useEffect(() => {
     if (stage !== 'breathing') return;
     setBreatheCount(0);
@@ -276,7 +409,6 @@ const WimHofSession = ({ userId, onEnd, startTime }: { userId?: string; onEnd: (
     return () => clearInterval(interval);
   }, [stage, round]);
 
-  // Hold phase: timer counting up
   useEffect(() => {
     if (stage !== 'hold') return;
     setHoldTimer(0);
@@ -292,7 +424,6 @@ const WimHofSession = ({ userId, onEnd, startTime }: { userId?: string; onEnd: (
     setStage('recovery');
   };
 
-  // Recovery phase
   useEffect(() => {
     if (stage !== 'recovery') return;
     setRecoveryCountdown(15);
@@ -324,93 +455,136 @@ const WimHofSession = ({ userId, onEnd, startTime }: { userId?: string; onEnd: (
     onEnd();
   };
 
-  const circleScale = stage === 'breathing' ? (breathCount % 2 === 0 ? 1.4 : 0.8)
-    : stage === 'hold' ? 1.0 : 1.2;
+  const phaseLabel = stage === 'breathing'
+    ? (breathCount % 2 === 0 ? 'INHALE' : 'EXHALE')
+    : stage === 'hold' ? 'HOLD' : stage === 'recovery' ? 'RECOVER' : 'DONE';
+
+  // Progress for SVG circle
+  const circleRadius = 62;
+  const circumference = 2 * Math.PI * circleRadius;
+  let phaseProgress = 0;
+  if (stage === 'breathing') phaseProgress = breathCount / 30;
+  else if (stage === 'recovery') phaseProgress = (15 - recoveryCountdown) / 15;
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-6"
-      style={{ background: 'hsl(var(--bg))' }}>
-      <button onClick={finish} className="absolute top-4 right-4 p-2">
-        <X size={24} style={{ color: 'hsl(var(--dim))' }} />
-      </button>
+    <div
+      className="fixed inset-0 z-[100] flex flex-col items-center"
+      style={{
+        background: 'radial-gradient(ellipse at 50% 40%, hsla(192,91%,54%,0.08), hsl(var(--bg)) 65%)',
+        padding: 16,
+      }}
+    >
+      {/* Top row */}
+      <div className="w-full flex items-center justify-between" style={{ marginBottom: 8 }}>
+        <button onClick={finish} style={{ fontSize: 8, color: 'hsl(var(--dim))' }}>← Back</button>
+        <span style={{ fontSize: 9, fontWeight: 600, color: 'hsl(var(--text))' }}>Wim Hof</span>
+        <span style={{ fontSize: 8, color: 'hsl(var(--dim))' }}>🔊</span>
+      </div>
 
-      <h2 className="font-display text-2xl tracking-wide mb-6" style={{ color: 'hsl(var(--text))' }}>
-        Wim Hof
-      </h2>
+      {/* Round indicator */}
+      <div className="font-mono" style={{ fontSize: 9, color: 'hsl(var(--dim))', marginBottom: 12, letterSpacing: '0.1em' }}>
+        ROUND {round} OF 3
+      </div>
 
       {stage === 'done' ? (
-        <div className="space-y-4 text-center">
-          <span className="font-display text-xl" style={{ color: 'hsl(var(--text))' }}>Complete!</span>
-          <div className="space-y-2">
+        <div className="flex flex-col items-center" style={{ marginTop: 20 }}>
+          <span className="font-display" style={{ fontSize: 36, color: 'hsl(var(--primary))', marginBottom: 16 }}>COMPLETE</span>
+          <div className="space-y-2" style={{ marginBottom: 20 }}>
             {holdTimes.map((t, i) => (
-              <div key={i} className="font-mono text-lg" style={{ color: 'hsl(var(--primary))' }}>
+              <div key={i} className="font-mono" style={{ fontSize: 14, color: 'hsl(var(--primary))', textAlign: 'center' }}>
                 Round {i + 1}: {t}s
               </div>
             ))}
           </div>
-          <button onClick={finish} className="mt-6 px-8 py-3 rounded-[12px] text-sm font-semibold"
-            style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
+          <button onClick={finish} style={{
+            padding: '8px 32px', borderRadius: 8, fontSize: 9, fontWeight: 600,
+            background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))',
+          }}>
             Done
           </button>
         </div>
       ) : (
         <>
-          <div className="relative w-40 h-40 flex items-center justify-center mb-8">
-            <div
-              className="w-full h-full rounded-full transition-transform duration-500 ease-in-out"
-              style={{
-                background: `radial-gradient(circle, hsl(var(--primary)), hsla(var(--primary), 0.3))`,
-                transform: `scale(${circleScale})`,
-                boxShadow: '0 0 30px hsla(192,91%,54%,0.4)',
-              }}
-            />
+          {/* SVG Circle */}
+          <div style={{ position: 'relative', width: 140, height: 140, marginBottom: 16 }}>
+            <svg width={140} height={140} style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx={70} cy={70} r={circleRadius} fill="none" strokeWidth={6} stroke="rgba(255,255,255,0.03)" />
+              <circle
+                cx={70} cy={70} r={circleRadius} fill="none" strokeWidth={6}
+                stroke="hsl(192,91%,54%)"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={circumference - phaseProgress * circumference}
+                style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+              />
+            </svg>
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span className="font-display" style={{ fontSize: 36, letterSpacing: 3, color: 'hsl(var(--primary))', lineHeight: 1 }}>
+                {phaseLabel}
+              </span>
+              <span className="font-mono" style={{ fontSize: 22, fontWeight: 700, color: 'hsl(var(--text))', marginTop: 4 }}>
+                {stage === 'breathing' ? `${breathCount + 1}/30` : stage === 'hold' ? `${holdTimer}s` : `${recoveryCountdown}`}
+              </span>
+              <span style={{ fontSize: 8, color: 'hsl(var(--dim))' }}>
+                {stage === 'breathing' ? 'breaths' : 'seconds'}
+              </span>
+            </div>
           </div>
 
-          {stage === 'breathing' && (
-            <>
-              <span className="font-display text-[32px]" style={{ color: 'hsl(var(--text))' }}>
-                {breathCount % 2 === 0 ? 'INHALE' : 'EXHALE'}
-              </span>
-              <span className="font-mono text-2xl mt-2" style={{ color: 'hsl(var(--primary))' }}>
-                {breathCount + 1} / 30
-              </span>
-            </>
-          )}
+          {/* Instruction */}
+          <div style={{ fontSize: 9, color: 'hsl(var(--mid))', textAlign: 'center', marginBottom: 14 }}>
+            {stage === 'breathing' ? 'Deep rapid breaths — in through nose, out through mouth'
+              : stage === 'hold' ? 'Hold after exhale — tap when you need to breathe'
+                : 'Inhale fully and hold for 15 seconds'}
+          </div>
 
+          {/* Hold tap button */}
           {stage === 'hold' && (
-            <>
-              <span className="font-display text-[32px]" style={{ color: 'hsl(var(--text))' }}>
-                HOLD
-              </span>
-              <span className="font-mono text-4xl mt-2" style={{ color: 'hsl(var(--primary))' }}>
-                {holdTimer}s
-              </span>
-              <button onClick={tapDone} className="mt-8 px-8 py-4 rounded-[12px] text-base font-semibold"
-                style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
-                Tap When Done
-              </button>
-            </>
+            <button
+              onClick={tapDone}
+              style={{
+                padding: '8px 32px', borderRadius: 8, fontSize: 9, fontWeight: 600,
+                background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))',
+                marginBottom: 14, border: 'none',
+              }}
+            >
+              Tap When Done
+            </button>
           )}
 
-          {stage === 'recovery' && (
-            <>
-              <span className="font-display text-[24px] text-center" style={{ color: 'hsl(var(--text))' }}>
-                INHALE FULLY<br />HOLD 15 SECONDS
-              </span>
-              <span className="font-mono text-4xl mt-2" style={{ color: 'hsl(var(--primary))' }}>
-                {recoveryCountdown}
-              </span>
-            </>
-          )}
+          {/* Progress bar */}
+          <div style={{ width: '100%', height: 2, background: 'hsl(var(--bg4))', borderRadius: 2, marginBottom: 14 }}>
+            <div style={{
+              width: `${((round - 1) / 3 + phaseProgress / 3) * 100}%`,
+              height: '100%', background: 'hsl(var(--primary))', borderRadius: 2, transition: 'width 0.3s ease',
+            }} />
+          </div>
 
-          <span className="text-sm mt-6" style={{ color: 'hsl(var(--dim))' }}>
-            Round {round} of 3
-          </span>
+          {/* Buttons */}
+          <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+            <div style={{
+              flex: 1, padding: 8, textAlign: 'center', fontSize: 9,
+              background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))',
+              borderRadius: 8, color: 'hsl(var(--dim))',
+            }} />
+            <button
+              onClick={finish}
+              style={{
+                flex: 1, padding: 8, textAlign: 'center', fontSize: 9, fontWeight: 600,
+                background: 'hsl(var(--bad))', borderRadius: 8, color: 'white', border: 'none',
+              }}
+            >
+              ✕ End
+            </button>
+          </div>
 
-          <button onClick={finish} className="mt-8 px-8 py-3 rounded-[12px] text-sm font-semibold"
-            style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text))' }}>
-            End Session
-          </button>
+          {/* Total time */}
+          <div className="font-mono" style={{ fontSize: 8, color: 'hsl(var(--dim))', marginTop: 9 }}>
+            Total: {formatTime(elapsed)}
+          </div>
         </>
       )}
     </div>
