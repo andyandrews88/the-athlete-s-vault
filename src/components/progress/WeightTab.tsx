@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Pencil } from 'lucide-react';
 import { format, subDays } from 'date-fns';
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 
 interface WeightLog { id: string; date: string; weight_kg: number; }
 
@@ -63,7 +63,7 @@ const WeightTab = () => {
   const weekAvg = last7.length ? (last7.reduce((s, l) => s + l.weight_kg, 0) / last7.length).toFixed(1) : null;
   const latestWeight = logs[0]?.weight_kg;
   const startWeight = logs.length > 0 ? logs[logs.length - 1]?.weight_kg : null;
-  const weightChange = logs.length >= 2 ? logs[0].weight_kg - logs[1].weight_kg : 0;
+  const weightChange = logs.length >= 2 ? logs[0].weight_kg - logs[logs.length - 1].weight_kg : 0;
 
   // Chart data (last 12 weeks, ascending)
   const chartData = [...logs].reverse().slice(-84).map(d => ({
@@ -99,15 +99,16 @@ const WeightTab = () => {
 
       {/* Bodyweight Chart Card */}
       {chartData.length > 1 && (
-        <div className="rounded-xl p-4" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+        <div style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 10, padding: 11, marginBottom: 12 }}>
           {/* Header */}
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[8px] font-mono tracking-wider" style={{ color: 'hsl(var(--dim))' }}>Bodyweight</span>
+          <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>Bodyweight</span>
             {weightChange !== 0 && (
               <span
-                className="text-[8px] font-mono px-2 py-0.5 rounded"
                 style={{
-                  background: weightChange < 0 ? 'hsla(var(--ok)/0.1)' : 'hsla(var(--bad)/0.1)',
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 8,
+                  padding: '2px 6px', borderRadius: 4,
+                  background: weightChange < 0 ? 'hsla(142,71%,45%,0.1)' : 'hsla(0,84%,60%,0.1)',
                   color: weightChange < 0 ? 'hsl(var(--ok))' : 'hsl(var(--bad))',
                 }}
               >
@@ -128,38 +129,31 @@ const WeightTab = () => {
                 </defs>
                 <YAxis hide domain={['dataMin - 1', 'dataMax + 1']} />
                 <XAxis hide dataKey="date" />
-                <Tooltip
-                  contentStyle={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 10 }}
-                  labelStyle={{ color: 'hsl(var(--dim))', fontSize: 9 }}
-                  itemStyle={{ color: 'hsl(var(--primary))' }}
-                  formatter={(v: number) => [`${v} kg`, 'Weight']}
-                  labelFormatter={(l: string) => l?.slice(5) || ''}
-                />
                 <Area type="monotone" dataKey="weight" fill="url(#weightGrad)" stroke="hsl(192,91%,54%)" strokeWidth={2} dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
 
           {/* X labels */}
-          <div className="flex justify-between mt-1">
+          <div className="flex justify-between" style={{ marginTop: 4 }}>
             {['W1', 'W4', 'W8', 'W12'].map(w => (
-              <span key={w} className="text-[7px] font-mono" style={{ color: 'hsl(var(--dim))' }}>{w}</span>
+              <span key={w} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>{w}</span>
             ))}
           </div>
 
           {/* Stats row */}
-          <div className="flex justify-between mt-3 pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
+          <div className="flex justify-between" style={{ borderTop: '1px solid hsl(var(--border))', marginTop: 6, paddingTop: 6 }}>
             <div className="text-center">
-              <span className="text-[7px] font-mono block" style={{ color: 'hsl(var(--dim))' }}>Start</span>
-              <span className="text-xs font-mono" style={{ color: 'hsl(var(--dim))' }}>{startWeight ?? '—'}</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', display: 'block' }}>Start</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'hsl(var(--dim))' }}>{startWeight ?? '—'}</span>
             </div>
             <div className="text-center">
-              <span className="text-[7px] font-mono block" style={{ color: 'hsl(var(--dim))' }}>Current</span>
-              <span className="text-xs font-mono" style={{ color: 'hsl(var(--primary))' }}>{latestWeight ?? '—'}</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', display: 'block' }}>Current</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'hsl(var(--primary))' }}>{latestWeight ?? '—'}</span>
             </div>
             <div className="text-center">
-              <span className="text-[7px] font-mono block" style={{ color: 'hsl(var(--dim))' }}>7-Day Avg</span>
-              <span className="text-xs font-mono" style={{ color: 'hsl(var(--ok))' }}>{weekAvg ?? '—'}</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', display: 'block' }}>7-Day Avg</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'hsl(var(--ok))' }}>{weekAvg ?? '—'}</span>
             </div>
           </div>
         </div>

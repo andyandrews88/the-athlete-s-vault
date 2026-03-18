@@ -129,7 +129,7 @@ const PhotosTab = () => {
           </div>
 
           {/* Current */}
-          <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '3/4', background: 'hsl(var(--pgb))', border: '1px solid hsla(192,91%,54%,0.25)' }}>
+          <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '3/4', background: 'hsla(192,91%,54%,0.07)', border: '1px solid hsla(192,91%,54%,0.25)' }}>
             {newestPhoto?.url ? (
               <>
                 <img src={newestPhoto.url} alt="Current" className="w-full h-full object-cover" />
@@ -163,7 +163,7 @@ const PhotosTab = () => {
                 className="rounded-md overflow-hidden"
                 style={{
                   aspectRatio: '1',
-                  background: i === 0 ? 'hsl(var(--pgb))' : 'hsl(var(--bg3))',
+                  background: i === 0 ? 'hsla(192,91%,54%,0.07)' : 'hsl(var(--bg3))',
                   border: i === 0 ? '1px solid hsla(192,91%,54%,0.3)' : '1px solid hsl(var(--border))',
                 }}
               >
