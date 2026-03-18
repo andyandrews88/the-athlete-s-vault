@@ -545,9 +545,9 @@ const CommunityPage = () => {
               background: COLOR_MAP[ch.color || 'primary'] || COLOR_MAP.primary,
             }} />
             <span style={{
-              fontSize: 8, fontFamily: 'Inter',
+              fontSize: 11, fontFamily: 'Inter',
               color: isActive ? 'hsl(210,20%,95%)' : 'hsl(215,14%,50%)',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              lineHeight: 1.3,
             }}>
               {capitalize(ch.name)}
             </span>
@@ -561,13 +561,8 @@ const CommunityPage = () => {
         background: 'transparent', border: 'none', textAlign: 'left', width: '100%',
       }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: COLOR_MAP.gold }} />
-        <span style={{ fontSize: 8, fontFamily: 'Inter', color: 'hsl(45,93%,58%)' }}>Andy</span>
+        <span style={{ fontSize: 11, fontFamily: 'Inter', color: 'hsl(45,93%,58%)' }}>Andy</span>
       </button>
-      {!isAdmin && (
-        <p style={{ fontFamily: 'Inter', fontSize: 10, color: 'hsl(215,14%,50%)', padding: '4px 7px' }}>
-          Direct messages are only available with Andy
-        </p>
-      )}
     </div>
   );
 
@@ -575,7 +570,7 @@ const CommunityPage = () => {
     <div style={{ display: 'flex', height: '100%', minHeight: 0, overflow: 'hidden' }}>
       {/* Channels sidebar */}
       <div style={{
-        width: isMobile ? 72 : 200, flexShrink: 0,
+        width: isMobile ? 100 : 200, flexShrink: 0,
         background: 'hsl(220,16%,9%)', borderRight: '1px solid hsl(215,14%,16%)',
         overflowY: 'auto',
       }}>
