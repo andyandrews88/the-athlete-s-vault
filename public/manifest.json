@@ -1,0 +1,24 @@
+{
+  "name": "The Vault",
+  "short_name": "The Vault",
+  "description": "Performance architecture for athletes who refuse to guess",
+  "start_url": "/home",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0ecfee",
+  "background_color": "#0d0f12",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
