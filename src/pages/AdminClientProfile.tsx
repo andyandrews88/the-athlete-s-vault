@@ -396,6 +396,7 @@ const AdminClientProfile = () => {
         <div style={{ height: 14, width: '100%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
         <div style={{ height: 14, width: '66%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
       </div>
+      </AdminLayout>
     );
   }
 
