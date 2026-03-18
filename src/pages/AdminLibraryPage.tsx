@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Send, Plus, X, Search } from 'lucide-react';
+import { ArrowLeft, Trash2, Send, Plus, X, Search, FileText, Link2, StickyNote, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,344 @@ interface CommunityChannel {
   name: string;
   color: string | null;
 }
+
+const KB_CATEGORIES = ['Nutrition', 'Training', 'Lifestyle', 'Sleep', 'Mindset', 'General'] as const;
+
+const categoryBadgeStyles: Record<string, { bg: string; color: string }> = {
+  Nutrition: { bg: 'hsl(var(--ok)/0.1)', color: 'hsl(var(--ok))' },
+  Training: { bg: 'hsl(var(--primary)/0.1)', color: 'hsl(var(--primary))' },
+  Lifestyle: { bg: 'hsl(var(--warn)/0.1)', color: 'hsl(var(--warn))' },
+  Sleep: { bg: 'hsla(262,60%,55%,0.1)', color: 'hsl(262,60%,70%)' },
+  Mindset: { bg: 'hsl(var(--gold)/0.1)', color: 'hsl(var(--gold))' },
+  General: { bg: 'hsl(var(--dim)/0.1)', color: 'hsl(var(--dim))' },
+};
+
+interface KBEntry {
+  id: string;
+  title: string;
+  content: string;
+  category: string | null;
+  source: string | null;
+  source_type: string | null;
+  word_count: number | null;
+  created_at: string | null;
+}
+
+const AIKnowledgeBaseSection = ({ userId }: { userId?: string }) => {
+  const [mode, setMode] = useState<'doc' | 'url' | 'note'>('doc');
+  const [entries, setEntries] = useState<KBEntry[]>([]);
+  const [kbSearch, setKbSearch] = useState('');
+  const [category, setCategory] = useState('General');
+  const [label, setLabel] = useState('');
+  const [saving, setSaving] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState('');
+  const [fileContent, setFileContent] = useState('');
+
+  // URL mode
+  const [kbUrl, setKbUrl] = useState('');
+  const [urlMeta, setUrlMeta] = useState<{ title?: string; thumbnail?: string } | null>(null);
+
+  // Note mode
+  const [noteText, setNoteText] = useState('');
+
+  const loadEntries = useCallback(async () => {
+    const { data } = await supabase.from('ai_knowledge_base').select('*').order('created_at', { ascending: false });
+    setEntries((data as any as KBEntry[]) || []);
+  }, []);
+
+  useEffect(() => { loadEntries(); }, [loadEntries]);
+
+  const stats = {
+    documents: entries.filter(e => e.source_type === 'document').length,
+    urls: entries.filter(e => e.source_type === 'url').length,
+    notes: entries.filter(e => e.source_type === 'note').length,
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Max 10MB' });
+      return;
+    }
+    setFileName(file.name);
+    const text = await file.text();
+    setFileContent(text.slice(0, 10000));
+    if (!label) setLabel(file.name.replace(/\.[^.]+$/, ''));
+  };
+
+  const handleUrlBlur = async () => {
+    if (!kbUrl.includes('youtube.com') && !kbUrl.includes('youtu.be')) {
+      setUrlMeta(null);
+      return;
+    }
+    try {
+      const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(kbUrl)}&format=json`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setUrlMeta({ title: data.title, thumbnail: data.thumbnail_url });
+      if (!label) setLabel(data.title || '');
+    } catch { /* ignore */ }
+  };
+
+  const handleSubmit = async () => {
+    if (!label.trim()) { toast({ title: 'Label required' }); return; }
+    setSaving(true);
+
+    let content = '';
+    let sourceType = 'document';
+    let source: string | null = null;
+
+    if (mode === 'doc') {
+      if (!fileContent) { toast({ title: 'Select a file first' }); setSaving(false); return; }
+      content = fileContent;
+      sourceType = 'document';
+      source = fileName;
+    } else if (mode === 'url') {
+      if (!kbUrl.trim()) { toast({ title: 'Enter a URL' }); setSaving(false); return; }
+      const urlTitle = urlMeta?.title || kbUrl;
+      content = `${kbUrl} - ${urlTitle} [URL source - content will be referenced by URL]`;
+      sourceType = 'url';
+      source = kbUrl;
+    } else {
+      if (!noteText.trim()) { toast({ title: 'Write some content' }); setSaving(false); return; }
+      content = noteText;
+      sourceType = 'note';
+      source = null;
+    }
+
+    const wordCount = content.split(/\s+/).filter(Boolean).length;
+
+    const { error } = await supabase.from('ai_knowledge_base').insert({
+      title: label.trim(),
+      content,
+      category,
+      source_type: sourceType,
+      source,
+      word_count: wordCount,
+      created_by: userId,
+    } as any);
+
+    setSaving(false);
+    if (error) { toast({ title: 'Error', description: error.message }); return; }
+    toast({ title: 'Added to knowledge base' });
+    setLabel('');
+    setFileName('');
+    setFileContent('');
+    setKbUrl('');
+    setUrlMeta(null);
+    setNoteText('');
+    setCategory('General');
+    loadEntries();
+  };
+
+  const handleDeleteEntry = async (id: string) => {
+    if (!confirm('Delete this knowledge source?')) return;
+    await supabase.from('ai_knowledge_base').delete().eq('id', id);
+    setEntries(prev => prev.filter(e => e.id !== id));
+    toast({ title: 'Deleted' });
+  };
+
+  const filtered = entries.filter(e => !kbSearch.trim() || e.title.toLowerCase().includes(kbSearch.toLowerCase()));
+
+  const formatDate = (d: string | null) => {
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+  };
+
+  const sourceLabel = (e: KBEntry) => {
+    if (e.source_type === 'document') return `PDF · Uploaded ${formatDate(e.created_at)}`;
+    if (e.source_type === 'url') {
+      const domain = e.source ? new URL(e.source).hostname.replace('www.', '').slice(0, 20) : '';
+      return `URL · ${domain}… · ${formatDate(e.created_at)}`;
+    }
+    const wc = e.word_count || e.content.split(/\s+/).length;
+    return `Text note · ${wc} words · ${formatDate(e.created_at)}`;
+  };
+
+  return (
+    <div className="mt-8">
+      <h2 className="font-display text-[24px] tracking-wide mb-0.5" style={{ color: 'hsl(var(--text))' }}>AI KNOWLEDGE BASE</h2>
+      <p className="text-[11px] mb-4" style={{ color: 'hsl(var(--dim))' }}>Feed the AI — it learns from your content</p>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {[
+          { label: 'DOCUMENTS', value: stats.documents },
+          { label: 'URLS', value: stats.urls },
+          { label: 'TEXT NOTES', value: stats.notes },
+        ].map(s => (
+          <div key={s.label} className="rounded-[8px] p-3 text-center" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+            <p className="font-mono text-[20px] font-bold" style={{ color: 'hsl(var(--primary))' }}>{s.value}</p>
+            <p className="font-mono text-[7px] uppercase tracking-wider" style={{ color: 'hsl(var(--dim))' }}>{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Mode tabs */}
+      <div className="flex gap-1.5 mb-4">
+        {([
+          { key: 'doc', label: 'Upload Doc', icon: <FileText size={12} /> },
+          { key: 'url', label: 'Paste URL', icon: <Link2 size={12} /> },
+          { key: 'note', label: 'Write Note', icon: <StickyNote size={12} /> },
+        ] as const).map(t => (
+          <button
+            key={t.key}
+            onClick={() => setMode(t.key)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[7px] font-mono text-[9px] font-bold transition-colors"
+            style={{
+              background: mode === t.key ? 'hsl(var(--primary))' : 'hsl(var(--bg3))',
+              color: mode === t.key ? 'hsl(220,16%,6%)' : 'hsl(var(--dim))',
+            }}
+          >
+            {t.icon} {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Input area */}
+      <div className="rounded-[10px] p-4 mb-4 space-y-3" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+        {mode === 'doc' && (
+          <>
+            <div
+              onClick={() => fileRef.current?.click()}
+              className="rounded-[8px] p-6 text-center cursor-pointer transition-colors hover:opacity-80"
+              style={{ background: 'hsl(var(--bg3))', border: '2px dashed hsl(var(--border2))' }}
+            >
+              <p className="text-[32px] mb-1">📄</p>
+              {fileName ? (
+                <p className="text-[12px] font-semibold" style={{ color: 'hsl(var(--primary))' }}>{fileName}</p>
+              ) : (
+                <>
+                  <p className="text-[12px]" style={{ color: 'hsl(var(--dim))' }}>Drop file here or tap to upload</p>
+                  <p className="font-mono text-[9px] mt-1" style={{ color: 'hsl(var(--dim))' }}>PDF, DOCX, TXT · Max 10MB</p>
+                </>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={handleFileSelect} />
+          </>
+        )}
+
+        {mode === 'url' && (
+          <>
+            <Input
+              value={kbUrl}
+              onChange={e => setKbUrl(e.target.value)}
+              onBlur={handleUrlBlur}
+              placeholder="https://youtube.com/watch?v=..."
+              className="h-9 text-xs"
+              style={{ background: 'hsl(var(--bg3))', borderColor: 'hsl(var(--border2))' }}
+            />
+            {urlMeta && (
+              <div className="flex items-center gap-3 rounded-[8px] p-2" style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))' }}>
+                {urlMeta.thumbnail && <img src={urlMeta.thumbnail} alt="" className="w-16 h-10 rounded object-cover" />}
+                <p className="font-mono text-[9px]" style={{ color: 'hsl(var(--primary))' }}>Auto-pulled: {urlMeta.title} · YouTube</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {mode === 'note' && (
+          <textarea
+            value={noteText}
+            onChange={e => setNoteText(e.target.value)}
+            placeholder="Write Andy's coaching philosophy, methodology notes, or any text you want the AI to know..."
+            rows={5}
+            className="w-full rounded-[7px] px-3 py-2 text-[12px]"
+            style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border2))', color: 'hsl(var(--text))', minHeight: 120 }}
+          />
+        )}
+
+        {/* Label */}
+        <Input
+          value={label}
+          onChange={e => setLabel(e.target.value)}
+          placeholder="Label (what is this?)"
+          className="h-9 text-xs"
+          style={{ background: 'hsl(var(--bg3))', borderColor: 'hsl(var(--border2))' }}
+        />
+
+        {/* Category pills */}
+        <div>
+          <p className="font-mono text-[8px] uppercase tracking-wider mb-1.5" style={{ color: 'hsl(var(--dim))' }}>Category</p>
+          <div className="flex gap-1.5 flex-wrap">
+            {KB_CATEGORIES.map(c => (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className="px-3 py-1 rounded-full font-mono text-[9px]"
+                style={{
+                  background: category === c ? 'hsl(var(--primary))' : 'hsl(var(--bg3))',
+                  color: category === c ? 'hsl(220,16%,6%)' : 'hsl(var(--dim))',
+                  fontWeight: category === c ? 700 : 500,
+                }}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Button onClick={handleSubmit} disabled={saving} className="w-full font-bold" style={{ background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)' }}>
+          {saving ? 'Adding...' : 'Add to Knowledge Base'}
+        </Button>
+      </div>
+
+      {/* Library auto-sync info */}
+      <div className="rounded-[8px] p-3 mb-6" style={{ background: 'hsl(var(--bg3))', border: '1px solid hsla(192,91%,54%,0.25)' }}>
+        <div className="flex items-center gap-2 mb-1">
+          <RefreshCw size={14} style={{ color: 'hsl(var(--primary))' }} />
+          <span className="text-[12px] font-semibold" style={{ color: 'hsl(var(--text))' }}>Library Auto-Sync</span>
+        </div>
+        <p className="text-[11px]" style={{ color: 'hsl(var(--mid))' }}>
+          All content published to the Library is automatically available to the AI. When you add a podcast, article or video — the AI knows about it.
+        </p>
+      </div>
+
+      {/* Knowledge sources list */}
+      <div>
+        <p className="font-mono text-[9px] uppercase tracking-[2px] mb-0.5" style={{ color: 'hsl(var(--dim))' }}>KNOWLEDGE SOURCES</p>
+        <p className="text-[11px] mb-3" style={{ color: 'hsl(var(--dim))' }}>{entries.length} sources · AI trained on all of these</p>
+
+        <div className="mb-3 relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'hsl(var(--dim))' }} />
+          <Input
+            value={kbSearch}
+            onChange={e => setKbSearch(e.target.value)}
+            placeholder="Search knowledge sources..."
+            className="h-9 text-xs pl-9"
+            style={{ background: 'hsl(var(--bg2))', borderColor: 'hsl(var(--border2))' }}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          {filtered.map(entry => {
+            const catStyle = categoryBadgeStyles[entry.category || 'General'] || categoryBadgeStyles.General;
+            return (
+              <div key={entry.id} className="flex items-start gap-3 p-3 rounded-[8px]" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold truncate" style={{ color: 'hsl(var(--text))' }}>{entry.title}</p>
+                  <p className="font-mono text-[9px] mt-0.5" style={{ color: 'hsl(var(--dim))' }}>{sourceLabel(entry)}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <span className="font-mono text-[8px] px-1.5 py-0.5 rounded" style={{ background: catStyle.bg, color: catStyle.color }}>{entry.category || 'General'}</span>
+                  <span className="font-mono text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'hsl(var(--ok)/0.1)', color: 'hsl(var(--ok))', border: '1px solid hsl(var(--ok)/0.2)' }}>✓ Indexed</span>
+                  <button onClick={() => handleDeleteEntry(entry.id)} className="text-[9px] mt-0.5" style={{ color: 'hsl(var(--bad))' }}>Delete ×</button>
+                </div>
+              </div>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="text-center py-6">
+              <p className="text-[11px]" style={{ color: 'hsl(var(--dim))' }}>No knowledge sources yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AdminLibraryPage = () => {
   const navigate = useNavigate();
@@ -577,6 +915,9 @@ const AdminLibraryPage = () => {
               </Button>
             </div>
           </div>
+
+          {/* AI KNOWLEDGE BASE */}
+          <AIKnowledgeBaseSection userId={user?.id} />
         </div>
       </div>
 

@@ -22,7 +22,9 @@ export type Database = {
           created_by: string | null
           id: string
           source: string | null
+          source_type: string | null
           title: string
+          word_count: number | null
         }
         Insert: {
           category?: string | null
@@ -31,7 +33,9 @@ export type Database = {
           created_by?: string | null
           id?: string
           source?: string | null
+          source_type?: string | null
           title: string
+          word_count?: number | null
         }
         Update: {
           category?: string | null
@@ -40,7 +44,9 @@ export type Database = {
           created_by?: string | null
           id?: string
           source?: string | null
+          source_type?: string | null
           title?: string
+          word_count?: number | null
         }
         Relationships: [
           {
