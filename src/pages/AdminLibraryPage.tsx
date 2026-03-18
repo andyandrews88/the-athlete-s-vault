@@ -577,6 +577,9 @@ const AdminLibraryPage = () => {
               </Button>
             </div>
           </div>
+
+          {/* AI KNOWLEDGE BASE */}
+          <AIKnowledgeBaseSection userId={user?.id} />
         </div>
       </div>
 
