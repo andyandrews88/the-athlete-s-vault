@@ -545,9 +545,9 @@ const CommunityPage = () => {
               background: COLOR_MAP[ch.color || 'primary'] || COLOR_MAP.primary,
             }} />
             <span style={{
-              fontSize: 8, fontFamily: 'Inter',
+              fontSize: 11, fontFamily: 'Inter',
               color: isActive ? 'hsl(210,20%,95%)' : 'hsl(215,14%,50%)',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              lineHeight: 1.3,
             }}>
               {capitalize(ch.name)}
             </span>
