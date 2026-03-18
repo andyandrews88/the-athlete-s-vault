@@ -163,7 +163,7 @@ const PhotosTab = () => {
                 className="rounded-md overflow-hidden"
                 style={{
                   aspectRatio: '1',
-                  background: i === 0 ? 'hsl(var(--pgb))' : 'hsl(var(--bg3))',
+                  background: i === 0 ? 'hsla(192,91%,54%,0.07)' : 'hsl(var(--bg3))',
                   border: i === 0 ? '1px solid hsla(192,91%,54%,0.3)' : '1px solid hsl(var(--border))',
                 }}
               >
