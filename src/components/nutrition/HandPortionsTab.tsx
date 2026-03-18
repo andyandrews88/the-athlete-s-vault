@@ -5,198 +5,331 @@ import { Plus, Minus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const PORTIONS = [
-  { key: 'protein_portions', emoji: '🤜', name: 'PROTEIN', desc: 'Palm-sized portions' },
-  { key: 'veggie_portions', emoji: '✊', name: 'VEGGIES', desc: 'Fist-sized portions' },
-  { key: 'carb_portions', emoji: '🖐', name: 'CARBS', desc: 'Cupped hand portions' },
-  { key: 'fat_portions', emoji: '👍', name: 'FATS', desc: 'Thumb-sized portions' },
+  { key: 'protein_portions', emoji: '🤜', name: 'Protein' },
+  { key: 'carb_portions', emoji: '🤲', name: 'Carbs' },
+  { key: 'fat_portions', emoji: '👍', name: 'Fats' },
+  { key: 'veggie_portions', emoji: '👊', name: 'Veggies' },
 ] as const;
 
 type PortionKey = typeof PORTIONS[number]['key'];
 
-const TIER_TARGETS: Record<string, Record<PortionKey, number>> = {
-  free: { protein_portions: 3, veggie_portions: 2, carb_portions: 2, fat_portions: 2 },
-  basic: { protein_portions: 3, veggie_portions: 2, carb_portions: 2, fat_portions: 2 },
-  pro: { protein_portions: 4, veggie_portions: 3, carb_portions: 3, fat_portions: 3 },
-  elite: { protein_portions: 4, veggie_portions: 3, carb_portions: 3, fat_portions: 3 },
-};
+const MEALS = ['Breakfast', 'Lunch', 'Dinner'] as const;
 
-const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack'] as const;
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function dateStr(d: Date) {
+  return d.toISOString().split('T')[0];
+}
+
+function formatShortDate(d: Date) {
+  return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
+}
+
+interface MealLog {
+  protein_portions: number;
+  carb_portions: number;
+  fat_portions: number;
+  veggie_portions: number;
+}
+
+const emptyMeal = (): MealLog => ({
+  protein_portions: 0, carb_portions: 0, fat_portions: 0, veggie_portions: 0,
+});
 
 const HandPortionsTab = () => {
-  const { user, profile } = useAuth();
-  const [totals, setTotals] = useState<Record<PortionKey, number>>({
-    protein_portions: 0, veggie_portions: 0, carb_portions: 0, fat_portions: 0,
+  const { user } = useAuth();
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [mealData, setMealData] = useState<Record<string, MealLog>>({
+    Breakfast: emptyMeal(),
+    Lunch: emptyMeal(),
+    Dinner: emptyMeal(),
   });
-  const [showLog, setShowLog] = useState(false);
-  const [meal, setMeal] = useState<typeof MEALS[number]>('Lunch');
-  const [mealPortions, setMealPortions] = useState<Record<PortionKey, number>>({
-    protein_portions: 0, veggie_portions: 0, carb_portions: 0, fat_portions: 0,
-  });
+  const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set());
+  const [mealLogIds, setMealLogIds] = useState<Record<string, string | null>>({});
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const tier = profile?.tier || 'free';
-  const targets = TIER_TARGETS[tier] || TIER_TARGETS.free;
+  const today = new Date();
+  const isToday = dateStr(selectedDate) === dateStr(today);
+  const dayName = DAY_NAMES[selectedDate.getDay()].toUpperCase();
 
-  const fetchTotals = useCallback(async () => {
+  const goYesterday = () => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(d);
+  };
+  const goToday = () => setSelectedDate(new Date());
+
+  const fetchData = useCallback(async () => {
     if (!user) return;
+    const ds = dateStr(selectedDate);
     const { data } = await supabase
       .from('hand_portion_logs')
-      .select('protein_portions, veggie_portions, carb_portions, fat_portions')
+      .select('*')
       .eq('user_id', user.id)
-      .eq('date', todayStr);
+      .eq('date', ds);
+
+    const newMealData: Record<string, MealLog> = {
+      Breakfast: emptyMeal(), Lunch: emptyMeal(), Dinner: emptyMeal(),
+    };
+    const ids: Record<string, string | null> = {};
+    const expanded = new Set<string>();
 
     if (data) {
-      const sums: Record<PortionKey, number> = {
-        protein_portions: 0, veggie_portions: 0, carb_portions: 0, fat_portions: 0,
-      };
-      data.forEach((row) => {
-        (Object.keys(sums) as PortionKey[]).forEach((k) => {
-          sums[k] += (row as any)[k] || 0;
-        });
+      data.forEach((row: any) => {
+        const meal = row.meal as string;
+        if (newMealData[meal]) {
+          newMealData[meal] = {
+            protein_portions: row.protein_portions || 0,
+            carb_portions: row.carb_portions || 0,
+            fat_portions: row.fat_portions || 0,
+            veggie_portions: row.veggie_portions || 0,
+          };
+          ids[meal] = row.id;
+          const hasData = Object.values(newMealData[meal]).some(v => v > 0);
+          if (hasData) expanded.add(meal);
+        }
       });
-      setTotals(sums);
     }
-  }, [user, todayStr]);
 
-  useEffect(() => { fetchTotals(); }, [fetchTotals]);
+    // Auto-expand based on time of day if today
+    if (isToday && expanded.size === 0) {
+      const hour = today.getHours();
+      if (hour < 12) expanded.add('Breakfast');
+      else if (hour < 17) expanded.add('Lunch');
+      else expanded.add('Dinner');
+    }
 
-  const logMeal = async () => {
+    setMealData(newMealData);
+    setMealLogIds(ids);
+    setExpandedMeals(expanded);
+  }, [user, selectedDate]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const upsertMeal = async (meal: string, portions: MealLog) => {
     if (!user) return;
-    await supabase.from('hand_portion_logs').insert({
-      user_id: user.id, date: todayStr, meal,
-      ...mealPortions,
-    });
-    setShowLog(false);
-    setMealPortions({ protein_portions: 0, veggie_portions: 0, carb_portions: 0, fat_portions: 0 });
-    fetchTotals();
-    toast({ title: 'Meal logged ✓' });
+    const ds = dateStr(selectedDate);
+    const existingId = mealLogIds[meal];
+
+    if (existingId) {
+      await supabase.from('hand_portion_logs').update(portions).eq('id', existingId);
+    } else {
+      const { data } = await supabase.from('hand_portion_logs').insert({
+        user_id: user.id, date: ds, meal, ...portions,
+      }).select('id').single();
+      if (data) setMealLogIds(prev => ({ ...prev, [meal]: data.id }));
+    }
   };
 
+  const updatePortion = (meal: string, key: PortionKey, delta: number) => {
+    setMealData(prev => {
+      const updated = {
+        ...prev,
+        [meal]: {
+          ...prev[meal],
+          [key]: Math.max(0, (prev[meal]?.[key] || 0) + delta),
+        },
+      };
+      upsertMeal(meal, updated[meal]);
+      return updated;
+    });
+  };
+
+  const toggleMeal = (meal: string) => {
+    setExpandedMeals(prev => {
+      const next = new Set(prev);
+      if (next.has(meal)) next.delete(meal); else next.add(meal);
+      return next;
+    });
+  };
+
+  // Daily summary totals
+  const totals: Record<PortionKey, number> = {
+    protein_portions: 0, carb_portions: 0, fat_portions: 0, veggie_portions: 0,
+  };
+  Object.values(mealData).forEach(m => {
+    (Object.keys(totals) as PortionKey[]).forEach(k => {
+      totals[k] += m[k] || 0;
+    });
+  });
+
   return (
-    <div className="px-4 py-5 pb-32 space-y-4">
-      <div>
-        <h2 className="font-display text-2xl tracking-wide" style={{ color: 'hsl(var(--text))' }}>
-          HAND PORTIONS
-        </h2>
-        <p className="text-xs mt-1" style={{ color: 'hsl(var(--dim))' }}>
-          Andy's method — no counting, no weighing
-        </p>
+    <div className="px-4 py-5 pb-24 space-y-4">
+      {/* Day header */}
+      <div className="text-center">
+        <div style={{
+          fontFamily: "'Bebas Neue', sans-serif",
+          fontSize: 18,
+          letterSpacing: 2,
+          color: 'hsl(var(--text))',
+        }}>
+          {dayName}
+        </div>
+        <div className="flex justify-between items-center mt-1">
+          <button onClick={goYesterday} style={{ fontSize: 8, color: 'hsl(var(--dim))' }}>
+            ← Yesterday
+          </button>
+          <span style={{ fontSize: 8, color: 'hsl(var(--mid))' }}>
+            {formatShortDate(selectedDate)}
+          </span>
+          <button onClick={goToday} style={{ fontSize: 8, color: 'hsl(var(--primary))' }}>
+            Today →
+          </button>
+        </div>
       </div>
 
-      {/* Portion cards */}
-      <div className="space-y-3">
-        {PORTIONS.map((p) => {
-          const done = totals[p.key];
-          const target = targets[p.key];
-          return (
-            <div key={p.key} className="rounded-[12px] p-4 space-y-3"
-              style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))' }}>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{p.emoji}</span>
-                <div className="flex-1">
-                  <span className="font-display text-base tracking-wide" style={{ color: 'hsl(var(--text))' }}>
-                    {p.name}
-                  </span>
-                  <p className="text-[11px]" style={{ color: 'hsl(var(--dim))' }}>{p.desc}</p>
-                </div>
-                <span className="font-mono text-sm" style={{ color: 'hsl(var(--primary))' }}>
-                  {done} / {target}
-                </span>
+      {/* Daily Summary Card */}
+      <div style={{
+        background: 'hsla(192,91%,54%,0.06)',
+        border: '1px solid hsla(192,91%,54%,0.15)',
+        borderRadius: 10,
+        padding: 11,
+      }}>
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 8,
+          color: 'hsl(var(--dim))',
+          marginBottom: 8,
+        }}>
+          Daily Summary
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+          {PORTIONS.map(p => (
+            <div key={p.key} style={{
+              background: 'hsl(var(--bg3))',
+              borderRadius: 6,
+              padding: 6,
+              textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 11, marginBottom: 2 }}>{p.emoji}</div>
+              <div style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 11,
+                color: 'hsl(var(--primary))',
+                fontWeight: 600,
+              }}>
+                {totals[p.key]}
               </div>
-              {/* Dots */}
-              <div className="flex gap-2">
-                {Array.from({ length: target }, (_, i) => (
-                  <div
-                    key={i}
-                    className="w-4 h-4 rounded-full"
-                    style={{
-                      background: i < done ? 'hsl(var(--primary))' : 'hsl(var(--bg4))',
-                    }}
-                  />
+              <div style={{ fontSize: 7, color: 'hsl(var(--dim))' }}>{p.name}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Meal Cards */}
+      {MEALS.map(meal => {
+        const data = mealData[meal] || emptyMeal();
+        const isExpanded = expandedMeals.has(meal);
+        const hasData = Object.values(data).some(v => v > 0);
+
+        return (
+          <div key={meal} style={{
+            background: 'hsl(var(--bg2))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 10,
+            padding: 11,
+          }}>
+            {/* Meal header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: isExpanded ? 8 : 0,
+            }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'hsl(var(--text))' }}>
+                {meal}
+              </span>
+              {hasData && !isExpanded ? (
+                <button onClick={() => toggleMeal(meal)} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  {PORTIONS.map(p => (
+                    <span key={p.key} style={{
+                      fontSize: 7,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      color: 'hsl(var(--dim))',
+                    }}>
+                      {p.emoji}{data[p.key]}
+                    </span>
+                  ))}
+                </button>
+              ) : !isExpanded ? (
+                <button onClick={() => toggleMeal(meal)} style={{
+                  fontSize: 8,
+                  color: 'hsl(var(--dim))',
+                }}>
+                  + Log portions
+                </button>
+              ) : null}
+            </div>
+
+            {/* Expanded portion tiles */}
+            {isExpanded && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                {PORTIONS.map((p, i) => (
+                  <div key={p.key} style={{
+                    background: 'hsl(var(--bg3))',
+                    border: i === 0
+                      ? '1px solid hsla(192,91%,54%,0.2)'
+                      : '1px solid hsl(var(--border))',
+                    borderRadius: 6,
+                    padding: 5,
+                    textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: 10, marginBottom: 2 }}>{p.emoji}</div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 2,
+                    }}>
+                      <button
+                        onClick={() => updatePortion(meal, p.key, -1)}
+                        style={{
+                          background: 'hsl(var(--bg4))',
+                          borderRadius: 3,
+                          padding: '1px 5px',
+                          fontSize: 10,
+                          color: 'hsl(var(--text))',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        −
+                      </button>
+                      <span style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: 12,
+                        color: 'hsl(var(--primary))',
+                        fontWeight: 700,
+                        width: 12,
+                        textAlign: 'center',
+                      }}>
+                        {data[p.key]}
+                      </span>
+                      <button
+                        onClick={() => updatePortion(meal, p.key, 1)}
+                        style={{
+                          background: 'hsl(var(--bg4))',
+                          borderRadius: 3,
+                          padding: '1px 5px',
+                          fontSize: 10,
+                          color: 'hsl(var(--text))',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div style={{ fontSize: 6, color: 'hsl(var(--dim))', marginTop: 2 }}>
+                      {p.name}
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Log Meal button */}
-      <button
-        onClick={() => setShowLog(true)}
-        className="w-full py-3 rounded-[12px] text-sm font-semibold tracking-wider"
-        style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
-      >
-        Log Meal
-      </button>
-
-      {/* Summary bar */}
-      <div className="fixed left-0 right-0 bottom-[60px] py-3 px-4 flex justify-around z-20"
-        style={{ background: 'hsl(var(--bg2))', borderTop: '1px solid hsl(var(--border))' }}>
-        {PORTIONS.map((p) => (
-          <div key={p.key} className="text-center">
-            <span className="text-lg">{p.emoji}</span>
-            <div className="font-mono text-[11px]" style={{ color: 'hsl(var(--primary))' }}>
-              {totals[p.key]}/{targets[p.key]}
-            </div>
+            )}
           </div>
-        ))}
-      </div>
-
-      {/* Log meal sheet */}
-      {showLog && (
-        <>
-          <div className="fixed inset-0 z-[60]" style={{ background: 'hsla(0,0%,0%,0.6)' }} onClick={() => setShowLog(false)} />
-          <div className="fixed left-0 right-0 bottom-[60px] z-[70] p-5 space-y-4"
-            style={{ background: 'hsl(var(--bg2))', borderRadius: '20px 20px 0 0' }}>
-            <div className="flex justify-center">
-              <div className="rounded-full" style={{ width: 40, height: 4, background: 'hsl(var(--bg4))' }} />
-            </div>
-            <h3 className="font-display text-xl" style={{ color: 'hsl(var(--text))' }}>Log Meal</h3>
-            {/* Meal selector */}
-            <div className="flex gap-2">
-              {MEALS.map((m) => (
-                <button key={m} onClick={() => setMeal(m)}
-                  className="flex-1 py-2 rounded-[8px] text-xs font-medium"
-                  style={{
-                    background: meal === m ? 'hsl(var(--primary))' : 'hsl(var(--bg3))',
-                    color: meal === m ? 'hsl(var(--primary-foreground))' : 'hsl(var(--mid))',
-                    border: `1px solid ${meal === m ? 'transparent' : 'hsl(var(--border))'}`,
-                  }}>
-                  {m}
-                </button>
-              ))}
-            </div>
-            {/* Portion counters */}
-            <div className="space-y-3">
-              {PORTIONS.map((p) => (
-                <div key={p.key} className="flex items-center justify-between">
-                  <span className="text-sm" style={{ color: 'hsl(var(--text))' }}>{p.emoji} {p.name}</span>
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => setMealPortions((v) => ({ ...v, [p.key]: Math.max(0, v[p.key] - 1) }))}
-                      className="w-8 h-8 rounded-full flex items-center justify-center"
-                      style={{ background: 'hsl(var(--bg4))' }}>
-                      <Minus size={14} style={{ color: 'hsl(var(--text))' }} />
-                    </button>
-                    <span className="font-mono text-sm w-4 text-center" style={{ color: 'hsl(var(--primary))' }}>
-                      {mealPortions[p.key]}
-                    </span>
-                    <button onClick={() => setMealPortions((v) => ({ ...v, [p.key]: v[p.key] + 1 }))}
-                      className="w-8 h-8 rounded-full flex items-center justify-center"
-                      style={{ background: 'hsl(var(--bg4))' }}>
-                      <Plus size={14} style={{ color: 'hsl(var(--text))' }} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button onClick={logMeal}
-              className="w-full py-3 rounded-[12px] text-sm font-semibold"
-              style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}>
-              Save
-            </button>
-          </div>
-        </>
-      )}
+        );
+      })}
     </div>
   );
 };
