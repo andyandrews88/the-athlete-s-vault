@@ -99,9 +99,21 @@ const MacrosTab = () => {
             display: 'inline-flex',
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: 8,
-            background: 'hsla(142,71%,45%,0.1)',
-            color: 'hsl(var(--ok))',
-            border: '1px solid hsla(142,71%,45%,0.2)',
+            background: totals.calories === 0
+              ? 'hsl(var(--bg4))'
+              : totals.calories >= targets.calories
+                ? 'hsl(var(--bad) / 0.1)'
+                : 'hsl(var(--ok) / 0.1)',
+            color: totals.calories === 0
+              ? 'hsl(var(--dim))'
+              : totals.calories >= targets.calories
+                ? 'hsl(var(--bad))'
+                : 'hsl(var(--ok))',
+            border: totals.calories === 0
+              ? '1px solid hsl(var(--border2))'
+              : totals.calories >= targets.calories
+                ? '1px solid hsl(var(--bad) / 0.2)'
+                : '1px solid hsl(var(--ok) / 0.2)',
             borderRadius: 4,
             padding: '2px 6px',
           }}>

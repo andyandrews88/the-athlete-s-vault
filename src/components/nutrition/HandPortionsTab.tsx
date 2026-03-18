@@ -197,8 +197,9 @@ const HandPortionsTab = () => {
           {PORTIONS.map(p => (
             <div key={p.key} style={{
               background: 'hsl(var(--bg3))',
+              border: '1px solid hsl(var(--border))',
               borderRadius: 6,
-              padding: 6,
+              padding: '5px 2px',
               textAlign: 'center',
             }}>
               <div style={{ fontSize: 11, marginBottom: 2 }}>{p.emoji}</div>
