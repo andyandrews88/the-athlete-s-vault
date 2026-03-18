@@ -63,6 +63,53 @@ const formatVolume = (v: number) => {
   return String(Math.round(v));
 };
 
+/* Weekly AI Review sub-component */
+const WeeklyAIReview = ({ userId, weeklyReview, setWeeklyReview }: { userId?: string; weeklyReview: string | null; setWeeklyReview: (v: string) => void }) => {
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!userId || generating) return;
+    setGenerating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-weekly-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      if (data.summary) {
+        setWeeklyReview(data.summary);
+        toast.success('Weekly review generated');
+      } else {
+        toast.error(data.error || 'Failed to generate review');
+      }
+    } catch {
+      toast.error('Failed to generate review');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div className="bg-vault-bg2 border border-vault-border rounded-2xl p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-base">✨</span>
+        <p className="font-mono text-[10px] text-primary uppercase tracking-[2px]">WEEKLY AI REVIEW</p>
+      </div>
+      <p className="text-sm text-vault-mid leading-relaxed mb-3">{weeklyReview || "Your first weekly review generates after 7 days of training data."}</p>
+      <button
+        onClick={handleGenerate}
+        disabled={generating}
+        className="w-full bg-primary text-primary-foreground font-bold text-[10px] py-2 rounded-lg uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
+      >
+        {generating && <Loader2 size={12} className="animate-spin" />}
+        {generating ? 'Generating...' : 'Generate Review'}
+      </button>
+    </div>
+  );
+};
+
 const HomeDashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
