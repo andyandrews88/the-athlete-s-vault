@@ -119,7 +119,7 @@ const WeightTab = () => {
           {/* Recharts Line */}
           <div style={{ height: 52, width: '100%' }}>
             <ResponsiveContainer width="100%" height={52}>
-              <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+              <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
                 <defs>
                   <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsla(192,91%,54%,0.2)" />
@@ -135,9 +135,8 @@ const WeightTab = () => {
                   formatter={(v: number) => [`${v} kg`, 'Weight']}
                   labelFormatter={(l: string) => l?.slice(5) || ''}
                 />
-                <Area type="monotone" dataKey="weight" fill="url(#weightGrad)" stroke="none" />
-                <Line type="monotone" dataKey="weight" stroke="hsl(192,91%,54%)" strokeWidth={2} dot={false} />
-              </LineChart>
+                <Area type="monotone" dataKey="weight" fill="url(#weightGrad)" stroke="hsl(192,91%,54%)" strokeWidth={2} dot={false} />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
 
