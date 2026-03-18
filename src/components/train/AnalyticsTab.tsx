@@ -357,10 +357,11 @@ export const AnalyticsTab = () => {
             <div className="flex items-end gap-1" style={{ height: 80 }}>
               {weeklyData.slice(-8).map((d, i, arr) => {
                 const h = maxNtu > 0 ? (d.ntu / maxNtu) * 100 : 0;
-                const opacity = 0.3 + (i / (arr.length - 1)) * 0.7;
+                const isLast = i === arr.length - 1;
+                const opacity = isLast ? 1 : 0.25 + (i / (arr.length - 1)) * 0.75;
                 return (
                   <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                    <div style={{ width: '100%', height: `${Math.max(h, 2)}%`, background: `hsla(192,91%,54%,${opacity})`, borderRadius: '3px 3px 0 0' }} />
+                    <div style={{ width: '100%', height: `${Math.max(h, 2)}%`, background: `hsla(192,91%,54%,${opacity})`, borderRadius: '3px 3px 0 0', ...(isLast ? { filter: 'drop-shadow(0 0 4px hsl(192,91%,54%))' } : {}) }} />
                   </div>
                 );
               })}
