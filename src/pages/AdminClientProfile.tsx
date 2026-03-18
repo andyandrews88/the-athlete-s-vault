@@ -412,6 +412,7 @@ const AdminClientProfile = () => {
   }
 
   return (
+    <AdminLayout>
     <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: 16, paddingBottom: 80 }}>
       {/* TOP BAR */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
