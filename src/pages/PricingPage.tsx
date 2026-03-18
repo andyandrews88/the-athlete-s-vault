@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { Check, ArrowLeft } from 'lucide-react';
 
 const plans = [
   {
