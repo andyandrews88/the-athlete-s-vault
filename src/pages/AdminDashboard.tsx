@@ -175,6 +175,7 @@ const AdminDashboard = () => {
   ];
 
   return (
+    <AdminLayout>
     <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: '16px', paddingBottom: 80 }}>
       {/* TOP BAR */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>

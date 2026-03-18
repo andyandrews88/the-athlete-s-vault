@@ -255,11 +255,11 @@ const AdminWorkoutBuilder = () => {
   };
 
   return (
+    <AdminLayout>
     <div style={{ minHeight: '100vh', background: 'hsl(var(--bg))', paddingBottom: 32 }}>
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 12px', borderBottom: '1px solid hsl(var(--border))' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => navigate('/admin')} style={{ background: 'none', border: 'none', color: 'hsl(var(--dim))', cursor: 'pointer' }}><ArrowLeft size={20} /></button>
           <span style={{ ...bebas, fontSize: 24, color: 'hsl(var(--text))' }}>WORKOUT BUILDER</span>
         </div>
         <span style={{ ...mono, fontSize: 8, padding: '2px 8px', borderRadius: 4, background: 'hsla(192,91%,54%,0.1)', color: 'hsl(var(--primary))', border: '1px solid hsla(192,91%,54%,0.2)', textTransform: 'uppercase', letterSpacing: 1 }}>ADMIN</span>

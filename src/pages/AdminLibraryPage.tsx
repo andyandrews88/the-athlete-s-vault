@@ -606,12 +606,10 @@ const AdminLibraryPage = () => {
   const totalPages = Math.ceil(exerciseTotal / EXERCISE_PAGE_SIZE);
 
   return (
+    <AdminLayout>
     <div className="min-h-screen pb-24" style={{ background: 'hsl(var(--bg))' }}>
       {/* Top bar */}
       <div className="px-4 pt-4 pb-3 flex items-center gap-3">
-        <button onClick={() => navigate('/admin')} className="p-1">
-          <ArrowLeft size={20} style={{ color: 'hsl(var(--dim))' }} />
-        </button>
         <h1 className="font-display text-[24px] tracking-wide" style={{ color: 'hsl(var(--text))' }}>LIBRARY ADMIN</h1>
         <span className="ml-auto font-mono text-[8px] px-2 py-0.5 rounded font-bold" style={{ background: 'hsl(var(--primary)/0.1)', color: 'hsl(var(--primary))', border: '1px solid hsl(var(--primary)/0.2)' }}>ADMIN</span>
       </div>
