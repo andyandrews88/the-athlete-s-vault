@@ -349,7 +349,7 @@ export const AnalyticsTab = () => {
       {/* 2. WEEKLY VOLUME */}
       <ChartCard
         label="Weekly Volume"
-        badge={<span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, fontWeight: 700, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', padding: '2px 6px', borderRadius: 4, border: '1px solid hsla(192,91%,54%,0.25)', display: 'inline-block' }}>NTU</span>}
+        badge={<span style={{ display: 'inline-flex', fontFamily: 'JetBrains Mono, monospace', fontSize: 8, fontWeight: 700, background: 'hsla(192,91%,54%,0.15)', color: 'hsl(192,91%,54%)', padding: '2px 6px', borderRadius: 4, border: '1px solid hsla(192,91%,54%,0.25)', width: 'auto' }}>NTU</span>}
       >
         {weeklyData.some(d => d.ntu > 0) ? (
           <>
