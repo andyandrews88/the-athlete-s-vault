@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Pencil } from 'lucide-react';
 import { format, subDays } from 'date-fns';
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 
 interface WeightLog { id: string; date: string; weight_kg: number; }
 
