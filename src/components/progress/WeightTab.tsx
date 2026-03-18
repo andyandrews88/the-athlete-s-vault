@@ -63,7 +63,7 @@ const WeightTab = () => {
   const weekAvg = last7.length ? (last7.reduce((s, l) => s + l.weight_kg, 0) / last7.length).toFixed(1) : null;
   const latestWeight = logs[0]?.weight_kg;
   const startWeight = logs.length > 0 ? logs[logs.length - 1]?.weight_kg : null;
-  const weightChange = logs.length >= 2 ? logs[0].weight_kg - logs[1].weight_kg : 0;
+  const weightChange = logs.length >= 2 ? logs[0].weight_kg - logs[logs.length - 1].weight_kg : 0;
 
   // Chart data (last 12 weeks, ascending)
   const chartData = [...logs].reverse().slice(-84).map(d => ({
