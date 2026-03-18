@@ -148,8 +148,8 @@ const WeightTab = () => {
               <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'hsl(var(--dim))' }}>{startWeight ?? '—'}</span>
             </div>
             <div className="text-center">
-              <span className="text-[7px] font-mono block" style={{ color: 'hsl(var(--dim))' }}>Current</span>
-              <span className="text-xs font-mono" style={{ color: 'hsl(var(--primary))' }}>{latestWeight ?? '—'}</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', display: 'block' }}>Current</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'hsl(var(--primary))' }}>{latestWeight ?? '—'}</span>
             </div>
             <div className="text-center">
               <span className="text-[7px] font-mono block" style={{ color: 'hsl(var(--dim))' }}>7-Day Avg</span>
