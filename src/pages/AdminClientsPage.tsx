@@ -283,6 +283,7 @@ const AdminClientsPage = () => {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 };
 

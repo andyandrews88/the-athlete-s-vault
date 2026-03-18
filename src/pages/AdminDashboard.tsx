@@ -338,6 +338,7 @@ const AdminDashboard = () => {
           }}>View All Clients</button>
       </div>
     </div>
+    </AdminLayout>
   );
 };
 
