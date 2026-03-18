@@ -123,6 +123,23 @@ const AuditResults = () => {
       });
   }, [tier]);
 
+  // Fetch AI recommendations
+  useEffect(() => {
+    if (!user) return;
+    setAiLoading(true);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-audit-recommendations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ userId: user.id, auditData: { score, tier, strengthScore, engineScore, movementScore, lifestyleScore, nutritionScore } }),
+      })
+        .then(r => r.json())
+        .then(data => { if (!data.error) setAiRecs(data); })
+        .catch(() => {})
+        .finally(() => setAiLoading(false));
+    });
+  }, [user, score, tier, strengthScore, engineScore, movementScore, lifestyleScore, nutritionScore]);
+
   const handleEnrol = async () => {
     if (!user || !recProgramme) return;
     setEnrolling(true);
