@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Dumbbell, BookOpen, TrendingUp, MoreHorizontal, Leaf, Apple, Users, User, Settings, Gift, Briefcase } from 'lucide-react';
+import { Home, Dumbbell, BookOpen, TrendingUp, MoreHorizontal, Leaf, Apple, Users, User, Settings, Gift, Briefcase, Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const navTabs = [
   { path: '/home', label: 'Home', icon: Home },
@@ -25,7 +26,16 @@ const VISIBLE_ROUTES = ['/home', '/train', '/library', '/progress', '/lifestyle'
 export const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  const gridItems = useMemo(() => {
+    if (isAdmin) {
+      return [{ path: '/admin', label: 'Admin', icon: Shield, isAdmin: true }, ...moreItems];
+    }
+    return moreItems;
+  }, [isAdmin]);
 
   const handleMoreTap = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -74,20 +84,20 @@ export const BottomNav = () => {
 
         {/* 2×3 grid */}
         <div className="grid grid-cols-3 gap-3 px-5 pb-6">
-          {moreItems.map((item) => (
+          {gridItems.map((item) => (
             <button
               key={item.path}
               onClick={() => handleItemTap(item.path)}
               className="flex flex-col items-center justify-center gap-2 rounded-[12px] p-4 transition-colors active:opacity-70"
               style={{
                 background: 'hsl(var(--bg3))',
-                border: '1px solid hsl(var(--border))',
+                border: `1px solid hsl(var(--${'isAdmin' in item && item.isAdmin ? 'warn' : 'border'}))`,
               }}
             >
-              <item.icon size={24} className="text-primary" />
+              <item.icon size={24} style={{ color: 'isAdmin' in item && item.isAdmin ? 'hsl(var(--warn))' : 'hsl(var(--primary))' }} />
               <span
                 className="font-medium text-center leading-tight"
-                style={{ fontSize: 11, color: 'hsl(var(--mid))', fontFamily: 'Inter, sans-serif' }}
+                style={{ fontSize: 11, color: 'isAdmin' in item && item.isAdmin ? 'hsl(var(--warn))' : 'hsl(var(--mid))', fontFamily: 'Inter, sans-serif' }}
               >
                 {item.label}
               </span>
