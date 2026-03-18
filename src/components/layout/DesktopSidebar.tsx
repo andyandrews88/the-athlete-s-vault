@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Dumbbell, BookOpen, TrendingUp, Leaf, Users, Shield, UserCog, LogOut } from 'lucide-react';
+import { Home, Dumbbell, BookOpen, TrendingUp, Leaf, Users, Shield, UserCog, LogOut, Bot, Briefcase, User, Settings, Gift } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminRole } from '@/hooks/useAdminRole';
 import logo from '@/assets/logo.png';
@@ -11,6 +11,17 @@ const navItems = [
   { path: '/progress', label: 'Progress', icon: TrendingUp },
   { path: '/lifestyle', label: 'Lifestyle', icon: Leaf },
   { path: '/community', label: 'Community', icon: Users },
+];
+
+const secondaryItems = [
+  { path: '/ai', label: 'AI Coach', icon: Bot },
+  { path: '/my-coaching', label: 'My Coaching', icon: Briefcase },
+];
+
+const bottomItems = [
+  { path: '/profile', label: 'Profile', icon: User },
+  { path: '/settings', label: 'Settings', icon: Settings },
+  { path: '/referral', label: 'Refer a Friend', icon: Gift },
 ];
 
 const adminItems = [
@@ -57,7 +68,47 @@ export const DesktopSidebar = () => {
             </NavLink>
           );
         })}
+        {/* Divider + secondary items */}
+        <div className="my-2 mx-3 border-t border-border" />
+        {secondaryItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                isActive
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              <item.icon size={18} strokeWidth={isActive ? 2.2 : 1.5} />
+              <span>{item.label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
+
+      {/* Bottom nav items */}
+      <div className="px-3 py-2 border-t border-border space-y-1">
+        {bottomItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                isActive
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              <item.icon size={18} strokeWidth={isActive ? 2.2 : 1.5} />
+              <span>{item.label}</span>
+            </NavLink>
+          );
+        })}
+      </div>
 
       {/* Admin section */}
       {isAdmin && (
