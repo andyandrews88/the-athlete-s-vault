@@ -141,7 +141,12 @@ const AdminLibraryPage = () => {
     setExerciseTotal(count ?? 0);
   }, [exerciseSearch, exercisePage]);
 
-  useEffect(() => { loadData(); loadAnnouncements(); }, [loadData, loadAnnouncements]);
+  const loadChannels = useCallback(async () => {
+    const { data } = await supabase.from('channels').select('*').order('created_at');
+    if (data) setCommunityChannels(data as CommunityChannel[]);
+  }, []);
+
+  useEffect(() => { loadData(); loadAnnouncements(); loadChannels(); }, [loadData, loadAnnouncements, loadChannels]);
   useEffect(() => { loadExercises(); }, [loadExercises]);
 
   const autoFillFromYouTube = async (inputUrl: string) => {
