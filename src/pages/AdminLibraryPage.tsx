@@ -100,6 +100,15 @@ const AdminLibraryPage = () => {
   const [exerciseSearch, setExerciseSearch] = useState('');
   const [exercisePage, setExercisePage] = useState(0);
   const [exerciseTotal, setExerciseTotal] = useState(0);
+
+  // Community channels
+  const [communityChannels, setCommunityChannels] = useState<CommunityChannel[]>([]);
+  const [newChannelName, setNewChannelName] = useState('');
+  const [newChannelColor, setNewChannelColor] = useState('primary');
+  const [editingChannelId, setEditingChannelId] = useState<string | null>(null);
+  const [editChannelName, setEditChannelName] = useState('');
+
+  const EXERCISE_PAGE_SIZE = 20;
   const EXERCISE_PAGE_SIZE = 20;
 
   const loadData = useCallback(async () => {
