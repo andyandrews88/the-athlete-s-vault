@@ -53,7 +53,7 @@ const App = () => (
             <Route path="/nutrition" element={<ProtectedRoute><NutritionPage /></ProtectedRoute>} />
             <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
             <Route path="/library" element={<ProtectedRoute><LibraryPage /></ProtectedRoute>} />
-            <Route path="/community" element={<ProtectedRoute><StubPage icon={Users} name="Community" /></ProtectedRoute>} />
+            <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><StubPage icon={Users} name="Profile" /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><StubPage icon={Users} name="Settings" /></ProtectedRoute>} />
             <Route path="/referral" element={<ProtectedRoute><StubPage icon={Users} name="Refer a Friend" /></ProtectedRoute>} />
