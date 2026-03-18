@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Check, Plus } from 'lucide-react';
@@ -36,7 +36,6 @@ const HabitsTab = () => {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
-  // Get Monday of current week
   const getWeekDates = useCallback(() => {
     const d = new Date(today);
     const day = d.getDay();
@@ -62,7 +61,6 @@ const HabitsTab = () => {
       .order('created_at');
 
     if (h && h.length === 0) {
-      // Seed default habits
       const inserts = DEFAULT_HABITS.map((dh) => ({
         user_id: user.id,
         name: dh.subtitle ? `${dh.name} — ${dh.subtitle}` : dh.name,
@@ -75,7 +73,6 @@ const HabitsTab = () => {
       setHabits(h);
     }
 
-    // Fetch completions for this week
     const { data: c } = await supabase
       .from('habit_completions')
       .select('habit_id, date, completed')
@@ -87,6 +84,16 @@ const HabitsTab = () => {
   }, [user, weekDates]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Deduplicate habits by id
+  const uniqueHabits = useMemo(() => {
+    const seen = new Set<string>();
+    return habits.filter((h) => {
+      if (seen.has(h.id)) return false;
+      seen.add(h.id);
+      return true;
+    });
+  }, [habits]);
 
   const toggleCompletion = async (habitId: string) => {
     if (!user) return;
@@ -140,38 +147,61 @@ const HabitsTab = () => {
         NON-NEGOTIABLES
       </h2>
 
-      {/* Habit rows */}
-      <div className="space-y-2">
-        {habits.map((habit) => {
+      {/* Habit rows — compact list with dividers */}
+      <div style={{ background: 'hsl(var(--bg2))', borderRadius: 10, overflow: 'hidden' }}>
+        {uniqueHabits.map((habit, idx) => {
           const done = isTodayCompleted(habit.id);
           const streak = getStreak(habit.id);
           return (
             <button
               key={habit.id}
               onClick={() => toggleCompletion(habit.id)}
-              className="w-full flex items-center gap-3 p-3 rounded-[12px] transition-all text-left"
+              className="w-full text-left"
               style={{
-                background: done ? 'hsla(var(--pgb), 0.15)' : 'hsl(var(--bg3))',
-                border: `1px solid ${done ? 'hsla(var(--ok), 0.3)' : 'hsl(var(--border))'}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 14px',
+                background: done ? 'hsl(var(--pgb))' : 'hsl(var(--bg2))',
+                borderBottom: idx < uniqueHabits.length - 1
+                  ? `1px solid ${done ? 'hsla(192,91%,54%,0.15)' : 'hsl(var(--border))'}`
+                  : 'none',
               }}
             >
+              {/* Checkbox */}
               <div
-                className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
                 style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 4,
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   background: done ? 'hsl(var(--ok))' : 'transparent',
                   border: done ? 'none' : '2px solid hsl(var(--border2))',
                 }}
               >
-                {done && <Check size={14} style={{ color: 'hsl(var(--primary-foreground))' }} />}
+                {done && <Check size={12} color="white" />}
               </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm" style={{ color: 'hsl(var(--text))' }}>
+
+              {/* Name */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'hsl(var(--text))' }}>
                   {habit.emoji} {habit.name}
                 </span>
               </div>
+
+              {/* Streak badge */}
               {streak > 0 && (
-                <span className="font-mono text-xs px-2 py-0.5 rounded-full shrink-0"
-                  style={{ background: 'hsla(var(--primary), 0.15)', color: 'hsl(var(--primary))' }}>
+                <span
+                  className="font-mono"
+                  style={{
+                    fontSize: 9,
+                    color: 'hsl(var(--warn))',
+                    flexShrink: 0,
+                  }}
+                >
                   🔥 {streak}d
                 </span>
               )}
@@ -187,7 +217,7 @@ const HabitsTab = () => {
           {dayLabels.map((d, i) => (
             <span key={i} className="text-[10px] text-center" style={{ color: 'hsl(var(--dim))' }}>{d}</span>
           ))}
-          {habits.map((habit) => (
+          {uniqueHabits.map((habit) => (
             <div key={habit.id} className="contents">
               <span className="text-[11px] truncate pr-2" style={{ color: 'hsl(var(--mid))' }}>
                 {habit.emoji}
