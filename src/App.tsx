@@ -29,6 +29,8 @@ import ProgressPage from "./pages/ProgressPage";
 import MyCoachingPage from "./pages/MyCoachingPage";
 import CommunityPage from "./pages/CommunityPage";
 import AIChatPage from "./pages/AIChatPage";
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
 import StubPage from "./pages/stubs/StubPage";
 import NotFound from "./pages/NotFound";
 
