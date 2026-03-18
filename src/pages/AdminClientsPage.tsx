@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Search, Users } from 'lucide-react';
+import { Search, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 
 interface ClientRow {
   id: string;
