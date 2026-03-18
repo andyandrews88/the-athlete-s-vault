@@ -1,14 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Trash2, MessageCircle, X } from 'lucide-react';
+import { MessageCircle, X, Camera } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const MACROS = [
-  { key: 'protein_g', label: 'Protein', unit: 'g' },
-  { key: 'carbs_g', label: 'Carbs', unit: 'g' },
-  { key: 'fat_g', label: 'Fat', unit: 'g' },
-  { key: 'calories', label: 'Calories', unit: '' },
+  { key: 'protein_g', label: 'Protein', unit: 'g', color: 'hsl(var(--primary))' },
+  { key: 'carbs_g', label: 'Carbs', unit: 'g', color: 'hsl(var(--warn))' },
+  { key: 'fat_g', label: 'Fat', unit: 'g', color: 'hsl(var(--ok))' },
 ] as const;
 
 type MacroKey = typeof MACROS[number]['key'];
@@ -23,25 +22,28 @@ interface MacroLog {
   fat_g: number;
 }
 
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MEALS = ['Breakfast', 'Lunch', 'Dinner'] as const;
+
 const MacrosTab = () => {
   const { user } = useAuth();
-  const [targets, setTargets] = useState({ protein_g: 150, carbs_g: 200, fat_g: 70, calories: 2200 });
+  const [targets, setTargets] = useState({ protein_g: 150, carbs_g: 200, fat_g: 70, calories: 2400 });
   const [logs, setLogs] = useState<MacroLog[]>([]);
   const [showAI, setShowAI] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const todayStr = new Date().toISOString().split('T')[0];
+  const dayName = DAY_NAMES[new Date().getDay()];
 
   const fetchData = useCallback(async () => {
     if (!user) return;
-    // Targets
     const { data: t } = await supabase
       .from('nutrition_targets')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
-    if (t) setTargets({ protein_g: t.protein_g ?? 150, carbs_g: t.carbs_g ?? 200, fat_g: t.fat_g ?? 70, calories: t.calories ?? 2200 });
+    if (t) setTargets({ protein_g: t.protein_g ?? 150, carbs_g: t.carbs_g ?? 200, fat_g: t.fat_g ?? 70, calories: t.calories ?? 2400 });
 
-    // Logs
     const { data: l } = await supabase
       .from('macro_logs')
       .select('*')
@@ -69,87 +71,194 @@ const MacrosTab = () => {
     toast({ title: 'Entry removed' });
   };
 
-  // Group logs by meal
   const grouped = logs.reduce<Record<string, MacroLog[]>>((acc, l) => {
     (acc[l.meal] = acc[l.meal] || []).push(l);
     return acc;
   }, {});
 
   return (
-    <div className="px-4 py-5 pb-24 space-y-6">
-      {/* Targets header */}
-      <div className="flex justify-around py-3 rounded-[12px]"
-        style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))' }}>
-        {MACROS.map((m) => (
-          <div key={m.key} className="text-center">
-            <div className="font-mono text-sm" style={{ color: 'hsl(var(--primary))' }}>
-              {targets[m.key]}{m.unit}
-            </div>
-            <div className="text-[10px]" style={{ color: 'hsl(var(--dim))' }}>{m.label}</div>
-          </div>
-        ))}
-      </div>
+    <div className="px-4 py-5 pb-24 space-y-4">
+      {/* Daily Summary Card */}
+      <div style={{
+        background: 'hsla(192,91%,54%,0.06)',
+        border: '1px solid hsla(192,91%,54%,0.15)',
+        borderRadius: 10,
+        padding: 11,
+      }}>
+        {/* Header row */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 10,
+        }}>
+          <span style={{ fontSize: 9, fontWeight: 600, color: 'hsl(var(--text))' }}>
+            {dayName}
+          </span>
+          <span style={{
+            display: 'inline-flex',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 8,
+            background: 'hsla(142,71%,45%,0.1)',
+            color: 'hsl(var(--ok))',
+            border: '1px solid hsla(142,71%,45%,0.2)',
+            borderRadius: 4,
+            padding: '2px 6px',
+          }}>
+            {Math.round(totals.calories).toLocaleString()} / {targets.calories.toLocaleString()} kcal
+          </span>
+        </div>
 
-      {/* Search placeholder */}
-      <div className="rounded-[12px] p-3 text-center text-xs"
-        style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--dim))' }}>
-        Search coming soon — Nutritionix API key needed
-      </div>
-
-      {/* Progress bars */}
-      <div className="space-y-3">
-        {MACROS.map((m) => {
-          const current = totals[m.key];
-          const target = targets[m.key];
-          const pct = Math.min((current / target) * 100, 100);
-          const remaining = Math.max(target - current, 0);
-          return (
-            <div key={m.key} className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span style={{ color: 'hsl(var(--mid))' }}>{m.label}</span>
-                <span className="font-mono" style={{ color: 'hsl(var(--primary))' }}>
-                  {Math.round(current)}{m.unit} / {remaining}{m.unit} left
-                </span>
-              </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ background: 'hsl(var(--bg4))' }}>
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${pct}%`, background: 'hsl(var(--primary))' }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Meal log */}
-      {Object.entries(grouped).map(([mealName, entries]) => (
-        <div key={mealName} className="space-y-2">
-          <h4 className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'hsl(var(--dim))' }}>
-            {mealName}
-          </h4>
-          {entries.map((entry) => (
-            <div key={entry.id} className="flex items-center gap-3 p-3 rounded-[10px]"
-              style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))' }}>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm truncate" style={{ color: 'hsl(var(--text))' }}>{entry.food_name}</div>
-                <div className="text-[10px] font-mono" style={{ color: 'hsl(var(--dim))' }}>
-                  P:{Math.round(entry.protein_g)}g C:{Math.round(entry.carbs_g)}g F:{Math.round(entry.fat_g)}g · {Math.round(entry.calories)}cal
+        {/* 3-column macro summary */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          {MACROS.map(m => {
+            const current = Math.round(totals[m.key]);
+            const target = targets[m.key];
+            const pct = Math.min((current / target) * 100, 100);
+            return (
+              <div key={m.key}>
+                <div style={{ fontSize: 7, color: 'hsl(var(--dim))', marginBottom: 2 }}>
+                  {m.label}
+                </div>
+                <div style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: m.color,
+                }}>
+                  {current}{m.unit}
+                </div>
+                <div style={{
+                  height: 3,
+                  borderRadius: 2,
+                  background: 'hsl(var(--bg4))',
+                  marginTop: 4,
+                  marginBottom: 2,
+                }}>
+                  <div style={{
+                    height: '100%',
+                    borderRadius: 2,
+                    width: `${pct}%`,
+                    background: m.color,
+                    transition: 'width 0.4s',
+                  }} />
+                </div>
+                <div style={{ fontSize: 7, color: 'hsl(var(--dim))' }}>
+                  / {target}{m.unit}
                 </div>
               </div>
-              <button onClick={() => deleteLog(entry.id)} className="p-1 shrink-0">
-                <Trash2 size={14} style={{ color: 'hsl(var(--bad))' }} />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      ))}
+      </div>
 
-      {logs.length === 0 && (
-        <p className="text-center text-sm py-8" style={{ color: 'hsl(var(--dim))' }}>
-          No meals logged today.
-        </p>
-      )}
+      {/* Food Search Row */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <input
+          type="text"
+          placeholder="🔍 Search food..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            flex: 1,
+            background: 'hsl(var(--bg3))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 7,
+            padding: '5px 8px',
+            fontSize: 9,
+            color: 'hsl(var(--text))',
+            outline: 'none',
+          }}
+        />
+        <button style={{
+          background: 'hsl(var(--primary))',
+          color: 'hsl(220,16%,6%)',
+          borderRadius: 7,
+          padding: '5px 7px',
+          fontSize: 10,
+          border: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+        }}>
+          <Camera size={12} />
+        </button>
+      </div>
+
+      {/* Meal Sections */}
+      {MEALS.map(meal => {
+        const entries = grouped[meal] || [];
+        return (
+          <div key={meal} style={{
+            background: 'hsl(var(--bg2))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 10,
+            padding: 11,
+          }}>
+            <div style={{
+              fontSize: 9,
+              fontWeight: 600,
+              color: 'hsl(var(--text))',
+              marginBottom: 7,
+            }}>
+              {meal}
+            </div>
+
+            {entries.map((entry, i) => (
+              <div key={entry.id} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 0',
+                borderBottom: i < entries.length - 1
+                  ? '1px solid hsl(var(--border))'
+                  : 'none',
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 10, fontWeight: 500, color: 'hsl(var(--text))' }}>
+                    {entry.food_name}
+                  </div>
+                  <div style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 8,
+                    color: 'hsl(var(--dim))',
+                  }}>
+                    {Math.round(entry.calories)} kcal · P{Math.round(entry.protein_g)} C{Math.round(entry.carbs_g)} F{Math.round(entry.fat_g)}
+                  </div>
+                </div>
+                <button
+                  onClick={() => deleteLog(entry.id)}
+                  style={{
+                    color: 'hsl(var(--dim))',
+                    fontSize: 10,
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 2,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+
+            {/* Add to meal button */}
+            <button style={{
+              width: '100%',
+              marginTop: entries.length > 0 ? 8 : 0,
+              border: '1px solid hsla(192,91%,54%,0.3)',
+              color: 'hsl(var(--primary))',
+              background: 'transparent',
+              padding: 5,
+              fontSize: 8,
+              borderRadius: 8,
+              cursor: 'pointer',
+            }}>
+              + Add to {meal}
+            </button>
+          </div>
+        );
+      })}
 
       {/* AI FAB */}
       <button

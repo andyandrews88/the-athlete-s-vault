@@ -2,14 +2,17 @@ import { useState } from 'react';
 import HandPortionsTab from '@/components/nutrition/HandPortionsTab';
 import MacrosTab from '@/components/nutrition/MacrosTab';
 
-const TABS = ['HAND PORTIONS', 'MACROS'] as const;
+const TABS = ['Hand Portions', 'Macro Tracking'] as const;
 
 const NutritionPage = () => {
-  const [tab, setTab] = useState<typeof TABS[number]>('HAND PORTIONS');
+  const [tab, setTab] = useState<typeof TABS[number]>('Hand Portions');
 
   return (
     <div className="min-h-screen pb-[60px]" style={{ background: 'hsl(var(--bg))' }}>
-      <div className="sticky top-0 z-30 flex" style={{ background: 'hsl(var(--bg))', borderBottom: '1px solid hsl(var(--border))' }}>
+      <div
+        className="sticky top-0 z-30 flex"
+        style={{ background: 'hsl(var(--bg))', borderBottom: '1px solid hsl(var(--border))' }}
+      >
         {TABS.map((t) => (
           <button
             key={t}
@@ -25,8 +28,8 @@ const NutritionPage = () => {
         ))}
       </div>
 
-      {tab === 'HAND PORTIONS' && <HandPortionsTab />}
-      {tab === 'MACROS' && <MacrosTab />}
+      {tab === 'Hand Portions' && <HandPortionsTab />}
+      {tab === 'Macro Tracking' && <MacrosTab />}
     </div>
   );
 };
