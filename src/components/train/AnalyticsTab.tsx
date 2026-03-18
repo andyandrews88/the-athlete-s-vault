@@ -57,7 +57,7 @@ export const AnalyticsTab = () => {
   const { user } = useAuth();
   const [weeklyData, setWeeklyData] = useState<WeekData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedStrengthExercise, setSelectedStrengthExercise] = useState<string>('Back Squat');
+  const [selectedStrengthExercise, setSelectedStrengthExercise] = useState<string>('');
   const [availableExercises, setAvailableExercises] = useState<string[]>([]);
   const [showExPicker, setShowExPicker] = useState(false);
   // Heatmap: 12 weeks × 7 days
@@ -65,8 +65,27 @@ export const AnalyticsTab = () => {
 
   useEffect(() => {
     if (!user) return;
+    loadExerciseOptions();
     loadData();
   }, [user]);
+
+  const loadExerciseOptions = async () => {
+    if (!user) return;
+    const { data: prs } = await supabase
+      .from('personal_records')
+      .select('exercise_id, achieved_at, exercises(name)')
+      .eq('user_id', user.id)
+      .order('achieved_at', { ascending: false }) as any;
+    if (prs?.length) {
+      const names = Array.from(new Set(prs.map((pr: any) => pr.exercises?.name).filter(Boolean))) as string[];
+      setAvailableExercises(names.sort());
+      if (!selectedStrengthExercise) {
+        setSelectedStrengthExercise(prs[0].exercises?.name || names[0] || 'Back Squat');
+      }
+    } else {
+      if (!selectedStrengthExercise) setSelectedStrengthExercise('Back Squat');
+    }
+  };
 
   const loadData = async () => {
     if (!user) return;
