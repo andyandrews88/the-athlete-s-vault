@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Dumbbell, BookOpen, TrendingUp, Leaf, Users, Shield, UserCog, LogOut } from 'lucide-react';
+import { Home, Dumbbell, BookOpen, TrendingUp, Leaf, Users, Shield, UserCog, LogOut, Bot, Briefcase, User, Settings, Gift } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminRole } from '@/hooks/useAdminRole';
 import logo from '@/assets/logo.png';
@@ -11,6 +11,17 @@ const navItems = [
   { path: '/progress', label: 'Progress', icon: TrendingUp },
   { path: '/lifestyle', label: 'Lifestyle', icon: Leaf },
   { path: '/community', label: 'Community', icon: Users },
+];
+
+const secondaryItems = [
+  { path: '/ai', label: 'AI Coach', icon: Bot },
+  { path: '/my-coaching', label: 'My Coaching', icon: Briefcase },
+];
+
+const bottomItems = [
+  { path: '/profile', label: 'Profile', icon: User },
+  { path: '/settings', label: 'Settings', icon: Settings },
+  { path: '/referral', label: 'Refer a Friend', icon: Gift },
 ];
 
 const adminItems = [
