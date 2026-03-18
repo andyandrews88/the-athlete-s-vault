@@ -90,6 +90,8 @@ const AuditResults = () => {
   const { user, profile, refetchProfile } = useAuth();
   const [enrolling, setEnrolling] = useState(false);
   const [recProgramme, setRecProgramme] = useState<{ id: string; name: string; description: string | null; days: number } | null>(null);
+  const [aiRecs, setAiRecs] = useState<any>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const state = location.state as any;
   const score = state?.score ?? profile?.audit_score ?? 0;
