@@ -390,6 +390,7 @@ const AdminClientProfile = () => {
 
   if (loading && !profile) {
     return (
+      <AdminLayout>
       <div style={{ background: 'hsl(var(--bg))', minHeight: '100vh', padding: 16, display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 60 }}>
         <div style={{ height: 20, width: '50%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
         <div style={{ height: 14, width: '100%', background: 'hsl(var(--bg3))', borderRadius: 8 }} className="animate-pulse" />
