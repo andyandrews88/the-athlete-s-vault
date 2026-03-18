@@ -282,6 +282,7 @@ const AdminBusinessDashboard = () => {
         </div>
       </div>
     </div>
+    </AdminLayout>
   );
 };
 

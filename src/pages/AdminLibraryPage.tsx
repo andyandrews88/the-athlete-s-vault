@@ -953,6 +953,7 @@ const AdminLibraryPage = () => {
         </SheetContent>
       </Sheet>
     </div>
+    </AdminLayout>
   );
 };
 

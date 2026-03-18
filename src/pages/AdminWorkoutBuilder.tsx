@@ -474,6 +474,7 @@ const AdminWorkoutBuilder = () => {
         </SheetContent>
       </Sheet>
     </div>
+    </AdminLayout>
   );
 };
 
