@@ -561,7 +561,10 @@ const CommunityPage = () => {
         background: 'transparent', border: 'none', textAlign: 'left', width: '100%',
       }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: COLOR_MAP.gold }} />
-        <span style={{ fontSize: 8, fontFamily: 'Inter', color: 'hsl(45,93%,58%)' }}>Andy</span>
+        <span style={{ fontSize: 11, fontFamily: 'Inter', color: 'hsl(45,93%,58%)' }}>Andy</span>
+      </button>
+    </div>
+  );
       </button>
       {!isAdmin && (
         <p style={{ fontFamily: 'Inter', fontSize: 10, color: 'hsl(215,14%,50%)', padding: '4px 7px' }}>
