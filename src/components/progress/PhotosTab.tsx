@@ -13,6 +13,7 @@ const PhotosTab = () => {
   const { user } = useAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [compareAngle, setCompareAngle] = useState<string>('front');
 
   const fetchPhotos = useCallback(async () => {
     if (!user) return;
@@ -24,7 +25,6 @@ const PhotosTab = () => {
       .limit(60);
     if (!data) return;
 
-    // Get signed URLs for each photo
     const withUrls = await Promise.all(
       (data as any[]).map(async (p: any) => {
         const { data: urlData } = await supabase.storage
@@ -79,9 +79,108 @@ const PhotosTab = () => {
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayPhotos = byDate[today] || [];
 
+  // Comparison: oldest and newest for selected angle
+  const anglePhotos = photos.filter(p => p.angle === compareAngle && p.url);
+  const oldestPhoto = anglePhotos.length > 0 ? anglePhotos[anglePhotos.length - 1] : null;
+  const newestPhoto = anglePhotos.length > 1 ? anglePhotos[0] : null;
+
+  // Timeline: last 8 photos
+  const timelinePhotos = photos.filter(p => p.url).slice(0, 8);
+
   return (
     <div className="px-4 py-5 pb-24 space-y-5">
-      {/* Upload cards */}
+      {/* Side-by-Side Comparison */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[8px] font-mono tracking-wider" style={{ color: 'hsl(var(--dim))' }}>Side-by-Side</span>
+          <div className="flex gap-1">
+            {ANGLES.map(a => (
+              <button
+                key={a}
+                onClick={() => setCompareAngle(a)}
+                className="px-2.5 py-1 rounded text-[8px] font-semibold capitalize"
+                style={{
+                  background: compareAngle === a ? 'hsl(var(--primary))' : 'hsl(var(--bg3))',
+                  color: compareAngle === a ? 'hsl(220,16%,6%)' : 'hsl(var(--dim))',
+                  border: compareAngle === a ? 'none' : '1px solid hsl(var(--border))',
+                }}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {/* Before */}
+          <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '3/4', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))' }}>
+            {oldestPhoto?.url ? (
+              <>
+                <img src={oldestPhoto.url} alt="Before" className="w-full h-full object-cover" />
+                <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[7px] font-mono" style={{ background: 'hsla(0,0%,0%,0.7)', color: 'hsl(var(--dim))' }}>
+                  {format(new Date(oldestPhoto.date), 'dd MMM')}
+                </span>
+              </>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span style={{ opacity: 0.3, fontSize: 32 }}>👤</span>
+              </div>
+            )}
+          </div>
+
+          {/* Current */}
+          <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '3/4', background: 'hsl(var(--pgb))', border: '1px solid hsla(192,91%,54%,0.25)' }}>
+            {newestPhoto?.url ? (
+              <>
+                <img src={newestPhoto.url} alt="Current" className="w-full h-full object-cover" />
+                <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[7px] font-mono" style={{ background: 'hsla(0,0%,0%,0.7)', color: 'hsl(var(--primary))' }}>
+                  {format(new Date(newestPhoto.date), 'dd MMM')}
+                </span>
+              </>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span style={{ opacity: 0.3, fontSize: 32 }}>👤</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {oldestPhoto && newestPhoto && (
+          <p className="text-center mt-2 text-[7px] font-mono" style={{ color: 'hsl(var(--ok))' }}>
+            {format(new Date(oldestPhoto.date), 'dd MMM')} → {format(new Date(newestPhoto.date), 'dd MMM')}
+          </p>
+        )}
+      </div>
+
+      {/* Photo Timeline */}
+      {timelinePhotos.length > 0 && (
+        <div>
+          <span className="text-[8px] font-mono tracking-wider block mb-3" style={{ color: 'hsl(var(--dim))' }}>Photo Timeline</span>
+          <div className="grid grid-cols-4 gap-2">
+            {timelinePhotos.map((p, i) => (
+              <div
+                key={p.id}
+                className="rounded-md overflow-hidden"
+                style={{
+                  aspectRatio: '1',
+                  background: i === 0 ? 'hsl(var(--pgb))' : 'hsl(var(--bg3))',
+                  border: i === 0 ? '1px solid hsla(192,91%,54%,0.3)' : '1px solid hsl(var(--border))',
+                }}
+              >
+                {p.url ? (
+                  <img src={p.url} alt={p.angle} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span style={{ opacity: 0.3 }}>👤</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Today's Photos */}
       <div>
         <span className="text-[9px] font-mono tracking-wider block mb-3" style={{ color: 'hsl(var(--primary))' }}>
           TODAY'S PHOTOS
@@ -92,7 +191,7 @@ const PhotosTab = () => {
             return (
               <div key={angle} className="relative">
                 {existing?.url ? (
-                  <div className="relative aspect-[3/4] rounded-xl overflow-hidden" style={{ border: '1px solid hsl(var(--border))' }}>
+                  <div className="relative rounded-xl overflow-hidden" style={{ aspectRatio: '3/4', border: '1px solid hsl(var(--border))' }}>
                     <img src={existing.url} alt={angle} className="w-full h-full object-cover" />
                     <button
                       onClick={() => handleDelete(existing)}
@@ -103,8 +202,8 @@ const PhotosTab = () => {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center aspect-[3/4] rounded-xl cursor-pointer"
-                    style={{ background: 'hsl(var(--bg2))', border: '2px dashed hsl(var(--border2))' }}
+                  <label className="flex flex-col items-center justify-center rounded-xl cursor-pointer"
+                    style={{ aspectRatio: '3/4', background: 'hsl(var(--bg2))', border: '2px dashed hsl(var(--border2))' }}
                   >
                     <Camera size={20} style={{ color: 'hsl(var(--dim))' }} />
                     <span className="text-[9px] font-mono mt-1.5 tracking-wider" style={{ color: 'hsl(var(--dim))' }}>
@@ -134,11 +233,11 @@ const PhotosTab = () => {
               {ANGLES.map(angle => {
                 const photo = datePhotos.find(p => p.angle === angle);
                 return photo?.url ? (
-                  <div key={angle} className="aspect-[3/4] rounded-lg overflow-hidden" style={{ border: '1px solid hsl(var(--border))' }}>
+                  <div key={angle} className="rounded-lg overflow-hidden" style={{ aspectRatio: '3/4', border: '1px solid hsl(var(--border))' }}>
                     <img src={photo.url} alt={`${angle} ${date}`} className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div key={angle} className="aspect-[3/4] rounded-lg flex items-center justify-center" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+                  <div key={angle} className="rounded-lg flex items-center justify-center" style={{ aspectRatio: '3/4', background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
                     <span className="text-[9px] font-mono" style={{ color: 'hsl(var(--dim))' }}>—</span>
                   </div>
                 );
@@ -150,6 +249,11 @@ const PhotosTab = () => {
           <p className="text-xs text-center py-6" style={{ color: 'hsl(var(--dim))' }}>No previous photos</p>
         )}
       </div>
+
+      {/* Private storage note */}
+      <p className="text-center text-[7px] font-mono" style={{ color: 'hsl(var(--dim))' }}>
+        Photos stored in private encrypted bucket. Signed-URL access only.
+      </p>
     </div>
   );
 };
