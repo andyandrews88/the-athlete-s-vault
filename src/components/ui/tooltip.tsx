@@ -1,32 +1,30 @@
-import * as React from "react";
+import * as React from "react"
+import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
-// Lightweight tooltip provider that avoids the radix-ui duplicate React bug.
-// Radix TooltipProvider calls useRef against a second React copy in the
-// pre-bundled Vite chunk, crashing the entire app. This shim provides the
-// same API surface so every consumer keeps working.
+import { cn } from "@/lib/utils"
 
-const TooltipProvider: React.FC<{ children: React.ReactNode; delayDuration?: number; skipDelayDuration?: number }> = ({ children }) => (
-  <>{children}</>
-);
+const TooltipProvider = TooltipPrimitive.Provider
 
-const Tooltip: React.FC<{ children: React.ReactNode; open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void }> = ({ children }) => (
-  <>{children}</>
-);
+const Tooltip = TooltipPrimitive.Root
 
-const TooltipTrigger = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }>(
-  ({ children, ...props }, ref) => {
-    if (props.asChild) return <>{children}</>;
-    return <button ref={ref} {...props}>{children}</button>;
-  }
-);
-TooltipTrigger.displayName = "TooltipTrigger";
+const TooltipTrigger = TooltipPrimitive.Trigger
 
 const TooltipContent = React.forwardRef<
-  HTMLDivElement,
-  React.PropsWithChildren<{ className?: string; side?: string; sideOffset?: number; align?: string; alignOffset?: number; hidden?: boolean }>
->(({ children, ...rest }, ref) => (
-  <div ref={ref} style={{ display: "none" }} />
-));
-TooltipContent.displayName = "TooltipContent";
+  React.ElementRef<typeof TooltipPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
+>(({ className, sideOffset = 4, ...props }, ref) => (
+  <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Content
+      ref={ref}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className
+      )}
+      {...props}
+    />
+  </TooltipPrimitive.Portal>
+))
+TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
