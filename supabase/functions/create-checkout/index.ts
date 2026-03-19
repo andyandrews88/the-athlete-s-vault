@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { priceId, userId, userEmail } = await req.json();
+    const { priceId, userId, userEmail, mode = 'subscription', purchaseType = 'premium' } = await req.json();
 
     const stripe = new Stripe(
       Deno.env.get('STRIPE_SECRET_KEY') ?? '',
@@ -21,12 +21,12 @@ Deno.serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      mode: 'subscription',
+      mode: mode as 'payment' | 'subscription',
       customer_email: userEmail,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${req.headers.get('origin')}/pricing?success=true`,
+      success_url: `${req.headers.get('origin')}/pricing?success=true&type=${purchaseType}`,
       cancel_url: `${req.headers.get('origin')}/pricing?cancelled=true`,
-      metadata: { userId },
+      metadata: { userId, purchaseType, priceId },
     });
 
     return new Response(
