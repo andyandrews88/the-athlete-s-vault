@@ -60,6 +60,11 @@ const PricingPage = () => {
         consultation: '✅ Consultation booked! Andy will send you a booking link.',
       };
       setBanner({ type: 'success', msg: msgs[purchaseType ?? 'premium'] ?? msgs.premium });
+      const retryFetch = (attempts: number) => {
+        refetchProfile?.();
+        if (attempts > 1) setTimeout(() => retryFetch(attempts - 1), 2000);
+      };
+      setTimeout(() => retryFetch(3), 1500);
       setTimeout(() => setBanner(null), 5000);
     } else if (cancelled === 'true') {
       setBanner({ type: 'cancel', msg: 'No worries — you can purchase anytime from this page.' });
