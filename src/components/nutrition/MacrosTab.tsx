@@ -90,8 +90,9 @@ const MacrosTab = () => {
       });
       if (error) throw error;
       setSearchResults(data?.foods ?? []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Food search error:', err);
+      toast({ title: 'Search failed', description: err?.message ?? 'Unknown error', variant: 'destructive' });
       setSearchResults([]);
     } finally {
       setIsSearching(false);
