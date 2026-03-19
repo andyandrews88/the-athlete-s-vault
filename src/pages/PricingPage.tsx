@@ -53,7 +53,7 @@ const PricingPage = () => {
     if (success === 'true') {
       const msgs: Record<string, string> = {
         coaching: '🎉 Welcome to 1-on-1 Coaching! Andy will contact you within 24 hours.',
-        premium: '🎉 You're now on Premium! All programmes are now unlocked.',
+        premium: '🎉 You\'re now on Premium! All programmes are now unlocked.',
         pt: '✅ PT sessions booked! Andy will contact you to schedule.',
         consultation: '✅ Consultation booked! Andy will send you a booking link.',
       };
