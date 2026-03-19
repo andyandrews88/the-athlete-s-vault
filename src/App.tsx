@@ -9,7 +9,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
-import { BookOpen, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
