@@ -359,7 +359,7 @@ const MacrosTab = () => {
             borderRadius: 10,
             maxHeight: 260,
             overflowY: 'auto',
-            zIndex: 40,
+            zIndex: 100,
             boxShadow: '0 8px 24px hsla(0,0%,0%,0.3)',
           }}>
             {isSearching ? (
