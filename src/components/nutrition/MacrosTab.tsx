@@ -90,8 +90,9 @@ const MacrosTab = () => {
       });
       if (error) throw error;
       setSearchResults(data?.foods ?? []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Food search error:', err);
+      toast({ title: 'Search failed', description: err?.message ?? 'Unknown error', variant: 'destructive' });
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -359,7 +360,7 @@ const MacrosTab = () => {
             borderRadius: 10,
             maxHeight: 260,
             overflowY: 'auto',
-            zIndex: 40,
+            zIndex: 100,
             boxShadow: '0 8px 24px hsla(0,0%,0%,0.3)',
           }}>
             {isSearching ? (
@@ -375,6 +376,7 @@ const MacrosTab = () => {
               searchResults.map((food) => (
                 <button
                   key={food.fdcId}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleSelectFood(food)}
                   style={{
                     display: 'block',
