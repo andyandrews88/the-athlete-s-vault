@@ -376,6 +376,7 @@ const MacrosTab = () => {
               searchResults.map((food) => (
                 <button
                   key={food.fdcId}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleSelectFood(food)}
                   style={{
                     display: 'block',
