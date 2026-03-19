@@ -344,14 +344,14 @@ const HandPortionsTab = ({ selectedDate }: Props) => {
                 return (
                   <button key={cat} onClick={() => { setSelectedCat(cat); setPortions(1); setSelectedFood(null); setSearchQuery(''); setSearchResults([]); }}
                     style={{
-                      background: active ? 'hsl(var(--pgb))' : 'hsl(var(--bg3))',
-                      border: active ? '2px solid hsl(var(--primary))' : '1px solid hsl(var(--border))',
+                      background: active ? 'hsla(192,91%,54%,0.12)' : 'hsl(var(--bg3))',
+                      border: active ? '2px solid hsl(192,91%,54%)' : '1px solid hsl(var(--border))',
                       borderRadius: 12, padding: 16, textAlign: 'center', cursor: 'pointer',
                     }}>
                     <div style={{ fontSize: 28 }}>{c.emoji}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: active ? 'hsl(var(--primary))' : 'hsl(var(--text))', marginTop: 4 }}>{c.label}</div>
-                    <div style={{ fontSize: 9, color: 'hsl(var(--dim))' }}>{c.shape}</div>
-                    <div style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', marginTop: 2 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: active ? 'hsl(192,91%,54%)' : 'hsl(var(--text))', marginTop: 4 }}>{c.label}</div>
+                    <div style={{ fontSize: 9, color: active ? 'hsl(215,14%,50%)' : 'hsl(var(--dim))' }}>{c.shape}</div>
+                    <div style={{ ...mono, fontSize: 8, color: active ? 'hsl(215,14%,50%)' : 'hsl(var(--dim))', marginTop: 2 }}>
                       ~{c.protein}g protein · ~{c.calories} kcal
                     </div>
                   </button>
