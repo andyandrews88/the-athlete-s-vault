@@ -929,6 +929,62 @@ export type Database = {
         }
         Relationships: []
       }
+      hand_portion_entries: {
+        Row: {
+          category: string
+          created_at: string | null
+          date: string
+          estimated_calories: number | null
+          estimated_carbs: number | null
+          estimated_fat: number | null
+          estimated_protein: number | null
+          food_name: string | null
+          id: string
+          meal_type: string
+          notes: string | null
+          portions: number
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          date?: string
+          estimated_calories?: number | null
+          estimated_carbs?: number | null
+          estimated_fat?: number | null
+          estimated_protein?: number | null
+          food_name?: string | null
+          id?: string
+          meal_type: string
+          notes?: string | null
+          portions: number
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          date?: string
+          estimated_calories?: number | null
+          estimated_carbs?: number | null
+          estimated_fat?: number | null
+          estimated_protein?: number | null
+          food_name?: string | null
+          id?: string
+          meal_type?: string
+          notes?: string | null
+          portions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hand_portion_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hand_portion_logs: {
         Row: {
           carb_portions: number | null
