@@ -516,6 +516,44 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_applications: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          status: string
+          stripe_session_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          stripe_session_id?: string | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          stripe_session_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_notes: {
         Row: {
           coach_id: string | null
