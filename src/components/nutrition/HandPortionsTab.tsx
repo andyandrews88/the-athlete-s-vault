@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronUp, Plus, X, Minus } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, X, Minus, Search, Loader2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 /* ── PN conversion constants ── */
@@ -29,6 +29,15 @@ interface Entry {
   estimated_calories: number;
 }
 
+interface FoodResult {
+  fdcId: number;
+  name: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+}
+
 interface Props { selectedDate: string; }
 
 const HandPortionsTab = ({ selectedDate }: Props) => {
@@ -39,9 +48,15 @@ const HandPortionsTab = ({ selectedDate }: Props) => {
   const [sheetMeal, setSheetMeal] = useState<string>('Breakfast');
   const [selectedCat, setSelectedCat] = useState<PNCat | null>(null);
   const [portions, setPortions] = useState(1);
-  const [foodName, setFoodName] = useState('');
   const [saving, setSaving] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+
+  // Food search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<FoodResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedFood, setSelectedFood] = useState<FoodResult | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const fetchEntries = useCallback(async () => {
     if (!user) return;
@@ -61,11 +76,34 @@ const HandPortionsTab = ({ selectedDate }: Props) => {
 
   useEffect(() => { fetchEntries(); }, [fetchEntries]);
 
+  // Debounced food search
+  useEffect(() => {
+    if (searchQuery.length < 2) { setSearchResults([]); return; }
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('food-search', {
+          body: { query: searchQuery },
+        });
+        if (error) throw error;
+        setSearchResults(data?.foods || []);
+      } catch (err) {
+        console.error('Food search error:', err);
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const openSheet = (meal: string) => {
     setSheetMeal(meal);
     setSelectedCat(null);
     setPortions(1);
-    setFoodName('');
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedFood(null);
     setSheetOpen(true);
   };
 
@@ -73,20 +111,45 @@ const HandPortionsTab = ({ selectedDate }: Props) => {
     if (!user || !selectedCat) return;
     setSaving(true);
     const c = PN[selectedCat];
+    const estProtein = Math.round(portions * c.protein * 10) / 10;
+    const estCarbs = Math.round(portions * c.carbs * 10) / 10;
+    const estFat = Math.round(portions * c.fat * 10) / 10;
+    const estCalories = Math.round(portions * c.calories);
+    const foodLabel = selectedFood?.name || null;
+    const macroFoodName = foodLabel
+      ? `${foodLabel} (${portions} ${c.unit})`
+      : `${c.label} — ${portions} ${c.unit}`;
+
     try {
-      const { error } = await supabase.from('hand_portion_entries').insert({
+      // 1. Insert to hand_portion_entries
+      const { error: hpError } = await supabase.from('hand_portion_entries').insert({
         user_id: user.id,
         date: selectedDate,
         meal_type: sheetMeal,
         category: selectedCat,
         portions,
-        food_name: foodName.trim() || null,
-        estimated_protein: Math.round(portions * c.protein * 10) / 10,
-        estimated_carbs: Math.round(portions * c.carbs * 10) / 10,
-        estimated_fat: Math.round(portions * c.fat * 10) / 10,
-        estimated_calories: Math.round(portions * c.calories),
+        food_name: foodLabel,
+        estimated_protein: estProtein,
+        estimated_carbs: estCarbs,
+        estimated_fat: estFat,
+        estimated_calories: estCalories,
       });
-      if (error) throw error;
+      if (hpError) throw hpError;
+
+      // 2. Also insert to macro_logs for two-way sync
+      await supabase.from('macro_logs').insert({
+        user_id: user.id,
+        date: selectedDate,
+        meal: sheetMeal,
+        food_name: macroFoodName,
+        serving_g: Math.round(portions * 100),
+        calories: estCalories,
+        protein_g: estProtein,
+        carbs_g: estCarbs,
+        fat_g: estFat,
+        source: 'hand_portions',
+      } as any);
+
       toast.success('Logged! 🤜');
       setSheetOpen(false);
       await fetchEntries();
@@ -95,9 +158,26 @@ const HandPortionsTab = ({ selectedDate }: Props) => {
   };
 
   const deleteEntry = async (id: string) => {
+    const entry = entries.find(e => e.id === id);
     try {
       const { error } = await supabase.from('hand_portion_entries').delete().eq('id', id);
       if (error) throw error;
+
+      // Also delete matching macro_logs entry
+      if (user && entry) {
+        const cat = entry.category as PNCat;
+        const c = PN[cat] || PN.protein;
+        const macroFoodName = entry.food_name
+          ? `${entry.food_name} (${entry.portions} ${c.unit})`
+          : `${c.label} — ${entry.portions} ${c.unit}`;
+        await supabase.from('macro_logs')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('date', selectedDate)
+          .eq('meal', entry.meal_type)
+          .eq('food_name', macroFoodName);
+      }
+
       await fetchEntries();
     } catch { toast.error('Failed to delete'); }
   };
@@ -256,20 +336,20 @@ const HandPortionsTab = ({ selectedDate }: Props) => {
 
           {/* Step 1 — Category */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ ...mono, fontSize: 9, color: 'hsl(var(--dim))', marginBottom: 8 }}>What did you eat?</div>
+            <div style={{ ...mono, fontSize: 9, color: 'hsl(var(--dim))', marginBottom: 8 }}>Select portion type</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {CATEGORIES.map(cat => {
                 const c = PN[cat];
                 const active = selectedCat === cat;
                 return (
-                  <button key={cat} onClick={() => { setSelectedCat(cat); setPortions(1); }}
+                  <button key={cat} onClick={() => { setSelectedCat(cat); setPortions(1); setSelectedFood(null); setSearchQuery(''); setSearchResults([]); }}
                     style={{
                       background: active ? 'hsl(var(--pgb))' : 'hsl(var(--bg3))',
-                      border: `1px solid ${active ? 'hsl(var(--primary))' : 'hsl(var(--border))'}`,
+                      border: active ? '2px solid hsl(var(--primary))' : '1px solid hsl(var(--border))',
                       borderRadius: 12, padding: 16, textAlign: 'center', cursor: 'pointer',
                     }}>
                     <div style={{ fontSize: 28 }}>{c.emoji}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))', marginTop: 4 }}>{c.label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: active ? 'hsl(var(--primary))' : 'hsl(var(--text))', marginTop: 4 }}>{c.label}</div>
                     <div style={{ fontSize: 9, color: 'hsl(var(--dim))' }}>{c.shape}</div>
                     <div style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))', marginTop: 2 }}>
                       ~{c.protein}g protein · ~{c.calories} kcal
@@ -310,18 +390,93 @@ const HandPortionsTab = ({ selectedDate }: Props) => {
             </div>
           )}
 
-          {/* Step 3 — Food name */}
+          {/* Step 3 — Food search (optional) */}
           {selectedCat && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: 'hsl(var(--dim))', marginBottom: 6 }}>What did you eat? (optional)</div>
-              <input
-                type="text" value={foodName} onChange={e => setFoodName(e.target.value)}
-                placeholder="e.g. Chicken breast, brown rice, olive oil..."
-                style={{
-                  width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))',
-                  borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none',
-                }}
-              />
+
+              {selectedFood ? (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: 'hsl(var(--pgb))', border: '1px solid hsl(var(--primary))',
+                  borderRadius: 8, padding: '6px 10px',
+                }}>
+                  <span style={{ fontSize: 11, color: 'hsl(var(--primary))', flex: 1 }}>{selectedFood.name}</span>
+                  <div style={{ ...mono, fontSize: 8, color: 'hsl(var(--dim))' }}>
+                    {selectedFood.calories}cal
+                  </div>
+                  <button onClick={() => { setSelectedFood(null); setSearchQuery(''); }} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+                  }}>
+                    <X size={12} style={{ color: 'hsl(var(--primary))' }} />
+                  </button>
+                </div>
+              ) : (
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative' }}>
+                    <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--dim))' }} />
+                    <input
+                      ref={searchRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Search food... e.g. chicken"
+                      style={{
+                        width: '100%', background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))',
+                        borderRadius: 8, padding: '10px 14px 10px 32px', fontSize: 12, color: 'hsl(var(--text))', outline: 'none',
+                      }}
+                    />
+                    {searching && (
+                      <Loader2 size={14} className="animate-spin" style={{
+                        position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--primary))',
+                      }} />
+                    )}
+                  </div>
+
+                  {/* Results dropdown */}
+                  {searchQuery.length >= 2 && (
+                    <div style={{
+                      background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))',
+                      borderRadius: 8, maxHeight: 180, overflowY: 'auto', marginTop: 4,
+                    }}>
+                      {searching ? (
+                        <div style={{ padding: 12, textAlign: 'center', color: 'hsl(var(--dim))', fontSize: 10 }}>
+                          <Loader2 size={14} className="animate-spin" style={{ display: 'inline-block', marginRight: 6, color: 'hsl(var(--primary))' }} />
+                          Searching...
+                        </div>
+                      ) : searchResults.length === 0 ? (
+                        <div style={{ padding: 12, textAlign: 'center', color: 'hsl(var(--dim))', fontSize: 10 }}>
+                          No results found
+                        </div>
+                      ) : (
+                        searchResults.map(food => (
+                          <button
+                            key={food.fdcId}
+                            onClick={() => { setSelectedFood(food); setSearchQuery(''); setSearchResults([]); }}
+                            style={{
+                              display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px',
+                              background: 'transparent', border: 'none', borderBottom: '1px solid hsl(var(--border))',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <div style={{ fontSize: 12, fontWeight: 500, color: 'hsl(var(--text))' }}>{food.name}</div>
+                            <div style={{ ...mono, fontSize: 9, color: 'hsl(var(--dim))' }}>
+                              {food.calories}cal · P:{food.protein_g}g C:{food.carbs_g}g F:{food.fat_g}g
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  <button onClick={() => setSearchQuery('')} style={{
+                    background: 'none', border: 'none', fontSize: 10, color: 'hsl(var(--dim))',
+                    cursor: 'pointer', marginTop: 4, padding: 0,
+                  }}>
+                    Skip
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

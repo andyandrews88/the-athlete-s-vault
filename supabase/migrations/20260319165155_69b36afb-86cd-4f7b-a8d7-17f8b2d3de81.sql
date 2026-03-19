@@ -1,0 +1,1 @@
+ALTER TABLE public.macro_logs ADD COLUMN IF NOT EXISTS source text DEFAULT 'manual';
