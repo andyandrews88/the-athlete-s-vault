@@ -42,7 +42,8 @@ const SectionDivider = () => (
 const PricingPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, profile } = useAuth();
+  const { user, profile, refetchProfile } = useAuth();
+  const { toast } = useToast();
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [banner, setBanner] = useState<{ type: 'success' | 'cancel'; msg: string } | null>(null);
 
