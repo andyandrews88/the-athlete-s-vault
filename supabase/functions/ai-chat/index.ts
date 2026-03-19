@@ -31,22 +31,54 @@ serve(async (req) => {
     // Get profile
     const { data: profile } = await supabase.from("profiles").select("tier, audit_score, audit_tier").eq("id", userId).single();
 
-    // Check usage limit for free users
-    const todayStr = new Date().toISOString().split("T")[0];
-    const { data: usage } = await supabase
-      .from("ai_usage")
-      .select("prompt_count")
-      .eq("user_id", userId)
-      .eq("date", todayStr)
-      .single();
+    const tier = profile?.tier ?? "free";
 
-    const currentCount = usage?.prompt_count ?? 0;
+    // Check usage limits based on tier
+    if (tier === "coaching") {
+      // Unlimited — no limit check
+    } else if (tier === "premium") {
+      // 500 prompts per month
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+      const { count } = await supabase
+        .from("ai_usage")
+        .select("prompt_count", { count: "exact", head: false })
+        .eq("user_id", userId)
+        .gte("date", monthStart);
 
-    if (profile?.tier === "free" && currentCount >= 2) {
-      return new Response(JSON.stringify({ limitReached: true, error: "Daily prompt limit reached" }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Sum prompt_count for the month
+      const { data: monthUsage } = await supabase
+        .from("ai_usage")
+        .select("prompt_count")
+        .eq("user_id", userId)
+        .gte("date", monthStart);
+
+      const monthTotal = (monthUsage ?? []).reduce((sum: number, row: any) => sum + (row.prompt_count ?? 0), 0);
+
+      if (monthTotal >= 500) {
+        return new Response(JSON.stringify({ limitReached: true, error: "Monthly prompt limit reached (500). Upgrade to coaching for unlimited." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      // Free tier: 2 prompts per day
+      const todayStr = new Date().toISOString().split("T")[0];
+      const { data: usage } = await supabase
+        .from("ai_usage")
+        .select("prompt_count")
+        .eq("user_id", userId)
+        .eq("date", todayStr)
+        .single();
+
+      const currentCount = usage?.prompt_count ?? 0;
+
+      if (currentCount >= 2) {
+        return new Response(JSON.stringify({ limitReached: true, error: "Daily prompt limit reached" }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Fetch user context data in parallel
@@ -134,8 +166,16 @@ RULES:
     const reply = openaiData.choices?.[0]?.message?.content ?? "I couldn't generate a response.";
 
     // Log usage
+    const todayStr = new Date().toISOString().split("T")[0];
+    const { data: usage } = await supabase
+      .from("ai_usage")
+      .select("prompt_count")
+      .eq("user_id", userId)
+      .eq("date", todayStr)
+      .single();
+
     if (usage) {
-      await supabase.from("ai_usage").update({ prompt_count: currentCount + 1 }).eq("user_id", userId).eq("date", todayStr);
+      await supabase.from("ai_usage").update({ prompt_count: (usage.prompt_count ?? 0) + 1 }).eq("user_id", userId).eq("date", todayStr);
     } else {
       await supabase.from("ai_usage").insert({ user_id: userId, date: todayStr, prompt_count: 1 });
     }
