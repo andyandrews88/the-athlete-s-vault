@@ -83,12 +83,18 @@ const HandPortionsTab = ({ selectedDate }: Props) => {
       setSearching(true);
       try {
         const { data, error } = await supabase.functions.invoke('food-search', {
-          body: { query: searchQuery },
+          body: { query: searchQuery.trim() },
         });
-        if (error) throw error;
-        setSearchResults(data?.foods || []);
+        console.log('Hand portions search:', { data, error, query: searchQuery });
+        if (error) {
+          console.error('Search error details:', JSON.stringify(error));
+          setSearchResults([]);
+          return;
+        }
+        console.log('Search data structure:', Object.keys(data || {}));
+        setSearchResults(data?.foods || data?.hints || data?.common || []);
       } catch (err) {
-        console.error('Food search error:', err);
+        console.error('Search exception:', err);
         setSearchResults([]);
       } finally {
         setSearching(false);
