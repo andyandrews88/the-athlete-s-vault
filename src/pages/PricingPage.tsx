@@ -84,6 +84,7 @@ const PricingPage = () => {
       if (data?.url) window.location.href = data.url;
     } catch (err) {
       console.error('Checkout error:', err);
+      toast({ title: 'Checkout failed', description: 'Something went wrong. Please try again or contact Andy.', variant: 'destructive' });
     } finally {
       setLoadingKey(null);
     }
