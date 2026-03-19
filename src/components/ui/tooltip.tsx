@@ -21,8 +21,8 @@ const TooltipTrigger = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttri
 );
 TooltipTrigger.displayName = "TooltipTrigger";
 
-const TooltipContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & { side?: string; sideOffset?: number }>(
-  ({ children, className, ...props }, ref) => (
+const TooltipContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & { side?: string; sideOffset?: number; align?: string; alignOffset?: number; [key: string]: unknown }>(
+  ({ children, className, side, sideOffset, align, alignOffset, ...props }, ref) => (
     <div ref={ref} className={className} style={{ display: "none" }} {...props}>
       {children}
     </div>
