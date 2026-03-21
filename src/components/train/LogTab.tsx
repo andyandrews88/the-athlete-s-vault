@@ -210,6 +210,8 @@ export const LogTab = () => {
   const completeSet = (exIdx: number, setIdx: number) => {
     storeMarkSetComplete(exIdx, setIdx);
     setShowRestTimer(true);
+    // Haptic on set completion
+    if ('vibrate' in navigator) try { navigator.vibrate(50); } catch {}
   };
 
   const uncompleteSet = (exIdx: number, setIdx: number) => {
