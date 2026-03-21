@@ -26,6 +26,11 @@ export interface ExerciseRow {
   difficulty_coefficient: number;
   exercise_type?: string;
   video_url?: string;
+  muscle_group?: string | null;
+  equipment_type?: string | null;
+  is_timed?: boolean | null;
+  is_unilateral?: boolean | null;
+  is_plyometric?: boolean | null;
 }
 
 export interface SessionExercise {
