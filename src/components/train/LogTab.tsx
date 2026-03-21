@@ -292,7 +292,7 @@ export const LogTab = () => {
             user_id: user.id, exercise_id: ex.exercise.id,
             weight_kg: set.weight_kg!, reps: set.reps, session_id: activeSessionId,
           });
-          toast({ title: '🏆 New PR!', description: `${ex.exercise.name}: ${set.weight_kg}kg × ${set.reps}` });
+          setPrCelebration({ exerciseName: ex.exercise.name, weight: set.weight_kg! });
         }
       }
     }
