@@ -155,6 +155,7 @@ export const ExerciseCard = ({
     } else {
       onUpdateSet(numpadState.setIndex, { reps: Math.round(val) });
     }
+    haptic(30);
     setNumpadState(null);
   };
 
