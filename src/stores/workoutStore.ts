@@ -44,6 +44,11 @@ export interface SessionExercise {
   showNotes: boolean;
 }
 
+interface PendingWrite {
+  data: Partial<SetData>;
+  timestamp: number;
+}
+
 interface WorkoutState {
   // Session state
   activeSessionId: string | null;
@@ -52,6 +57,12 @@ interface WorkoutState {
   isSessionActive: boolean;
   viewingWorkoutId: string | null;
   preferredUnit: 'kg' | 'lbs';
+
+  // Optimistic write queue
+  pendingWrites: Record<string, PendingWrite>;
+  addPendingWrite: (key: string, data: Partial<SetData>) => void;
+  clearPendingWrite: (key: string) => void;
+  clearAllPendingWrites: () => void;
 
   // Actions
   startSession: (sessionId: string, preloadedExercises?: SessionExercise[]) => void;
