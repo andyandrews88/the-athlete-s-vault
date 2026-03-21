@@ -1,7 +1,44 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { MoreVertical, ChevronDown, ChevronUp, Play, StickyNote, Check } from 'lucide-react';
 import type { SessionExercise, SetData } from '@/stores/workoutStore';
 import { WeightNumpad } from './WeightNumpad';
+import { supabase } from '@/integrations/supabase/client';
+import { queueWrite } from '@/lib/offlineQueue';
+
+/* ─── Haptic feedback ─── */
+const haptic = (pattern: number | number[]) => {
+  if ('vibrate' in navigator) {
+    try { navigator.vibrate(pattern); } catch {}
+  }
+};
+
+/* ─── Debounced set save hook ─── */
+const useDebouncedSetSave = (
+  setId: string | undefined,
+  data: Record<string, unknown>,
+  delay = 500
+) => {
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const dataRef = useRef(data);
+  dataRef.current = data;
+
+  useEffect(() => {
+    if (!setId || Object.keys(dataRef.current).length === 0) return;
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
+      if (!navigator.onLine) {
+        await queueWrite({ table: 'exercise_sets', operation: 'update', data: { id: setId, ...dataRef.current } });
+        return;
+      }
+      try {
+        await supabase.from('exercise_sets').update(dataRef.current).eq('id', setId);
+      } catch {
+        await queueWrite({ table: 'exercise_sets', operation: 'update', data: { id: setId, ...dataRef.current } });
+      }
+    }, delay);
+    return () => clearTimeout(timerRef.current);
+  }, [setId, JSON.stringify(data), delay]);
+};
 
 interface ExerciseCardProps {
   exercise: SessionExercise;
