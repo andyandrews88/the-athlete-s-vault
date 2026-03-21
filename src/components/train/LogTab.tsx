@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -193,6 +193,8 @@ export const LogTab = () => {
       notes: '', section, supersetGroup: null, showNotes: false,
     });
     setShowSearch(false);
+    // Haptic on exercise added
+    if ('vibrate' in navigator) try { navigator.vibrate(30); } catch {}
   };
 
   const removeExercise = (exIdx: number) => {
@@ -210,6 +212,8 @@ export const LogTab = () => {
   const completeSet = (exIdx: number, setIdx: number) => {
     storeMarkSetComplete(exIdx, setIdx);
     setShowRestTimer(true);
+    // Haptic on set completion
+    if ('vibrate' in navigator) try { navigator.vibrate(50); } catch {}
   };
 
   const uncompleteSet = (exIdx: number, setIdx: number) => {
@@ -298,6 +302,8 @@ export const LogTab = () => {
     });
     storeEndSession();
     setFinished(true);
+    // Haptic on session finish
+    if ('vibrate' in navigator) try { navigator.vibrate([100, 100, 200]); } catch {}
   };
 
   /* ─── Grouped exercises by section ─── */

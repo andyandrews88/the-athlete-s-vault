@@ -1,7 +1,11 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
+import { toast } from "@/hooks/use-toast";
+import { syncPendingWrites } from "@/lib/offlineQueue";
+import { supabase } from "@/integrations/supabase/client";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
@@ -39,7 +43,22 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  // Sync offline writes when coming back online
+  useEffect(() => {
+    const handleOnline = async () => {
+      const synced = await syncPendingWrites(supabase);
+      if (synced > 0) {
+        toast({ title: 'Back online', description: `Synced ${synced} pending write${synced > 1 ? 's' : ''}.` });
+      }
+    };
+    window.addEventListener('online', handleOnline);
+    // Also sync on mount in case writes accumulated
+    handleOnline();
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <>
       <Toaster />
@@ -80,6 +99,7 @@ const App = () => (
       </BrowserRouter>
     </>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

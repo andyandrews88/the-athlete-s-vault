@@ -60,7 +60,6 @@ export const AnalyticsTab = () => {
   const [selectedStrengthExercise, setSelectedStrengthExercise] = useState<string>('');
   const [availableExercises, setAvailableExercises] = useState<string[]>([]);
   const [showExPicker, setShowExPicker] = useState(false);
-  // Heatmap: 12 weeks × 7 days
   const [heatmapData, setHeatmapData] = useState<HeatmapDay[][]>([]);
 
   useEffect(() => {
@@ -68,6 +67,24 @@ export const AnalyticsTab = () => {
     loadExerciseOptions();
     loadData();
   }, [user]);
+
+  /* ─── Skeleton shimmer ─── */
+  const SkeletonCard = ({ barCount = 5 }: { barCount?: number }) => (
+    <div style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 10, padding: 14, marginBottom: 8 }}>
+      <div style={{ height: 8, width: '40%', background: 'hsl(var(--bg4))', borderRadius: 4, marginBottom: 12 }} className="animate-pulse" />
+      <div className="flex items-end gap-1" style={{ height: 80 }}>
+        {Array.from({ length: barCount }, (_, i) => (
+          <div key={i} className="flex-1 animate-pulse" style={{
+            height: `${20 + Math.random() * 60}%`,
+            background: 'hsl(var(--bg4))',
+            borderRadius: '3px 3px 0 0',
+            animationDelay: `${i * 100}ms`,
+          }} />
+        ))}
+      </div>
+    </div>
+  );
+
 
   const loadExerciseOptions = async () => {
     if (!user) return;
@@ -278,6 +295,17 @@ export const AnalyticsTab = () => {
     if (rir <= 3) return 'hsl(var(--warn))';
     return 'hsla(38,92%,50%,0.4)';
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-lg mx-auto px-4 space-y-2">
+        <SkeletonCard barCount={9} />
+        <SkeletonCard barCount={8} />
+        <SkeletonCard barCount={8} />
+        <SkeletonCard barCount={6} />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto px-4 space-y-2">
