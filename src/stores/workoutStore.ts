@@ -98,6 +98,20 @@ export const useWorkoutStore = create<WorkoutState>()(
       ...emptySessionState,
       viewingWorkoutId: null,
       preferredUnit: 'kg',
+      pendingWrites: {},
+
+      addPendingWrite: (key, data) =>
+        set((state) => ({
+          pendingWrites: { ...state.pendingWrites, [key]: { data, timestamp: Date.now() } },
+        })),
+
+      clearPendingWrite: (key) =>
+        set((state) => {
+          const { [key]: _, ...rest } = state.pendingWrites;
+          return { pendingWrites: rest };
+        }),
+
+      clearAllPendingWrites: () => set({ pendingWrites: {} }),
 
       startSession: (sessionId, preloadedExercises) =>
         set({
