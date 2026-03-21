@@ -193,6 +193,8 @@ export const LogTab = () => {
       notes: '', section, supersetGroup: null, showNotes: false,
     });
     setShowSearch(false);
+    // Haptic on exercise added
+    if ('vibrate' in navigator) try { navigator.vibrate(30); } catch {}
   };
 
   const removeExercise = (exIdx: number) => {
