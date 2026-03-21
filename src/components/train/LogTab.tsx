@@ -192,7 +192,7 @@ export const LogTab = () => {
       exercise: ex, sets: [emptySet(1)], expanded: true, isPr: false,
       notes: '', section, supersetGroup: null, showNotes: false,
     });
-    setSearchQuery(''); setSearchResults([]); setShowSearch(false);
+    setShowSearch(false);
   };
 
   const removeExercise = (exIdx: number) => {
