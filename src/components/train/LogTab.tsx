@@ -5,8 +5,12 @@ import { toast } from '@/hooks/use-toast';
 import { calculateSetNtu } from '@/lib/movementPatterns';
 import { RestTimer } from './RestTimer';
 import { WeekStrip } from './WeekStrip';
+import { ExerciseCard } from './ExerciseCard';
+import { ExerciseActionSheet } from './ExerciseActionSheet';
+import { PRCelebration } from './PRCelebration';
 import { useWorkoutStore, type SessionExercise, type SetData, type WorkoutSection, type ExerciseRow } from '@/stores/workoutStore';
 import { useUserProgrammes, useProgrammeWorkouts } from '@/hooks/useProgrammes';
+import { usePreviousSets } from '@/hooks/useWorkoutHistory';
 import {
   Search, Plus, ChevronDown, ChevronUp, Dumbbell, ListChecks,
   Link2, StickyNote, MessageSquare, Trash2, X, Check,
