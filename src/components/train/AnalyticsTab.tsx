@@ -296,6 +296,17 @@ export const AnalyticsTab = () => {
     return 'hsla(38,92%,50%,0.4)';
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-lg mx-auto px-4 space-y-2">
+        <SkeletonCard barCount={9} />
+        <SkeletonCard barCount={8} />
+        <SkeletonCard barCount={8} />
+        <SkeletonCard barCount={6} />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-lg mx-auto px-4 space-y-2">
       {/* 1. STRENGTH TREND */}
