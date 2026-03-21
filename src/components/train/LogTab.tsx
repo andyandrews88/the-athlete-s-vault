@@ -322,217 +322,46 @@ export const LogTab = () => {
     return map;
   }, [exercises]);
 
-  const isTimedOrConditioning = (exType?: string) => exType === 'timed' || exType === 'conditioning';
-
-  /* ─── Render helpers ─── */
-  const renderSetRow = (ex: SessionExercise, exIdx: number, set: SetData, setIdx: number) => {
-    const isTimed = isTimedOrConditioning(ex.exercise.exercise_type);
-    const isConditioning = ex.exercise.exercise_type === 'conditioning';
-    const canComplete = setHasData(set, ex.exercise.exercise_type);
-
-    const cellBase: React.CSSProperties = {
-      background: 'hsl(var(--bg3))',
-      border: '1px solid hsl(var(--border))',
-      borderRadius: 5,
-      padding: '3px 6px',
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: 9,
-      textAlign: 'center' as const,
-      width: '100%',
-      outline: 'none',
-    };
-    const cellDone: React.CSSProperties = { ...cellBase, color: 'hsl(var(--ok))' };
-    const cellActive: React.CSSProperties = { ...cellBase, color: 'hsl(var(--primary))', borderColor: 'hsla(192,91%,54%,0.3)' };
-    const cellDefault: React.CSSProperties = { ...cellBase, color: 'hsl(var(--text))' };
-    const rirStyle: React.CSSProperties = { ...cellBase, fontSize: 8, padding: '3px 5px' };
-
-    const getStyle = (done: boolean) => done ? cellDone : cellDefault;
-
-    return (
-      <div key={setIdx} style={{ display: 'grid', gridTemplateColumns: isTimed ? '28px 1fr 40px' : '28px 1fr 1fr 40px', gap: 4, marginBottom: 2 }}>
-        {/* Set label — tap to toggle completion */}
-        <button
-          onClick={() => set.completed ? uncompleteSet(exIdx, setIdx) : (canComplete ? completeSet(exIdx, setIdx) : null)}
-          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: set.completed ? 'hsl(var(--ok))' : set.set_type === 'warmup' ? 'hsl(var(--warn))' : 'hsl(var(--dim))', textAlign: 'center', fontWeight: set.completed ? 700 : 400, background: 'transparent', border: 'none' }}
-        >
-          {set.completed ? '✓' : set.set_type === 'warmup' ? 'W' : `S${set.set_num}`}
-        </button>
-
-        {/* Weight / Duration */}
-        {isTimed ? (
-          <input
-            type="number" inputMode="numeric" placeholder="sec"
-            value={set.duration_secs ?? ''} disabled={set.completed}
-            onChange={e => updateSet(exIdx, setIdx, 'duration_secs', e.target.value ? parseInt(e.target.value) : null)}
-            style={getStyle(set.completed)}
-          />
-        ) : (
-          <input
-            type="number" inputMode="decimal"
-            placeholder={weightUnit === 'lbs' ? 'lbs' : 'kg'}
-            value={set.completed && set.weight_kg ? `${toDisplay(set.weight_kg)}` : (toDisplay(set.weight_kg) ?? '')}
-            onChange={e => updateSet(exIdx, setIdx, 'weight_kg', toKg(e.target.value ? parseFloat(e.target.value) : null))}
-            disabled={set.completed}
-            style={getStyle(set.completed)}
-          />
-        )}
-
-        {/* Reps */}
-        {!isTimed && (
-          <input
-            type="number" inputMode="numeric" placeholder="reps"
-            value={set.reps ?? ''} disabled={set.completed}
-            onChange={e => updateSet(exIdx, setIdx, 'reps', e.target.value ? parseInt(e.target.value) : null)}
-            style={getStyle(set.completed)}
-          />
-        )}
-
-        {/* RIR */}
-        <input
-          type="number" inputMode="numeric" min={0} max={5} placeholder="RIR"
-          value={set.rir ?? ''} disabled={set.completed}
-          onChange={e => updateSet(exIdx, setIdx, 'rir', e.target.value ? parseInt(e.target.value) : null)}
-          style={set.completed ? { ...rirStyle, color: 'hsl(var(--ok))' } : rirStyle}
-        />
-      </div>
-    );
-  };
-
-  const pipColor = (pattern: string) => {
-    const map: Record<string, string> = {
-      'Hinge':      'hsl(0,72%,51%)',
-      'Squat':      'hsl(262,60%,55%)',
-      'Push':       'hsl(var(--primary))',
-      'Pull':       'hsl(var(--ok))',
-      'Single Leg': 'hsl(38,92%,50%)',
-      'Carry':      'hsl(38,92%,50%)',
-      'Core':       'hsl(215,14%,50%)',
-      'Olympic':    'hsl(var(--gold))',
-      'Isolation':  'hsl(215,14%,50%)',
-      'Plyometric': 'hsl(var(--gold))',
-      'Rotational': 'hsl(var(--primary))',
-      'Conditioning':'hsl(var(--warn))',
-    };
-    return map[pattern] || 'hsl(var(--primary))';
-  };
-
-  const renderExerciseCard = (ex: SessionExercise, exIdx: number) => {
-    const completedSets = ex.sets.filter(s => s.completed);
-    const isTimed = isTimedOrConditioning(ex.exercise.exercise_type);
-
-    // Summary line: "4 × 8 · Hinge"
-    const firstReps = ex.sets[0]?.reps;
-    const summaryLine = isTimed
-      ? `${ex.sets.length} set${ex.sets.length > 1 ? 's' : ''} · ${ex.exercise.movement_pattern || ''}`
-      : `${ex.sets.length} × ${firstReps ?? '–'} · ${ex.exercise.movement_pattern || ''}`;
-
-    const ssColor = ex.supersetGroup ? 'border-l-2 border-l-amber-500' : '';
-    const lastSetRir = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1].rir : null;
-
-    return (
-      <div key={exIdx} className={ssColor} style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-        {/* Header — flat row */}
-        <button onClick={() => toggleExpand(exIdx)} className="w-full flex items-center gap-[6px] text-left" style={{ padding: '7px 0' }}>
-          <div style={{ width: 3, minWidth: 3, height: 26, borderRadius: 2, flexShrink: 0, background: pipColor(ex.exercise.movement_pattern || '') }} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <p className="truncate" style={{ fontSize: 10, fontWeight: 500, color: 'hsl(var(--text))' }}>{ex.exercise.name}</p>
-              {ex.supersetGroup && (
-                <span className="font-mono" style={{ fontSize: 8, padding: '0.5px 4px', borderRadius: 9, background: 'hsla(38,92%,50%,0.1)', color: 'hsl(var(--warn))', border: '1px solid hsla(38,92%,50%,0.2)' }}>SS</span>
-              )}
-            </div>
-            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', marginTop: 1 }}>{summaryLine}</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {completedSets.length > 0 && (
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: '1px 5px', borderRadius: 9, background: 'hsla(142,71%,45%,0.1)', color: 'hsl(var(--ok))', border: '1px solid hsla(142,71%,45%,0.2)' }}>
-                {completedSets.length}/{ex.sets.length}
-              </span>
-            )}
-            {!ex.expanded && lastSetRir !== null && lastSetRir !== undefined && (
-              <span style={{ background: 'hsla(38,92%,50%,0.1)', color: 'hsl(var(--warn))', fontFamily: 'JetBrains Mono, monospace', fontSize: 8, padding: '1px 3px', borderRadius: 3 }}>
-                RIR {lastSetRir}
-              </span>
-            )}
-            {ex.isPr && (
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, padding: '1px 3px', borderRadius: 3, background: 'hsl(var(--pg))', color: 'hsl(var(--primary))', border: '1px solid hsla(192,91%,54%,0.25)' }}>PR ↑</span>
-            )}
-          </div>
-        </button>
-
-        {ex.expanded && (
-          <div style={{ padding: '0 0 8px 9px' }} className="space-y-1">
-            {/* Column headers */}
-            <div style={{ display: 'grid', gridTemplateColumns: isTimed ? '28px 1fr 40px' : '28px 1fr 1fr 40px', gap: 4, padding: '4px 0 0 0' }}>
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>Set</span>
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>
-                {isTimed ? 'Secs' : 'Weight'}
-              </span>
-              {!isTimed && <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>Reps</span>}
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center' }}>RIR</span>
-            </div>
-
-            {/* Sets */}
-            {ex.sets.map((set, setIdx) => renderSetRow(ex, exIdx, set, setIdx))}
-
-            {/* Add Set */}
-            <button onClick={() => addSet(exIdx)} className="w-full text-primary" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: '5px 0', border: '1px dashed hsla(192,91%,54%,0.2)', borderRadius: 5, background: 'transparent' }}>
-              + Set
-            </button>
-
-            {/* Notes toggle */}
-            <div>
-              <button
-                onClick={() => toggleNotesVisibility(exIdx)}
-                className="flex items-center gap-1.5 transition-colors"
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.05em', color: ex.showNotes ? 'hsl(var(--primary))' : 'hsl(var(--dim))' }}
-              >
-                <StickyNote size={10} /> {ex.showNotes ? 'Hide Notes' : 'Notes'}
-              </button>
-              {ex.showNotes && (
-                <textarea
-                  value={ex.notes}
-                  onChange={e => updateNotes(exIdx, e.target.value)}
-                  placeholder="Exercise notes..."
-                  rows={2}
-                  className="w-full mt-1 focus:outline-none resize-none"
-                  style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', borderRadius: 6, padding: '6px 8px', fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'hsl(var(--text))' }}
-                />
-              )}
-            </div>
-
-            {/* Overflow actions — compact row */}
-            <div className="flex items-center gap-2 pt-1" style={{ borderTop: '1px solid hsl(var(--border))' }}>
-              <button
-                onClick={() => removeExercise(exIdx)}
-                className="flex items-center gap-1 transition-colors"
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--bad))' }}
-              >
-                <Trash2 size={10} /> Remove
-              </button>
-              <span style={{ color: 'hsl(var(--border))' }}>|</span>
-              {ex.section !== 'warmup' && (
-                <button onClick={() => moveExercise(exIdx, 'warmup')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>→ Warm Up</button>
-              )}
-              {ex.section !== 'exercises' && (
-                <button onClick={() => moveExercise(exIdx, 'exercises')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>→ Main</button>
-              )}
-              {ex.section !== 'cooldown' && (
-                <button onClick={() => moveExercise(exIdx, 'cooldown')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>→ Cool Down</button>
-              )}
-              <button
-                onClick={() => handleSupersetLink(exIdx)}
-                className="flex items-center gap-1 transition-colors"
-                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: linkingSuperset === exIdx ? 'hsl(var(--warn))' : 'hsl(var(--dim))' }}
-              >
-                <Link2 size={8} /> {linkingSuperset === exIdx ? 'Pick pair…' : 'SS'}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
+  /* ─── Load Last Session handler ─── */
+  const handleLoadLastSession = useCallback(async (exIdx: number) => {
+    const ex = exercises[exIdx];
+    if (!user || !ex) return;
+    const { data } = await supabase
+      .from('session_exercises')
+      .select(`
+        exercise_sets ( set_num, reps, weight_kg, rir ),
+        training_sessions!inner ( date, user_id )
+      `)
+      .eq('exercise_id', ex.exercise.id)
+      .order('display_order', { ascending: false })
+      .limit(5);
+    if (!data?.length) {
+      toast({ title: 'No history', description: 'No previous session found for this exercise.' });
+      return;
+    }
+    const userSessions = data.filter((d: any) => d.training_sessions?.user_id === user.id);
+    if (!userSessions.length) {
+      toast({ title: 'No history', description: 'No previous session found for this exercise.' });
+      return;
+    }
+    const prevSets = (userSessions[0] as any)?.exercise_sets;
+    if (!prevSets?.length) return;
+    // Overwrite current sets with previous data
+    const newSets: SetData[] = prevSets.map((ps: any, i: number) => ({
+      set_num: ps.set_num || i + 1,
+      reps: ps.reps,
+      weight_kg: ps.weight_kg,
+      rir: ps.rir,
+      rpe: null,
+      completed: false,
+      set_type: 'working' as const,
+      duration_secs: null,
+      distance_m: null,
+      calories: null,
+    }));
+    storeUpdateExercise(exIdx, { sets: newSets });
+    toast({ title: 'Loaded', description: `${prevSets.length} sets loaded from last session.` });
+  }, [exercises, user, storeUpdateExercise]);
 
   const sectionConfig: Record<WorkoutSection, { label: string; emoji: string; color: string; bannerStyle: React.CSSProperties }> = {
     warmup:    { label: 'WARM UP',        emoji: '🔥', color: 'hsl(var(--warn))',    bannerStyle: { padding: '4px 7px', background: 'hsla(38,92%,50%,0.06)', border: '1px solid hsla(38,92%,50%,0.15)', borderRadius: 6 } },
@@ -552,7 +381,27 @@ export const LogTab = () => {
           )}
         </div>
         <div className="mb-4">
-          {items.map(({ ex, globalIdx }) => renderExerciseCard(ex, globalIdx))}
+          {items.map(({ ex, globalIdx }) => (
+            <ExerciseCard
+              key={globalIdx}
+              exercise={ex}
+              exerciseIndex={globalIdx}
+              onUpdateSet={(setIdx, data) => storeUpdateSet(globalIdx, setIdx, data)}
+              onAddSet={() => storeAddSet(globalIdx)}
+              onRemoveSet={(setIdx) => {
+                const updated = ex.sets.filter((_, j) => j !== setIdx);
+                storeUpdateExercise(globalIdx, { sets: updated });
+              }}
+              onMarkComplete={(setIdx) => { storeMarkSetComplete(globalIdx, setIdx); setShowRestTimer(true); }}
+              onMarkIncomplete={(setIdx) => storeMarkSetIncomplete(globalIdx, setIdx)}
+              onToggleExpand={() => toggleExpand(globalIdx)}
+              onOpenActionSheet={() => setActionSheetIndex(globalIdx)}
+              onUpdateNotes={(notes) => updateNotes(globalIdx, notes)}
+              onToggleNotesVisibility={() => toggleNotesVisibility(globalIdx)}
+              preferredUnit={weightUnit as 'kg' | 'lbs'}
+              onToggleUnit={() => store.setPreferredUnit(weightUnit === 'kg' ? 'lbs' : 'kg')}
+            />
+          ))}
         </div>
       </div>
     );
