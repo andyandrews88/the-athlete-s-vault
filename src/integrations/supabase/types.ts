@@ -740,6 +740,7 @@ export type Database = {
           completed: boolean | null
           distance_m: number | null
           duration_secs: number | null
+          height_cm: number | null
           id: string
           is_pr: boolean | null
           reps: number | null
@@ -748,6 +749,8 @@ export type Database = {
           session_exercise_id: string
           set_num: number
           set_type: string
+          side: string | null
+          speed_mps: number | null
           weight_kg: number | null
         }
         Insert: {
@@ -755,6 +758,7 @@ export type Database = {
           completed?: boolean | null
           distance_m?: number | null
           duration_secs?: number | null
+          height_cm?: number | null
           id?: string
           is_pr?: boolean | null
           reps?: number | null
@@ -763,6 +767,8 @@ export type Database = {
           session_exercise_id: string
           set_num: number
           set_type?: string
+          side?: string | null
+          speed_mps?: number | null
           weight_kg?: number | null
         }
         Update: {
@@ -770,6 +776,7 @@ export type Database = {
           completed?: boolean | null
           distance_m?: number | null
           duration_secs?: number | null
+          height_cm?: number | null
           id?: string
           is_pr?: boolean | null
           reps?: number | null
@@ -778,6 +785,8 @@ export type Database = {
           session_exercise_id?: string
           set_num?: number
           set_type?: string
+          side?: string | null
+          speed_mps?: number | null
           weight_kg?: number | null
         }
         Relationships: [
@@ -796,11 +805,19 @@ export type Database = {
           category: string | null
           created_by: string | null
           difficulty_coefficient: number | null
+          equipment_type: string | null
           exercise_type: string
           id: string
           is_custom: boolean | null
+          is_plyometric: boolean | null
+          is_timed: boolean | null
+          is_unilateral: boolean | null
           movement_pattern: string | null
+          muscle_group: string | null
           name: string
+          plyo_metric: string | null
+          status: string | null
+          submitted_by: string | null
           video_url: string | null
         }
         Insert: {
@@ -808,11 +825,19 @@ export type Database = {
           category?: string | null
           created_by?: string | null
           difficulty_coefficient?: number | null
+          equipment_type?: string | null
           exercise_type?: string
           id?: string
           is_custom?: boolean | null
+          is_plyometric?: boolean | null
+          is_timed?: boolean | null
+          is_unilateral?: boolean | null
           movement_pattern?: string | null
+          muscle_group?: string | null
           name: string
+          plyo_metric?: string | null
+          status?: string | null
+          submitted_by?: string | null
           video_url?: string | null
         }
         Update: {
@@ -820,11 +845,19 @@ export type Database = {
           category?: string | null
           created_by?: string | null
           difficulty_coefficient?: number | null
+          equipment_type?: string | null
           exercise_type?: string
           id?: string
           is_custom?: boolean | null
+          is_plyometric?: boolean | null
+          is_timed?: boolean | null
+          is_unilateral?: boolean | null
           movement_pattern?: string | null
+          muscle_group?: string | null
           name?: string
+          plyo_metric?: string | null
+          status?: string | null
+          submitted_by?: string | null
           video_url?: string | null
         }
         Relationships: [
