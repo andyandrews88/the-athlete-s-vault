@@ -26,7 +26,7 @@ interface ExerciseSearchProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectExercise: (exercise: ExerciseRow) => void;
-  currentSection: 'warmup' | 'main' | 'cooldown';
+  currentSection: 'warmup' | 'exercises' | 'cooldown';
 }
 
 export const ExerciseSearch = ({ isOpen, onClose, onSelectExercise, currentSection }: ExerciseSearchProps) => {
