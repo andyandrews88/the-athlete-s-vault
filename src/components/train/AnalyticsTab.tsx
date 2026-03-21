@@ -85,16 +85,6 @@ export const AnalyticsTab = () => {
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="max-w-lg mx-auto px-4 space-y-2">
-        <SkeletonCard barCount={9} />
-        <SkeletonCard barCount={8} />
-        <SkeletonCard barCount={8} />
-        <SkeletonCard barCount={6} />
-      </div>
-    );
-  }
 
   const loadExerciseOptions = async () => {
     if (!user) return;
