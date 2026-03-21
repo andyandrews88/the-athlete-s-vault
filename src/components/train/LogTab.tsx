@@ -62,8 +62,6 @@ export const LogTab = () => {
   const sessionStartTime = sessionStartTimeISO ? new Date(sessionStartTimeISO) : null;
 
   // ─── Local UI state (not persisted) ───
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<ExerciseRow[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [finished, setFinished] = useState(false);
   const [workoutNotes, setWorkoutNotes] = useState('');
