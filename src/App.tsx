@@ -43,7 +43,22 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  // Sync offline writes when coming back online
+  useEffect(() => {
+    const handleOnline = async () => {
+      const synced = await syncPendingWrites(supabase);
+      if (synced > 0) {
+        toast({ title: 'Back online', description: `Synced ${synced} pending write${synced > 1 ? 's' : ''}.` });
+      }
+    };
+    window.addEventListener('online', handleOnline);
+    // Also sync on mount in case writes accumulated
+    handleOnline();
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <>
       <Toaster />

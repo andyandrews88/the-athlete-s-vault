@@ -302,6 +302,8 @@ export const LogTab = () => {
     });
     storeEndSession();
     setFinished(true);
+    // Haptic on session finish
+    if ('vibrate' in navigator) try { navigator.vibrate([100, 100, 200]); } catch {}
   };
 
   /* ─── Grouped exercises by section ─── */
