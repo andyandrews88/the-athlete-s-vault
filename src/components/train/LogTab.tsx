@@ -8,6 +8,7 @@ import { WeekStrip } from './WeekStrip';
 import { ExerciseCard } from './ExerciseCard';
 import { ExerciseActionSheet } from './ExerciseActionSheet';
 import { PRCelebration } from './PRCelebration';
+import { ExerciseSearch } from './ExerciseSearch';
 import { useWorkoutStore, type SessionExercise, type SetData, type WorkoutSection, type ExerciseRow } from '@/stores/workoutStore';
 import { useUserProgrammes, useProgrammeWorkouts } from '@/hooks/useProgrammes';
 import { usePreviousSets } from '@/hooks/useWorkoutHistory';
@@ -61,8 +62,6 @@ export const LogTab = () => {
   const sessionStartTime = sessionStartTimeISO ? new Date(sessionStartTimeISO) : null;
 
   // ─── Local UI state (not persisted) ───
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<ExerciseRow[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [finished, setFinished] = useState(false);
   const [workoutNotes, setWorkoutNotes] = useState('');
@@ -141,18 +140,6 @@ export const LogTab = () => {
     }, 0);
   }, [exercises]);
 
-  /* ─── Search ─── */
-  const handleSearch = useCallback(async (query: string) => {
-    setSearchQuery(query);
-    if (query.length < 1) { setSearchResults([]); return; }
-    const { data } = await supabase
-      .from('exercises')
-      .select('id, name, movement_pattern, difficulty_coefficient, exercise_type, video_url')
-      .ilike('name', `%${query}%`)
-      .limit(8);
-    setSearchResults((data as ExerciseRow[]) || []);
-  }, []);
-
   /* ─── Session actions ─── */
   const startSession = async () => {
     if (!user) return;
@@ -205,7 +192,7 @@ export const LogTab = () => {
       exercise: ex, sets: [emptySet(1)], expanded: true, isPr: false,
       notes: '', section, supersetGroup: null, showNotes: false,
     });
-    setSearchQuery(''); setSearchResults([]); setShowSearch(false);
+    setShowSearch(false);
   };
 
   const removeExercise = (exIdx: number) => {
@@ -586,45 +573,21 @@ export const LogTab = () => {
       {renderSection('cooldown', sectionExercises.cooldown)}
 
       {/* Add Exercise */}
-      {!showSearch ? (
-        <button
-          onClick={() => setShowSearch(true)}
-          className="w-full flex items-center justify-center gap-2"
-          style={{ border: '1px solid hsl(var(--border2))', color: 'hsl(var(--dim))', fontFamily: 'Inter, sans-serif', fontSize: 9, padding: 7, borderRadius: 8, background: 'transparent', marginTop: 7 }}
-        >
-          <Plus size={12} /> + Add Exercise
-        </button>
-      ) : (
-        <div className="space-y-1">
-          <div className="relative">
-            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              autoFocus placeholder="Search exercises..."
-              value={searchQuery} onChange={e => handleSearch(e.target.value)}
-              className="w-full bg-secondary border border-input rounded-xl px-4 py-3 pl-10 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-            />
-          </div>
-          {searchResults.length > 0 && (
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              {searchResults.map(ex => (
-                <button
-                  key={ex.id} onClick={() => addExercise(ex)}
-                  className="w-full flex items-center justify-between px-4 py-3 text-left border-b border-border last:border-b-0 text-foreground hover:bg-secondary cursor-pointer font-mono text-sm transition-colors"
-                >
-                  <span>{ex.name}</span>
-                  <div className="flex items-center gap-1.5">
-                    {ex.exercise_type && ex.exercise_type !== 'strength' && (
-                      <span className="font-mono text-[8px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border">{ex.exercise_type}</span>
-                    )}
-                    <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{ex.movement_pattern}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-          <button onClick={() => setShowSearch(false)} className="w-full font-mono text-[9px] text-muted-foreground py-2">Cancel</button>
-        </div>
-      )}
+      <button
+        onClick={() => setShowSearch(true)}
+        className="w-full flex items-center justify-center gap-2"
+        style={{ border: '1px solid hsl(var(--border2))', color: 'hsl(var(--dim))', fontFamily: 'Inter, sans-serif', fontSize: 9, padding: 7, borderRadius: 8, background: 'transparent', marginTop: 7 }}
+      >
+        <Plus size={12} /> + Add Exercise
+      </button>
+
+      {/* Exercise search overlay */}
+      <ExerciseSearch
+        isOpen={showSearch}
+        onClose={() => setShowSearch(false)}
+        onSelectExercise={(ex) => addExercise(ex)}
+        currentSection="exercises"
+      />
 
       {/* Workout notes */}
       <div className="rounded-2xl p-4" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
