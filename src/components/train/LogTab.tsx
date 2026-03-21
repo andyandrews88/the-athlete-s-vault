@@ -5,6 +5,8 @@ import { toast } from '@/hooks/use-toast';
 import { calculateSetNtu } from '@/lib/movementPatterns';
 import { RestTimer } from './RestTimer';
 import { WeekStrip } from './WeekStrip';
+import { useWorkoutStore, type SessionExercise, type SetData, type WorkoutSection, type ExerciseRow } from '@/stores/workoutStore';
+import { useUserProgrammes, useProgrammeWorkouts } from '@/hooks/useProgrammes';
 import {
   Search, Plus, ChevronDown, ChevronUp, Dumbbell, ListChecks,
   Link2, StickyNote, MessageSquare, Trash2, X, Check,
@@ -13,41 +15,6 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/component
 import { format } from 'date-fns';
 
 /* ─── Types ─── */
-interface ExerciseRow {
-  id: string;
-  name: string;
-  movement_pattern: string;
-  difficulty_coefficient: number;
-  exercise_type?: string;
-  video_url?: string;
-}
-
-interface SetData {
-  set_num: number;
-  reps: number | null;
-  weight_kg: number | null;
-  rir: number | null;
-  rpe: number | null;
-  completed: boolean;
-  set_type: 'warmup' | 'working';
-  duration_secs: number | null;
-  distance_m: number | null;
-  calories: number | null;
-}
-
-type WorkoutSection = 'warmup' | 'exercises' | 'cooldown';
-
-interface SessionExercise {
-  exercise: ExerciseRow;
-  sets: SetData[];
-  expanded: boolean;
-  isPr: boolean;
-  notes: string;
-  section: WorkoutSection;
-  supersetGroup: string | null;
-  showNotes: boolean;
-}
-
 interface Programme {
   id: string;
   name: string;
@@ -75,9 +42,21 @@ export const LogTab = () => {
   const weightUnit = profile?.weight_unit ?? 'kg';
   const restTimerDefault = (profile as any)?.rest_timer_secs ?? 90;
 
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-  const [exercises, setExercises] = useState<SessionExercise[]>([]);
+  // ─── Zustand store ───
+  const store = useWorkoutStore();
+  const {
+    activeSessionId, sessionStartTime: sessionStartTimeISO, exercises, isSessionActive,
+    startSession: storeStartSession, endSession: storeEndSession,
+    addExercise: storeAddExercise, removeExercise: storeRemoveExercise,
+    updateExercise: storeUpdateExercise, updateSet: storeUpdateSet,
+    addSet: storeAddSet, markSetComplete: storeMarkSetComplete,
+    markSetIncomplete: storeMarkSetIncomplete, moveExerciseToSection,
+    linkSuperset: storeLinkSuperset, resetSession: storeResetSession,
+  } = store;
+
+  const sessionStartTime = sessionStartTimeISO ? new Date(sessionStartTimeISO) : null;
+
+  // ─── Local UI state (not persisted) ───
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ExerciseRow[]>([]);
   const [showSearch, setShowSearch] = useState(false);
@@ -85,21 +64,29 @@ export const LogTab = () => {
   const [workoutNotes, setWorkoutNotes] = useState('');
   const [summaryData, setSummaryData] = useState<any>(null);
   const [timer, setTimer] = useState('00:00');
-
-  // Rest timer
   const [showRestTimer, setShowRestTimer] = useState(false);
-
-  // Sections open state
   const [sectionsOpen, setSectionsOpen] = useState({ warmup: true, exercises: true, cooldown: true });
 
-  // Programme state
-  const [programmes, setProgrammes] = useState<Programme[]>([]);
-  const [activeProgramme, setActiveProgramme] = useState<Programme | null>(null);
+  // Programme state — via React Query
+  const { data: programmesData } = useUserProgrammes();
+  const programmes = (programmesData as Programme[]) || [];
   const [selectedProgrammeId, setSelectedProgrammeId] = useState<string | null>(null);
   const [showProgrammeSelector, setShowProgrammeSelector] = useState(false);
 
-  // Workout day state
-  const [workouts, setWorkouts] = useState<ProgrammeWorkout[]>([]);
+  const activeProgramme = useMemo(() => programmes.find(p => p.is_active) || null, [programmes]);
+
+  // Set selected programme when data loads
+  useEffect(() => {
+    if (programmes.length > 0 && selectedProgrammeId === null) {
+      setSelectedProgrammeId(activeProgramme?.id || null);
+    }
+  }, [programmes, activeProgramme, selectedProgrammeId]);
+
+  // Workout day state — via React Query
+  const { data: workoutsData } = useProgrammeWorkouts(
+    selectedProgrammeId === activeProgramme?.id ? activeProgramme?.id || null : null
+  );
+  const workouts = (workoutsData as ProgrammeWorkout[]) || [];
   const [selectedWorkout, setSelectedWorkout] = useState<ProgrammeWorkout | null>(null);
   const [showWorkoutPicker, setShowWorkoutPicker] = useState(false);
 
@@ -125,31 +112,6 @@ export const LogTab = () => {
     if (exType === 'conditioning') return !!(set.duration_secs || set.distance_m || set.calories);
     return !!(set.reps && set.weight_kg);
   };
-
-  /* ─── Load programmes ─── */
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data } = await supabase
-        .from('training_programmes')
-        .select('id, name, description, is_active')
-        .eq('user_id', user.id)
-        .order('is_active', { ascending: false });
-      const progs = (data as Programme[]) || [];
-      setProgrammes(progs);
-      const active = progs.find(p => p.is_active) || null;
-      setActiveProgramme(active);
-      setSelectedProgrammeId(active?.id || null);
-      if (active) {
-        const { data: wkData } = await supabase
-          .from('programme_workouts')
-          .select('id, day_number, name, prescribed_exercises')
-          .eq('programme_id', active.id)
-          .order('day_number');
-        if (wkData?.length) setWorkouts(wkData as ProgrammeWorkout[]);
-      }
-    })();
-  }, [user]);
 
   /* ─── Timer ─── */
   useEffect(() => {
@@ -192,8 +154,7 @@ export const LogTab = () => {
       .select('id')
       .single();
     if (data && !error) {
-      setSessionId(data.id);
-      setSessionStartTime(new Date());
+      let preloaded: SessionExercise[] = [];
       if (selectedWorkout) {
         const prescribed = selectedWorkout.prescribed_exercises || [];
         const names = prescribed.map((p: any) => p.name);
@@ -204,7 +165,7 @@ export const LogTab = () => {
             .in('name', names);
           if (exData) {
             const exMap = new Map(exData.map((e: any) => [e.name, e]));
-            const preloaded: SessionExercise[] = prescribed
+            preloaded = prescribed
               .filter((p: any) => exMap.has(p.name))
               .map((p: any) => ({
                 exercise: exMap.get(p.name)!,
@@ -215,71 +176,65 @@ export const LogTab = () => {
                 supersetGroup: null,
                 showNotes: !!(p.notes),
               }));
-            setExercises(preloaded);
           }
         }
       }
+      storeStartSession(data.id, preloaded);
     }
   };
 
   const cancelSession = async () => {
-    if (!sessionId) return;
-    await supabase.from('training_sessions').delete().eq('id', sessionId);
-    setSessionId(null);
-    setExercises([]);
-    setSessionStartTime(null);
+    if (!activeSessionId) return;
+    await supabase.from('training_sessions').delete().eq('id', activeSessionId);
+    storeEndSession();
     setTimer('00:00');
     setWorkoutNotes('');
     toast({ title: 'Workout cancelled', description: 'Session discarded.' });
   };
 
   const addExercise = (ex: ExerciseRow, section: WorkoutSection = 'exercises') => {
-    setExercises(prev => [...prev, {
+    storeAddExercise({
       exercise: ex, sets: [emptySet(1)], expanded: true, isPr: false,
       notes: '', section, supersetGroup: null, showNotes: false,
-    }]);
+    });
     setSearchQuery(''); setSearchResults([]); setShowSearch(false);
   };
 
   const removeExercise = (exIdx: number) => {
-    setExercises(prev => prev.filter((_, i) => i !== exIdx));
+    storeRemoveExercise(exIdx);
   };
 
   const addSet = (exIdx: number) => {
-    setExercises(prev => prev.map((e, i) => i === exIdx ? {
-      ...e, sets: [...e.sets, emptySet(e.sets.length + 1)],
-    } : e));
+    storeAddSet(exIdx);
   };
 
   const updateSet = (exIdx: number, setIdx: number, field: keyof SetData, value: any) => {
-    setExercises(prev => prev.map((e, i) => i === exIdx ? {
-      ...e, sets: e.sets.map((s, j) => j === setIdx ? { ...s, [field]: value } : s),
-    } : e));
+    storeUpdateSet(exIdx, setIdx, { [field]: value });
   };
 
   const completeSet = (exIdx: number, setIdx: number) => {
-    updateSet(exIdx, setIdx, 'completed', true);
+    storeMarkSetComplete(exIdx, setIdx);
     setShowRestTimer(true);
   };
 
   const uncompleteSet = (exIdx: number, setIdx: number) => {
-    updateSet(exIdx, setIdx, 'completed', false);
+    storeMarkSetIncomplete(exIdx, setIdx);
   };
 
   const toggleExpand = (exIdx: number) => {
-    setExercises(prev => prev.map((e, i) => i === exIdx ? { ...e, expanded: !e.expanded } : e));
+    storeUpdateExercise(exIdx, { expanded: !exercises[exIdx].expanded });
   };
 
   const moveExercise = (exIdx: number, to: WorkoutSection) => {
-    setExercises(prev => prev.map((e, i) => i === exIdx ? { ...e, section: to } : e));
+    moveExerciseToSection(exIdx, to);
   };
 
   const updateNotes = (exIdx: number, notes: string) => {
-    setExercises(prev => prev.map((e, i) => i === exIdx ? { ...e, notes } : e));
+    storeUpdateExercise(exIdx, { notes });
   };
 
   const toggleNotesVisibility = (exIdx: number) => {
-    setExercises(prev => prev.map((e, i) => i === exIdx ? { ...e, showNotes: !e.showNotes } : e));
+    storeUpdateExercise(exIdx, { showNotes: !exercises[exIdx].showNotes });
   };
 
   /* ─── Superset linking ─── */
@@ -287,25 +242,21 @@ export const LogTab = () => {
     if (linkingSuperset === null) {
       setLinkingSuperset(exIdx);
     } else {
-      const groupId = `ss-${Date.now()}`;
-      setExercises(prev => prev.map((e, i) => {
-        if (i === linkingSuperset || i === exIdx) return { ...e, supersetGroup: groupId };
-        return e;
-      }));
+      storeLinkSuperset(linkingSuperset, exIdx);
       setLinkingSuperset(null);
     }
   };
 
   /* ─── Finish ─── */
   const finishSession = async () => {
-    if (!sessionId || !user) return;
+    if (!activeSessionId || !user) return;
     let prsHit = 0;
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
       const { data: seData } = await supabase
         .from('session_exercises')
         .insert({
-          session_id: sessionId, exercise_id: ex.exercise.id,
+          session_id: activeSessionId, exercise_id: ex.exercise.id,
           display_order: i, notes: ex.notes || null, superset_group: ex.supersetGroup,
         } as any)
         .select('id').single();
@@ -331,17 +282,17 @@ export const LogTab = () => {
           prsHit++;
           await supabase.from('personal_records').insert({
             user_id: user.id, exercise_id: ex.exercise.id,
-            weight_kg: set.weight_kg!, reps: set.reps, session_id: sessionId,
+            weight_kg: set.weight_kg!, reps: set.reps, session_id: activeSessionId,
           });
           toast({ title: '🏆 New PR!', description: `${ex.exercise.name}: ${set.weight_kg}kg × ${set.reps}` });
         }
       }
     }
     if (workoutNotes) {
-      await supabase.from('training_sessions').update({ workout_notes: workoutNotes } as any).eq('id', sessionId);
+      await supabase.from('training_sessions').update({ workout_notes: workoutNotes } as any).eq('id', activeSessionId);
     }
     await supabase.from('training_sessions')
-      .update({ completed: true, total_ntu: Math.round(totalNtu) }).eq('id', sessionId);
+      .update({ completed: true, total_ntu: Math.round(totalNtu) }).eq('id', activeSessionId);
 
     const durSecs = sessionStartTime ? Math.floor((Date.now() - sessionStartTime.getTime()) / 1000) : 0;
     setSummaryData({
@@ -350,6 +301,7 @@ export const LogTab = () => {
       totalNtu: Math.round(totalNtu), prsHit, exercisesDone: exercises.length,
       programmeName: activeProgramme?.name,
     });
+    storeEndSession();
     setFinished(true);
   };
 
@@ -601,7 +553,7 @@ export const LogTab = () => {
   /* ═══════════════════════════════════════════
      STATE 1 — No active session
      ═══════════════════════════════════════════ */
-  if (!sessionId && !finished) {
+  if (!isSessionActive && !finished) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
         {/* Week strip */}
@@ -729,7 +681,7 @@ export const LogTab = () => {
             ))}
           </div>
           <button
-            onClick={() => { setSessionId(null); setExercises([]); setFinished(false); setSummaryData(null); setTimer('00:00'); setWorkoutNotes(''); }}
+            onClick={() => { storeResetSession(); setFinished(false); setSummaryData(null); setTimer('00:00'); setWorkoutNotes(''); }}
             className="w-full bg-secondary border border-border text-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs"
           >New Session</button>
         </div>
