@@ -71,6 +71,10 @@ export const LogTab = () => {
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState({ warmup: true, exercises: true, cooldown: true });
 
+  // ─── Action sheet & PR celebration state ───
+  const [actionSheetIndex, setActionSheetIndex] = useState<number | null>(null);
+  const [prCelebration, setPrCelebration] = useState<{ exerciseName: string; weight: number } | null>(null);
+
   // Programme state — via React Query
   const { data: programmesData } = useUserProgrammes();
   const programmes = (programmesData as Programme[]) || [];
