@@ -648,6 +648,41 @@ export const LogTab = () => {
           onSkip={() => setShowRestTimer(false)}
         />
       )}
+
+      {/* Action sheet overlay */}
+      {actionSheetIndex !== null && exercises[actionSheetIndex] && (
+        <ExerciseActionSheet
+          exerciseName={exercises[actionSheetIndex].exercise.name}
+          exerciseIndex={actionSheetIndex}
+          onClose={() => setActionSheetIndex(null)}
+          onLoadLastSession={() => handleLoadLastSession(actionSheetIndex)}
+          onReplaceExercise={() => {
+            setActionSheetIndex(null);
+            setShowSearch(true);
+          }}
+          onRemoveExercise={() => {
+            removeExercise(actionSheetIndex);
+            setActionSheetIndex(null);
+          }}
+          onMoveUp={() => store.reorderExercise(actionSheetIndex, 'up')}
+          onMoveDown={() => store.reorderExercise(actionSheetIndex, 'down')}
+          onLinkSuperset={() => handleSupersetLink(actionSheetIndex)}
+          onUnlinkSuperset={() => store.unlinkSuperset(actionSheetIndex)}
+          hasSuperset={!!exercises[actionSheetIndex].supersetGroup}
+          canMoveUp={actionSheetIndex > 0}
+          canMoveDown={actionSheetIndex < exercises.length - 1}
+        />
+      )}
+
+      {/* PR celebration overlay */}
+      {prCelebration && (
+        <PRCelebration
+          exerciseName={prCelebration.exerciseName}
+          weight={prCelebration.weight}
+          unit={weightUnit as 'kg' | 'lbs'}
+          onDismiss={() => setPrCelebration(null)}
+        />
+      )}
     </div>
   );
 };
