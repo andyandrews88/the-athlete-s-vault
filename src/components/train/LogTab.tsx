@@ -696,19 +696,47 @@ export const LogTab = () => {
         currentSection="exercises"
       />
 
-      {/* Workout notes */}
-      <div className="rounded-2xl p-4" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
-        <div className="flex items-center gap-1.5 mb-2">
-          <MessageSquare size={12} className="text-muted-foreground" />
-          <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest">Workout Notes</span>
+      {/* Workout notes (active session only) */}
+      {!isEditing && (
+        <div className="rounded-2xl p-4" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+          <div className="flex items-center gap-1.5 mb-2">
+            <MessageSquare size={12} className="text-muted-foreground" />
+            <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest">Workout Notes</span>
+          </div>
+          <textarea
+            value={workoutNotes} onChange={e => setWorkoutNotes(e.target.value)}
+            placeholder="How did this session feel?"
+            rows={3}
+            className="w-full bg-secondary border border-border rounded-lg px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none resize-none"
+          />
         </div>
-        <textarea
-          value={workoutNotes} onChange={e => setWorkoutNotes(e.target.value)}
-          placeholder="How did this session feel?"
-          rows={3}
-          className="w-full bg-secondary border border-border rounded-lg px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none resize-none"
-        />
-      </div>
+      )}
+
+      {/* Edit mode buttons */}
+      {isEditing && (
+        <div className="space-y-2" style={{ marginTop: 12 }}>
+          <button
+            onClick={saveEdits}
+            style={{
+              width: '100%', background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)',
+              fontWeight: 700, fontSize: 11, padding: '12px 0', borderRadius: 8, border: 'none',
+              textTransform: 'uppercase', letterSpacing: 1,
+            }}
+          >
+            Save Changes
+          </button>
+          <button
+            onClick={discardEdits}
+            style={{
+              width: '100%', background: 'transparent', color: 'hsl(var(--dim))',
+              fontWeight: 500, fontSize: 11, padding: '10px 0', borderRadius: 8,
+              border: 'none', cursor: 'pointer',
+            }}
+          >
+            Discard Changes
+          </button>
+        </div>
+      )}
 
       {/* Rest timer overlay */}
       {showRestTimer && (
