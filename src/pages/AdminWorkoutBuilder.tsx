@@ -111,7 +111,7 @@ const AdminWorkoutBuilder = () => {
     // Copy
     for (const w of weekWorkouts) {
       await supabase.from('programme_workouts').insert({
-        template_id: selectedTemplateId!, week_number: targetWeek,
+        programme_id: selectedTemplateId!, template_id: selectedTemplateId!, week_number: targetWeek,
         day_number: w.day_number, name: w.name,
         prescribed_exercises: w.prescribed_exercises as any,
       });
