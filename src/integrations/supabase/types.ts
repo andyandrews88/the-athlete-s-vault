@@ -1542,6 +1542,63 @@ export type Database = {
         }
         Relationships: []
       }
+      programme_templates: {
+        Row: {
+          created_at: string | null
+          days_per_week: number | null
+          description: string | null
+          difficulty: string | null
+          display_order: number | null
+          duration_weeks: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          required_tier: string | null
+          sample_week: Json | null
+          slug: string
+          tagline: string | null
+          tags: string[] | null
+          what_to_expect: string | null
+          who_its_for: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          days_per_week?: number | null
+          description?: string | null
+          difficulty?: string | null
+          display_order?: number | null
+          duration_weeks?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          required_tier?: string | null
+          sample_week?: Json | null
+          slug: string
+          tagline?: string | null
+          tags?: string[] | null
+          what_to_expect?: string | null
+          who_its_for?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          days_per_week?: number | null
+          description?: string | null
+          difficulty?: string | null
+          display_order?: number | null
+          duration_weeks?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          required_tier?: string | null
+          sample_week?: Json | null
+          slug?: string
+          tagline?: string | null
+          tags?: string[] | null
+          what_to_expect?: string | null
+          who_its_for?: string | null
+        }
+        Relationships: []
+      }
       programme_workouts: {
         Row: {
           created_at: string | null
@@ -1831,6 +1888,7 @@ export type Database = {
           is_free: boolean | null
           is_template: boolean | null
           name: string
+          template_id: string | null
           user_id: string
           weeks: number | null
         }
@@ -1844,6 +1902,7 @@ export type Database = {
           is_free?: boolean | null
           is_template?: boolean | null
           name: string
+          template_id?: string | null
           user_id: string
           weeks?: number | null
         }
@@ -1857,10 +1916,19 @@ export type Database = {
           is_free?: boolean | null
           is_template?: boolean | null
           name?: string
+          template_id?: string | null
           user_id?: string
           weeks?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "training_programmes_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "programme_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       training_sessions: {
         Row: {

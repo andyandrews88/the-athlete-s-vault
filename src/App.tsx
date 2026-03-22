@@ -30,6 +30,9 @@ import AdminLibraryPage from "./pages/AdminLibraryPage";
 import AdminBusinessDashboard from "./pages/AdminBusinessDashboard";
 import LibraryPage from "./pages/LibraryPage";
 import TrainPage from "./pages/TrainPage";
+import ProgrammeSelectPage from "./pages/ProgrammeSelectPage";
+import ProgrammeLandingPage from "./components/train/ProgrammeLandingPage";
+import AdminProgrammeManager from "./pages/AdminProgrammeManager";
 import LifestylePage from "./pages/LifestylePage";
 import NutritionPage from "./pages/NutritionPage";
 import ProgressPage from "./pages/ProgressPage";
@@ -77,6 +80,8 @@ const App = () => {
             <Route path="/results" element={<ProtectedRoute><AuditResults /></ProtectedRoute>} />
             <Route path="/home" element={<ProtectedRoute><HomeDashboard /></ProtectedRoute>} />
             <Route path="/train" element={<ProtectedRoute><TrainPage /></ProtectedRoute>} />
+            <Route path="/programmes" element={<ProtectedRoute><ProgrammeSelectPage /></ProtectedRoute>} />
+            <Route path="/programmes/:slug" element={<ProtectedRoute><ProgrammeLandingPage /></ProtectedRoute>} />
             <Route path="/lifestyle" element={<ProtectedRoute><LifestylePage /></ProtectedRoute>} />
             <Route path="/nutrition" element={<ProtectedRoute><NutritionPage /></ProtectedRoute>} />
             <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
@@ -93,6 +98,7 @@ const App = () => {
             <Route path="/admin/workout-builder" element={<AdminRoute><AdminWorkoutBuilder /></AdminRoute>} />
             <Route path="/admin/library" element={<AdminRoute><AdminLibraryPage /></AdminRoute>} />
             <Route path="/admin/business" element={<AdminRoute><AdminBusinessDashboard /></AdminRoute>} />
+            <Route path="/admin/programmes" element={<AdminRoute><AdminProgrammeManager /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>

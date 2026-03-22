@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -43,6 +44,7 @@ const emptySet = (num: number): SetData => ({
 
 /* ─── Component ─── */
 export const LogTab = () => {
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const weightUnit = profile?.weight_unit ?? 'kg';
   const restTimerDefault = (profile as any)?.rest_timer_secs ?? 90;
@@ -491,56 +493,27 @@ export const LogTab = () => {
         </div>
 
         <div className="w-full" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsla(192,91%,54%,0.2)', boxShadow: '0 0 30px hsla(192,91%,54%,0.06)', borderRadius: 16, padding: 24 }}>
-          {/* Programme header */}
-          <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 22, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1, marginBottom: 4 }}>
-            {activeProgramme ? activeProgramme.name.toUpperCase() : 'FREE SESSION'}
-          </h2>
-          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginBottom: 16 }}>
-            {activeProgramme && selectedWorkout
-              ? `Week 1 · Day ${selectedWorkout.day_number} · Main Block`
-              : activeProgramme
-                ? 'Select a workout day below'
-                : 'No programme · Free session'}
-          </p>
-
-          {/* Programme selector */}
-          {programmes.length > 0 && (
-            <div className="mb-5">
-              <button
-                onClick={() => setShowProgrammeSelector(!showProgrammeSelector)}
-                className="w-full flex items-center justify-between rounded-xl px-4 py-3 text-left"
-                style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))' }}
-              >
-                <div className="flex items-center gap-2">
-                  <ListChecks size={14} className="text-primary" />
-                  <span className="font-mono text-xs" style={{ color: 'hsl(var(--text))' }}>
-                    {selectedProgrammeId ? programmes.find(p => p.id === selectedProgrammeId)?.name : 'No Programme'}
-                  </span>
-                </div>
-                <ChevronDown size={14} style={{ color: 'hsl(var(--dim))' }} />
+          {/* Programme info row */}
+          {activeProgramme ? (
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))' }}>{activeProgramme.name}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '2px 8px', borderRadius: 6, border: '1px solid hsla(192,91%,54%,0.2)' }}>
+                  Week 1
+                </span>
+                <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'hsl(var(--dim))', background: 'none', border: 'none', cursor: 'pointer' }}>
+                  Change →
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-3">
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'hsl(var(--dim))' }}>No programme selected</p>
+              <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--primary))', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 2 }}>
+                Choose a programme →
               </button>
-              {showProgrammeSelector && (
-                <div className="mt-1 overflow-hidden" style={{ background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))', borderRadius: 10 }}>
-                  <button
-                    onClick={() => { setSelectedProgrammeId(null); setShowProgrammeSelector(false); }}
-                    className="w-full text-left px-4 py-3 font-mono text-xs transition-colors"
-                    style={{ color: !selectedProgrammeId ? 'hsl(var(--primary))' : 'hsl(var(--text))', borderBottom: '1px solid hsl(var(--border))' }}
-                  >
-                    No Programme (Free Session)
-                  </button>
-                  {programmes.map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => { setSelectedProgrammeId(p.id); setShowProgrammeSelector(false); }}
-                      className="w-full text-left px-4 py-3 font-mono text-xs transition-colors"
-                      style={{ color: selectedProgrammeId === p.id ? 'hsl(var(--primary))' : 'hsl(var(--text))', borderBottom: '1px solid hsl(var(--border))' }}
-                    >
-                      {p.name}
-                      {p.is_active && <span className="ml-2" style={{ fontSize: 8, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '1px 5px', borderRadius: 9, border: '1px solid hsla(192,91%,54%,0.2)' }}>ACTIVE</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
@@ -567,6 +540,19 @@ export const LogTab = () => {
               </div>
             </div>
           )}
+
+          {/* Build Workout button */}
+          <button
+            onClick={startSession}
+            className="w-full mb-2"
+            style={{
+              background: 'transparent', border: '1px solid hsl(var(--border))',
+              color: 'hsl(var(--text))', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
+              padding: '10px 0', borderRadius: 8, cursor: 'pointer',
+            }}
+          >
+            🏋️ Build Workout
+          </button>
 
           <button
             onClick={startSession}
