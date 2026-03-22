@@ -314,6 +314,73 @@ export const LogTab = () => {
     if ('vibrate' in navigator) try { navigator.vibrate([100, 100, 200]); } catch {}
   };
 
+  /* ─── Save Edits (edit mode) ─── */
+  const saveEdits = async () => {
+    if (!editingSessionId || !user) return;
+
+    // Delete removed exercises
+    for (const id of removedExerciseIds) {
+      await supabase.from('exercise_sets').delete().eq('session_exercise_id', id);
+      await supabase.from('session_exercises').delete().eq('id', id);
+    }
+
+    // Upsert exercises and sets
+    for (let i = 0; i < exercises.length; i++) {
+      const ex = exercises[i] as any;
+      let seId = ex._dbId;
+
+      if (seId) {
+        // Update existing session_exercise
+        await supabase.from('session_exercises').update({
+          display_order: i, notes: ex.notes || null, superset_group: ex.supersetGroup,
+        }).eq('id', seId);
+      } else {
+        // Insert new session_exercise
+        const { data: seData } = await supabase
+          .from('session_exercises')
+          .insert({
+            session_id: editingSessionId, exercise_id: ex.exercise.id,
+            display_order: i, notes: ex.notes || null, superset_group: ex.supersetGroup,
+          } as any)
+          .select('id').single();
+        if (!seData) continue;
+        seId = seData.id;
+      }
+
+      for (const set of ex.sets) {
+        const setData: any = {
+          set_num: set.set_num, reps: set.reps, weight_kg: set.weight_kg,
+          rir: set.rir, rpe: set.rpe, completed: set.completed,
+          set_type: set.set_type, is_pr: set.is_pr || false,
+          duration_secs: set.duration_secs, distance_m: set.distance_m,
+          calories: set.calories, side: set.side,
+        };
+
+        if (set._dbId) {
+          await supabase.from('exercise_sets').update(setData).eq('id', set._dbId);
+        } else {
+          await supabase.from('exercise_sets').insert({
+            session_exercise_id: seId, ...setData,
+          });
+        }
+      }
+    }
+
+    // Recalculate NTU
+    await supabase.from('training_sessions')
+      .update({ total_ntu: Math.round(totalNtu) }).eq('id', editingSessionId);
+
+    toast({ title: 'Workout updated', description: 'Your changes have been saved.' });
+    clearEditing();
+    if ('vibrate' in navigator) try { navigator.vibrate([100, 100, 200]); } catch {}
+  };
+
+  const discardEdits = () => {
+    if (window.confirm('Discard all changes?')) {
+      clearEditing();
+    }
+  };
+
   /* ─── Grouped exercises by section ─── */
   const sectionExercises = useMemo(() => {
     const map: Record<WorkoutSection, { ex: SessionExercise; globalIdx: number }[]> = {
