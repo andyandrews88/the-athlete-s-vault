@@ -40,7 +40,7 @@ const AdminProgrammeManager = () => {
         .select('*')
         .order('display_order');
       if (error) throw error;
-      return (data || []) as ProgrammeTemplate[];
+      return (data || []) as unknown as ProgrammeTemplate[];
     },
   });
 

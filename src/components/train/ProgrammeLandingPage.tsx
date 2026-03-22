@@ -42,7 +42,7 @@ const ProgrammeLandingPage = () => {
         .eq('slug', slug!)
         .single();
       if (error) throw error;
-      return data as ProgrammeTemplate;
+      return data as unknown as ProgrammeTemplate;
     },
     enabled: !!slug,
   });
