@@ -57,7 +57,11 @@ export const LogTab = () => {
     addSet: storeAddSet, markSetComplete: storeMarkSetComplete,
     markSetIncomplete: storeMarkSetIncomplete, moveExerciseToSection,
     linkSuperset: storeLinkSuperset, resetSession: storeResetSession,
+    editingSessionId, editingSessionDate, removedExerciseIds,
+    trackRemovedExercise, clearEditing,
   } = store;
+
+  const isEditing = !!editingSessionId;
 
   const sessionStartTime = sessionStartTimeISO ? new Date(sessionStartTimeISO) : null;
 
