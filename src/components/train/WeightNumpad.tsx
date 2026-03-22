@@ -174,7 +174,7 @@ export const WeightNumpad = ({
 
         {/* Bottom row */}
         <div className="flex gap-2">
-          {label !== 'REPS' && (
+          {showBWOnly && label !== 'REPS' && label !== 'RIR' && (
             <button
               onClick={handleBWOnly}
               style={{

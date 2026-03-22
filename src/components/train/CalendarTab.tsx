@@ -511,6 +511,7 @@ export const CalendarTab = () => {
           onClose={() => setSheetDay(null)}
           sessionData={getSheetData(sheetDay)}
           onViewWorkout={handleViewWorkout}
+          onEditWorkout={handleEditWorkout}
           onStartWorkout={handleStartProgrammeWorkout}
         />
       )}

@@ -309,6 +309,9 @@ export const useWorkoutStore = create<WorkoutState>()(
         exercises: state.exercises,
         isSessionActive: state.isSessionActive,
         sessionStartTime: state.sessionStartTime,
+        editingSessionId: state.editingSessionId,
+        editingSessionDate: state.editingSessionDate,
+        removedExerciseIds: state.removedExerciseIds,
       }),
     }
   )

@@ -430,7 +430,9 @@ export const ExerciseCard = ({
           onClose={() => setNumpadState(null)}
           onToggleUnit={numpadState.field === 'weight_kg' ? onToggleUnit : undefined}
           previousValue={numpadState.previousValue}
-          label={numpadState.field === 'weight_kg' ? 'WEIGHT' : 'REPS'}
+          label={numpadState.field === 'weight_kg' ? 'WEIGHT' : numpadState.field === 'rir' ? 'RIR' : 'REPS'}
+          showBWOnly={numpadState.field === 'weight_kg'}
+          maxValue={numpadState.field === 'rir' ? 10 : undefined}
         />
       )}
     </div>
