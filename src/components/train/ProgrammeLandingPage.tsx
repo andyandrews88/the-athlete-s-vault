@@ -20,7 +20,13 @@ interface ProgrammeTemplate {
   difficulty: string;
   tags: string[] | null;
   required_tier: string;
+  video_url: string | null;
 }
+
+const extractYouTubeId = (url: string): string | null => {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\s]+)/);
+  return match ? match[1] : null;
+};
 
 const mono: React.CSSProperties = { fontFamily: "'JetBrains Mono', monospace" };
 const bebas: React.CSSProperties = { fontFamily: "'Bebas Neue', cursive" };
