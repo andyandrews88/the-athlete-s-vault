@@ -58,6 +58,11 @@ interface WorkoutState {
   viewingWorkoutId: string | null;
   preferredUnit: 'kg' | 'lbs';
 
+  // Edit mode for past workouts
+  editingSessionId: string | null;
+  editingSessionDate: string | null;
+  removedExerciseIds: string[];
+
   // Optimistic write queue
   pendingWrites: Record<string, PendingWrite>;
   addPendingWrite: (key: string, data: Partial<SetData>) => void;
@@ -83,6 +88,11 @@ interface WorkoutState {
   setViewingWorkout: (id: string | null) => void;
   setPreferredUnit: (unit: 'kg' | 'lbs') => void;
   resetSession: () => void;
+
+  // Edit mode actions
+  setEditingSession: (id: string | null, date?: string | null) => void;
+  trackRemovedExercise: (id: string) => void;
+  clearEditing: () => void;
 }
 
 const emptySessionState = {
