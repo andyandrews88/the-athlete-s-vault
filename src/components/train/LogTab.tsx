@@ -44,6 +44,7 @@ const emptySet = (num: number): SetData => ({
 
 /* ─── Component ─── */
 export const LogTab = () => {
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const weightUnit = profile?.weight_unit ?? 'kg';
   const restTimerDefault = (profile as any)?.rest_timer_secs ?? 90;
