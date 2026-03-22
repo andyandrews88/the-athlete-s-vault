@@ -473,7 +473,7 @@ const WorkoutDayEditor = ({
             setExercises([...exercises, { name: ex.name, sets: 3, reps: '8-12', notes: '' }]);
             setShowSearch(false);
           }}
-          currentSection="main"
+          currentSection="exercises"
         />
       )}
     </div>
