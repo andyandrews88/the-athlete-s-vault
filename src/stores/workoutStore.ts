@@ -281,7 +281,25 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       setPreferredUnit: (unit) => set({ preferredUnit: unit }),
 
-      resetSession: () => set(emptySessionState),
+      resetSession: () => set({ ...emptySessionState, ...emptyEditState }),
+
+      setEditingSession: (id, date) =>
+        set({
+          editingSessionId: id,
+          editingSessionDate: date || null,
+          removedExerciseIds: [],
+        }),
+
+      trackRemovedExercise: (id) =>
+        set((state) => ({
+          removedExerciseIds: [...state.removedExerciseIds, id],
+        })),
+
+      clearEditing: () =>
+        set({
+          ...emptyEditState,
+          exercises: [],
+        }),
     }),
     {
       name: 'vault-workout-store',
