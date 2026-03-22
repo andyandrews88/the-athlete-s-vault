@@ -1558,6 +1558,7 @@ export type Database = {
           slug: string
           tagline: string | null
           tags: string[] | null
+          video_url: string | null
           what_to_expect: string | null
           who_its_for: string | null
         }
@@ -1576,6 +1577,7 @@ export type Database = {
           slug: string
           tagline?: string | null
           tags?: string[] | null
+          video_url?: string | null
           what_to_expect?: string | null
           who_its_for?: string | null
         }
@@ -1594,6 +1596,7 @@ export type Database = {
           slug?: string
           tagline?: string | null
           tags?: string[] | null
+          video_url?: string | null
           what_to_expect?: string | null
           who_its_for?: string | null
         }
@@ -1608,6 +1611,8 @@ export type Database = {
           prescribed_exercises: Json
           programme_id: string
           section: string | null
+          template_id: string | null
+          week_number: number | null
         }
         Insert: {
           created_at?: string | null
@@ -1617,6 +1622,8 @@ export type Database = {
           prescribed_exercises?: Json
           programme_id: string
           section?: string | null
+          template_id?: string | null
+          week_number?: number | null
         }
         Update: {
           created_at?: string | null
@@ -1626,6 +1633,8 @@ export type Database = {
           prescribed_exercises?: Json
           programme_id?: string
           section?: string | null
+          template_id?: string | null
+          week_number?: number | null
         }
         Relationships: [
           {
@@ -1633,6 +1642,13 @@ export type Database = {
             columns: ["programme_id"]
             isOneToOne: false
             referencedRelation: "training_programmes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programme_workouts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "programme_templates"
             referencedColumns: ["id"]
           },
         ]
