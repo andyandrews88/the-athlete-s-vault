@@ -373,12 +373,18 @@ export const ExerciseCard = ({
                 )}
 
                 {/* RIR */}
-                <input
-                  type="number" inputMode="numeric" min={0} max={5} placeholder="RIR"
-                  value={set.rir ?? ''} disabled={set.completed}
-                  onChange={e => onUpdateSet(setIdx, { rir: e.target.value ? parseInt(e.target.value) : null })}
-                  style={{ ...rirStyle, color: set.completed ? 'hsl(var(--ok))' : 'hsl(var(--text))' }}
-                />
+                <button
+                  onClick={() => handleRirTap(setIdx)}
+                  disabled={set.completed}
+                  style={{
+                    ...rirStyle,
+                    color: set.completed ? 'hsl(var(--ok))' : set.rir !== null ? 'hsl(var(--text))' : 'hsl(var(--dim))',
+                    cursor: set.completed ? 'default' : 'pointer',
+                    textAlign: 'center',
+                  }}
+                >
+                  {set.rir ?? '0-10'}
+                </button>
               </div>
             );
           })}
