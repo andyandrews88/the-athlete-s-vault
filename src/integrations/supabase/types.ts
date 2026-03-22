@@ -1602,6 +1602,35 @@ export type Database = {
         }
         Relationships: []
       }
+      programme_weeks: {
+        Row: {
+          id: string
+          notes: string | null
+          template_id: string | null
+          week_number: number
+        }
+        Insert: {
+          id?: string
+          notes?: string | null
+          template_id?: string | null
+          week_number: number
+        }
+        Update: {
+          id?: string
+          notes?: string | null
+          template_id?: string | null
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programme_weeks_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "programme_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       programme_workouts: {
         Row: {
           created_at: string | null
