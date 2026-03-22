@@ -42,6 +42,7 @@ export interface SessionExercise {
   section: WorkoutSection;
   supersetGroup: string | null;
   showNotes: boolean;
+  coachNotes?: string | null;
 }
 
 interface PendingWrite {
