@@ -112,6 +112,7 @@ export const useWorkoutStore = create<WorkoutState>()(
   persist(
     (set) => ({
       ...emptySessionState,
+      ...emptyEditState,
       viewingWorkoutId: null,
       preferredUnit: 'kg',
       pendingWrites: {},
