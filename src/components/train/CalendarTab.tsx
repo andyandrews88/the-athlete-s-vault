@@ -453,6 +453,7 @@ interface DayDetailSheetProps {
     planned: ProgrammeWorkout | null;
   };
   onViewWorkout: (sessionId: string) => void;
+  onEditWorkout: (sessionId: string) => void;
   onStartWorkout: () => void;
 }
 
