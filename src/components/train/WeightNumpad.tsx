@@ -9,6 +9,8 @@ interface WeightNumpadProps {
   onToggleUnit?: () => void;
   previousValue?: number | null;
   label?: string;
+  showBWOnly?: boolean;
+  maxValue?: number;
 }
 
 const LB_PER_KG = 2.20462;
@@ -21,6 +23,8 @@ export const WeightNumpad = ({
   onToggleUnit,
   previousValue,
   label = 'WEIGHT',
+  showBWOnly = true,
+  maxValue,
 }: WeightNumpadProps) => {
   const [display, setDisplay] = useState(value !== null ? String(value) : '');
 
@@ -29,9 +33,11 @@ export const WeightNumpad = ({
       if (key === '⌫') return prev.slice(0, -1);
       if (key === '.' && prev.includes('.')) return prev;
       if (key === '.' && prev === '') return '0.';
-      return prev + key;
+      const next = prev + key;
+      if (maxValue !== undefined && parseFloat(next) > maxValue) return prev;
+      return next;
     });
-  }, []);
+  }, [maxValue]);
 
   const handleConfirm = () => {
     const num = parseFloat(display);
@@ -168,7 +174,7 @@ export const WeightNumpad = ({
 
         {/* Bottom row */}
         <div className="flex gap-2">
-          {label !== 'REPS' && (
+          {showBWOnly && label !== 'REPS' && label !== 'RIR' && (
             <button
               onClick={handleBWOnly}
               style={{

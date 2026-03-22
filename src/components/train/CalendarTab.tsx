@@ -223,9 +223,85 @@ export const CalendarTab = () => {
     return `${w} weeks ago`;
   };
 
+  const setEditingSession = useWorkoutStore(s => s.setEditingSession);
+
   /* ─── Helpers for sheet ─── */
   const handleViewWorkout = (sessionId: string) => {
     setViewingWorkout(sessionId);
+    setSheetDay(null);
+    navigate('/train');
+  };
+
+  const handleEditWorkout = async (sessionId: string) => {
+    if (!user) return;
+    // Fetch full session data for editing
+    const { data } = await supabase
+      .from('training_sessions')
+      .select(`
+        id, date, workout_notes, total_ntu,
+        session_exercises (
+          id, exercise_id, display_order, superset_group, notes,
+          exercises (
+            id, name, movement_pattern, difficulty_coefficient,
+            exercise_type, muscle_group, equipment_type,
+            is_timed, is_unilateral, is_plyometric, video_url
+          ),
+          exercise_sets (
+            id, set_num, reps, weight_kg, rir, rpe,
+            completed, is_pr, side, set_type,
+            duration_secs, distance_m, calories
+          )
+        )
+      `)
+      .eq('id', sessionId)
+      .single() as any;
+
+    if (!data) return;
+
+    const mappedExercises = (data.session_exercises || [])
+      .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+      .map((se: any) => ({
+        exercise: {
+          id: se.exercises.id,
+          name: se.exercises.name,
+          movement_pattern: se.exercises.movement_pattern || '',
+          difficulty_coefficient: se.exercises.difficulty_coefficient || 1,
+          exercise_type: se.exercises.exercise_type || 'strength',
+          video_url: se.exercises.video_url,
+          muscle_group: se.exercises.muscle_group,
+          equipment_type: se.exercises.equipment_type,
+          is_timed: se.exercises.is_timed,
+          is_unilateral: se.exercises.is_unilateral,
+          is_plyometric: se.exercises.is_plyometric,
+        },
+        sets: (se.exercise_sets || [])
+          .sort((a: any, b: any) => a.set_num - b.set_num)
+          .map((s: any) => ({
+            set_num: s.set_num,
+            reps: s.reps,
+            weight_kg: s.weight_kg,
+            rir: s.rir,
+            rpe: s.rpe,
+            completed: s.completed ?? false,
+            set_type: s.set_type || 'working',
+            duration_secs: s.duration_secs,
+            distance_m: s.distance_m,
+            calories: s.calories,
+            is_pr: s.is_pr,
+            side: s.side,
+            _dbId: s.id, // track DB id for updates
+          })),
+        expanded: true,
+        isPr: false,
+        notes: se.notes || '',
+        section: 'exercises' as const,
+        supersetGroup: se.superset_group || null,
+        showNotes: !!(se.notes),
+        _dbId: se.id, // track DB id for updates
+      }));
+
+    setEditingSession(sessionId, data.date);
+    useWorkoutStore.getState().setExercises(mappedExercises);
     setSheetDay(null);
     navigate('/train');
   };
@@ -435,6 +511,7 @@ export const CalendarTab = () => {
           onClose={() => setSheetDay(null)}
           sessionData={getSheetData(sheetDay)}
           onViewWorkout={handleViewWorkout}
+          onEditWorkout={handleEditWorkout}
           onStartWorkout={handleStartProgrammeWorkout}
         />
       )}
@@ -453,10 +530,11 @@ interface DayDetailSheetProps {
     planned: ProgrammeWorkout | null;
   };
   onViewWorkout: (sessionId: string) => void;
+  onEditWorkout: (sessionId: string) => void;
   onStartWorkout: () => void;
 }
 
-const DayDetailSheet = ({ day, onClose, sessionData, onViewWorkout, onStartWorkout }: DayDetailSheetProps) => {
+const DayDetailSheet = ({ day, onClose, sessionData, onViewWorkout, onEditWorkout, onStartWorkout }: DayDetailSheetProps) => {
   const { completedSession, planned } = sessionData;
 
   return (
@@ -500,7 +578,7 @@ const DayDetailSheet = ({ day, onClose, sessionData, onViewWorkout, onStartWorko
 
         {/* Content */}
         {completedSession ? (
-          <CompletedSessionView session={completedSession} onViewWorkout={onViewWorkout} />
+          <CompletedSessionView session={completedSession} onViewWorkout={onViewWorkout} onEditWorkout={onEditWorkout} />
         ) : planned ? (
           <PlannedWorkoutView workout={planned} onStart={onStartWorkout} />
         ) : (
@@ -519,7 +597,7 @@ const DayDetailSheet = ({ day, onClose, sessionData, onViewWorkout, onStartWorko
 };
 
 /* ─── Completed session view ─── */
-const CompletedSessionView = ({ session, onViewWorkout }: { session: SessionData; onViewWorkout: (id: string) => void }) => {
+const CompletedSessionView = ({ session, onViewWorkout, onEditWorkout }: { session: SessionData; onViewWorkout: (id: string) => void; onEditWorkout: (id: string) => void }) => {
   const exercises = session.session_exercises || [];
   const totalSets = exercises.reduce((sum, ex) => sum + (ex.exercise_sets?.length || 0), 0);
 
@@ -569,16 +647,27 @@ const CompletedSessionView = ({ session, onViewWorkout }: { session: SessionData
         </p>
       )}
 
-      <button
-        onClick={() => onViewWorkout(session.id)}
-        style={{
-          width: '100%', background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)',
-          fontWeight: 700, fontSize: 11, padding: 10, borderRadius: 8, border: 'none',
-          marginTop: 8,
-        }}
-      >
-        View Full Workout
-      </button>
+      <div className="flex gap-2" style={{ marginTop: 8 }}>
+        <button
+          onClick={() => onViewWorkout(session.id)}
+          style={{
+            flex: 1, background: 'transparent', color: 'hsl(var(--dim))',
+            fontWeight: 600, fontSize: 11, padding: 10, borderRadius: 8,
+            border: '1px solid hsl(var(--border))',
+          }}
+        >
+          View
+        </button>
+        <button
+          onClick={() => onEditWorkout(session.id)}
+          style={{
+            flex: 1, background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)',
+            fontWeight: 700, fontSize: 11, padding: 10, borderRadius: 8, border: 'none',
+          }}
+        >
+          Edit
+        </button>
+      </div>
     </div>
   );
 };

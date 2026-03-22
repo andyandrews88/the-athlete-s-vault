@@ -88,7 +88,7 @@ export const ExerciseCard = ({
   onToggleUnit,
 }: ExerciseCardProps) => {
   const [numpadState, setNumpadState] = useState<{
-    field: 'weight_kg' | 'reps';
+    field: 'weight_kg' | 'reps' | 'rir';
     setIndex: number;
     value: number | null;
     previousValue: number | null;
@@ -148,10 +148,24 @@ export const ExerciseCard = ({
     });
   };
 
+  const handleRirTap = (setIdx: number) => {
+    const set = ex.sets[setIdx];
+    if (set.completed) return;
+    const prev = previousSets?.find(p => p.set_num === setIdx + 1) || previousSets?.[setIdx];
+    setNumpadState({
+      field: 'rir',
+      setIndex: setIdx,
+      value: set.rir,
+      previousValue: prev?.rir ?? null,
+    });
+  };
+
   const handleNumpadConfirm = (val: number) => {
     if (!numpadState) return;
     if (numpadState.field === 'weight_kg') {
       onUpdateSet(numpadState.setIndex, { weight_kg: toKg(val) });
+    } else if (numpadState.field === 'rir') {
+      onUpdateSet(numpadState.setIndex, { rir: Math.round(val) });
     } else {
       onUpdateSet(numpadState.setIndex, { reps: Math.round(val) });
     }
@@ -359,12 +373,18 @@ export const ExerciseCard = ({
                 )}
 
                 {/* RIR */}
-                <input
-                  type="number" inputMode="numeric" min={0} max={5} placeholder="RIR"
-                  value={set.rir ?? ''} disabled={set.completed}
-                  onChange={e => onUpdateSet(setIdx, { rir: e.target.value ? parseInt(e.target.value) : null })}
-                  style={{ ...rirStyle, color: set.completed ? 'hsl(var(--ok))' : 'hsl(var(--text))' }}
-                />
+                <button
+                  onClick={() => handleRirTap(setIdx)}
+                  disabled={set.completed}
+                  style={{
+                    ...rirStyle,
+                    color: set.completed ? 'hsl(var(--ok))' : set.rir !== null ? 'hsl(var(--text))' : 'hsl(var(--dim))',
+                    cursor: set.completed ? 'default' : 'pointer',
+                    textAlign: 'center',
+                  }}
+                >
+                  {set.rir ?? '0-10'}
+                </button>
               </div>
             );
           })}
@@ -410,7 +430,9 @@ export const ExerciseCard = ({
           onClose={() => setNumpadState(null)}
           onToggleUnit={numpadState.field === 'weight_kg' ? onToggleUnit : undefined}
           previousValue={numpadState.previousValue}
-          label={numpadState.field === 'weight_kg' ? 'WEIGHT' : 'REPS'}
+          label={numpadState.field === 'weight_kg' ? 'WEIGHT' : numpadState.field === 'rir' ? 'RIR' : 'REPS'}
+          showBWOnly={numpadState.field === 'weight_kg'}
+          maxValue={numpadState.field === 'rir' ? 10 : undefined}
         />
       )}
     </div>

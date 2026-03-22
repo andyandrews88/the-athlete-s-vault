@@ -57,7 +57,11 @@ export const LogTab = () => {
     addSet: storeAddSet, markSetComplete: storeMarkSetComplete,
     markSetIncomplete: storeMarkSetIncomplete, moveExerciseToSection,
     linkSuperset: storeLinkSuperset, resetSession: storeResetSession,
+    editingSessionId, editingSessionDate, removedExerciseIds,
+    trackRemovedExercise, clearEditing,
   } = store;
+
+  const isEditing = !!editingSessionId;
 
   const sessionStartTime = sessionStartTimeISO ? new Date(sessionStartTimeISO) : null;
 
@@ -198,6 +202,10 @@ export const LogTab = () => {
   };
 
   const removeExercise = (exIdx: number) => {
+    const ex = exercises[exIdx] as any;
+    if (isEditing && ex._dbId) {
+      trackRemovedExercise(ex._dbId);
+    }
     storeRemoveExercise(exIdx);
   };
 
@@ -306,6 +314,73 @@ export const LogTab = () => {
     if ('vibrate' in navigator) try { navigator.vibrate([100, 100, 200]); } catch {}
   };
 
+  /* ─── Save Edits (edit mode) ─── */
+  const saveEdits = async () => {
+    if (!editingSessionId || !user) return;
+
+    // Delete removed exercises
+    for (const id of removedExerciseIds) {
+      await supabase.from('exercise_sets').delete().eq('session_exercise_id', id);
+      await supabase.from('session_exercises').delete().eq('id', id);
+    }
+
+    // Upsert exercises and sets
+    for (let i = 0; i < exercises.length; i++) {
+      const ex = exercises[i] as any;
+      let seId = ex._dbId;
+
+      if (seId) {
+        // Update existing session_exercise
+        await supabase.from('session_exercises').update({
+          display_order: i, notes: ex.notes || null, superset_group: ex.supersetGroup,
+        }).eq('id', seId);
+      } else {
+        // Insert new session_exercise
+        const { data: seData } = await supabase
+          .from('session_exercises')
+          .insert({
+            session_id: editingSessionId, exercise_id: ex.exercise.id,
+            display_order: i, notes: ex.notes || null, superset_group: ex.supersetGroup,
+          } as any)
+          .select('id').single();
+        if (!seData) continue;
+        seId = seData.id;
+      }
+
+      for (const set of ex.sets) {
+        const setData: any = {
+          set_num: set.set_num, reps: set.reps, weight_kg: set.weight_kg,
+          rir: set.rir, rpe: set.rpe, completed: set.completed,
+          set_type: set.set_type, is_pr: set.is_pr || false,
+          duration_secs: set.duration_secs, distance_m: set.distance_m,
+          calories: set.calories, side: set.side,
+        };
+
+        if (set._dbId) {
+          await supabase.from('exercise_sets').update(setData).eq('id', set._dbId);
+        } else {
+          await supabase.from('exercise_sets').insert({
+            session_exercise_id: seId, ...setData,
+          });
+        }
+      }
+    }
+
+    // Recalculate NTU
+    await supabase.from('training_sessions')
+      .update({ total_ntu: Math.round(totalNtu) }).eq('id', editingSessionId);
+
+    toast({ title: 'Workout updated', description: 'Your changes have been saved.' });
+    clearEditing();
+    if ('vibrate' in navigator) try { navigator.vibrate([100, 100, 200]); } catch {}
+  };
+
+  const discardEdits = () => {
+    if (window.confirm('Discard all changes?')) {
+      clearEditing();
+    }
+  };
+
   /* ─── Grouped exercises by section ─── */
   const sectionExercises = useMemo(() => {
     const map: Record<WorkoutSection, { ex: SessionExercise; globalIdx: number }[]> = {
@@ -401,9 +476,9 @@ export const LogTab = () => {
   };
 
   /* ═══════════════════════════════════════════
-     STATE 1 — No active session
+     STATE 1 — No active session (and not editing)
      ═══════════════════════════════════════════ */
-  if (!isSessionActive && !finished) {
+  if (!isSessionActive && !finished && !isEditing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
         {/* Week strip */}
@@ -540,38 +615,64 @@ export const LogTab = () => {
   }
 
   /* ═══════════════════════════════════════════
-     STATE 2 — Active session
+     STATE 2 — Active session OR Edit mode
      ═══════════════════════════════════════════ */
+  const editDateLabel = editingSessionDate
+    ? format(new Date(editingSessionDate + 'T00:00:00'), 'EEE dd MMM').toUpperCase()
+    : '';
+
   return (
     <div className="max-w-lg mx-auto space-y-4" style={{ padding: '8px 11px 64px', background: 'hsl(var(--bg))' }}>
-      {/* Week strip */}
-      <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} workoutDays={workouts.map(w => w.day_number)} />
+      {/* Week strip (hide in edit mode) */}
+      {!isEditing && (
+        <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} workoutDays={workouts.map(w => w.day_number)} />
+      )}
 
-      {/* Session header — compact */}
-      <div className="flex items-start justify-between">
-        <div className="min-w-0 flex-1">
-          {activeProgramme && (
-            <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1 }}>{activeProgramme.name.toUpperCase()}</h2>
-          )}
-          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
-            {selectedWorkout ? `Week 1 · Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5" style={{ background: 'transparent', border: '1px solid hsl(var(--warn))', borderRadius: 6, padding: '3px 8px' }}>
-            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--warn))' }} />
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, fontSize: 11, color: 'hsl(var(--warn))' }}>{timer}</span>
+      {/* Edit mode banner */}
+      {isEditing && (
+        <>
+          <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 20, color: 'hsl(var(--warn))', letterSpacing: 2, textAlign: 'center' }}>
+            EDITING — {editDateLabel}
+          </h2>
+          <div style={{
+            background: 'hsla(38,92%,50%,0.1)',
+            color: 'hsl(var(--warn))',
+            border: '1px solid hsla(38,92%,50%,0.2)',
+            borderRadius: 8, padding: '8px 12px', textAlign: 'center',
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 9,
+          }}>
+            You are editing a past workout
           </div>
-          <button
-            onClick={cancelSession}
-            className="w-9 h-9 flex items-center justify-center transition-colors"
-            style={{ borderRadius: 8, border: '1px solid hsl(var(--border))', color: 'hsl(var(--bad))' }}
-          >
-            <X size={14} />
-          </button>
-          <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold uppercase" style={{ fontSize: 10, padding: '7px 14px', borderRadius: 8, letterSpacing: 1 }}>FINISH</button>
+        </>
+      )}
+
+      {/* Session header — compact (active session only) */}
+      {!isEditing && (
+        <div className="flex items-start justify-between">
+          <div className="min-w-0 flex-1">
+            {activeProgramme && (
+              <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1 }}>{activeProgramme.name.toUpperCase()}</h2>
+            )}
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
+              {selectedWorkout ? `Week 1 · Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5" style={{ background: 'transparent', border: '1px solid hsl(var(--warn))', borderRadius: 6, padding: '3px 8px' }}>
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--warn))' }} />
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, fontSize: 11, color: 'hsl(var(--warn))' }}>{timer}</span>
+            </div>
+            <button
+              onClick={cancelSession}
+              className="w-9 h-9 flex items-center justify-center transition-colors"
+              style={{ borderRadius: 8, border: '1px solid hsl(var(--border))', color: 'hsl(var(--bad))' }}
+            >
+              <X size={14} />
+            </button>
+            <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold uppercase" style={{ fontSize: 10, padding: '7px 14px', borderRadius: 8, letterSpacing: 1 }}>FINISH</button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ─── Sections ─── */}
       {renderSection('warmup', sectionExercises.warmup)}
@@ -595,19 +696,47 @@ export const LogTab = () => {
         currentSection="exercises"
       />
 
-      {/* Workout notes */}
-      <div className="rounded-2xl p-4" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
-        <div className="flex items-center gap-1.5 mb-2">
-          <MessageSquare size={12} className="text-muted-foreground" />
-          <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest">Workout Notes</span>
+      {/* Workout notes (active session only) */}
+      {!isEditing && (
+        <div className="rounded-2xl p-4" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))' }}>
+          <div className="flex items-center gap-1.5 mb-2">
+            <MessageSquare size={12} className="text-muted-foreground" />
+            <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-widest">Workout Notes</span>
+          </div>
+          <textarea
+            value={workoutNotes} onChange={e => setWorkoutNotes(e.target.value)}
+            placeholder="How did this session feel?"
+            rows={3}
+            className="w-full bg-secondary border border-border rounded-lg px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none resize-none"
+          />
         </div>
-        <textarea
-          value={workoutNotes} onChange={e => setWorkoutNotes(e.target.value)}
-          placeholder="How did this session feel?"
-          rows={3}
-          className="w-full bg-secondary border border-border rounded-lg px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none resize-none"
-        />
-      </div>
+      )}
+
+      {/* Edit mode buttons */}
+      {isEditing && (
+        <div className="space-y-2" style={{ marginTop: 12 }}>
+          <button
+            onClick={saveEdits}
+            style={{
+              width: '100%', background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)',
+              fontWeight: 700, fontSize: 11, padding: '12px 0', borderRadius: 8, border: 'none',
+              textTransform: 'uppercase', letterSpacing: 1,
+            }}
+          >
+            Save Changes
+          </button>
+          <button
+            onClick={discardEdits}
+            style={{
+              width: '100%', background: 'transparent', color: 'hsl(var(--dim))',
+              fontWeight: 500, fontSize: 11, padding: '10px 0', borderRadius: 8,
+              border: 'none', cursor: 'pointer',
+            }}
+          >
+            Discard Changes
+          </button>
+        </div>
+      )}
 
       {/* Rest timer overlay */}
       {showRestTimer && (

@@ -58,6 +58,11 @@ interface WorkoutState {
   viewingWorkoutId: string | null;
   preferredUnit: 'kg' | 'lbs';
 
+  // Edit mode for past workouts
+  editingSessionId: string | null;
+  editingSessionDate: string | null;
+  removedExerciseIds: string[];
+
   // Optimistic write queue
   pendingWrites: Record<string, PendingWrite>;
   addPendingWrite: (key: string, data: Partial<SetData>) => void;
@@ -83,19 +88,31 @@ interface WorkoutState {
   setViewingWorkout: (id: string | null) => void;
   setPreferredUnit: (unit: 'kg' | 'lbs') => void;
   resetSession: () => void;
+
+  // Edit mode actions
+  setEditingSession: (id: string | null, date?: string | null) => void;
+  trackRemovedExercise: (id: string) => void;
+  clearEditing: () => void;
 }
 
 const emptySessionState = {
   activeSessionId: null,
   sessionStartTime: null,
   isSessionActive: false,
-  exercises: [],
+  exercises: [] as SessionExercise[],
+};
+
+const emptyEditState = {
+  editingSessionId: null,
+  editingSessionDate: null,
+  removedExerciseIds: [] as string[],
 };
 
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
     (set) => ({
       ...emptySessionState,
+      ...emptyEditState,
       viewingWorkoutId: null,
       preferredUnit: 'kg',
       pendingWrites: {},
@@ -264,7 +281,25 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       setPreferredUnit: (unit) => set({ preferredUnit: unit }),
 
-      resetSession: () => set(emptySessionState),
+      resetSession: () => set({ ...emptySessionState, ...emptyEditState }),
+
+      setEditingSession: (id, date) =>
+        set({
+          editingSessionId: id,
+          editingSessionDate: date || null,
+          removedExerciseIds: [],
+        }),
+
+      trackRemovedExercise: (id) =>
+        set((state) => ({
+          removedExerciseIds: [...state.removedExerciseIds, id],
+        })),
+
+      clearEditing: () =>
+        set({
+          ...emptyEditState,
+          exercises: [],
+        }),
     }),
     {
       name: 'vault-workout-store',
@@ -274,6 +309,9 @@ export const useWorkoutStore = create<WorkoutState>()(
         exercises: state.exercises,
         isSessionActive: state.isSessionActive,
         sessionStartTime: state.sessionStartTime,
+        editingSessionId: state.editingSessionId,
+        editingSessionDate: state.editingSessionDate,
+        removedExerciseIds: state.removedExerciseIds,
       }),
     }
   )
