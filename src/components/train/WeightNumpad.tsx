@@ -33,9 +33,11 @@ export const WeightNumpad = ({
       if (key === '⌫') return prev.slice(0, -1);
       if (key === '.' && prev.includes('.')) return prev;
       if (key === '.' && prev === '') return '0.';
-      return prev + key;
+      const next = prev + key;
+      if (maxValue !== undefined && parseFloat(next) > maxValue) return prev;
+      return next;
     });
-  }, []);
+  }, [maxValue]);
 
   const handleConfirm = () => {
     const num = parseFloat(display);
