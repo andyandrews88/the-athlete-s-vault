@@ -96,10 +96,12 @@ export const LogTab = () => {
   }, [programmes, activeProgramme, selectedProgrammeId]);
 
   // Workout day state — via React Query
+  const activeTemplateId = (activeProgramme as any)?.template_id || null;
   const { data: workoutsData } = useProgrammeWorkouts(
-    selectedProgrammeId === activeProgramme?.id ? activeProgramme?.id || null : null
+    selectedProgrammeId === activeProgramme?.id ? activeProgramme?.id || null : null,
+    activeTemplateId
   );
-  const workouts = (workoutsData as ProgrammeWorkout[]) || [];
+  const workouts = ((workoutsData || []) as unknown as ProgrammeWorkout[]);
   const [selectedWorkout, setSelectedWorkout] = useState<ProgrammeWorkout | null>(null);
   const [showWorkoutPicker, setShowWorkoutPicker] = useState(false);
 
