@@ -148,10 +148,24 @@ export const ExerciseCard = ({
     });
   };
 
+  const handleRirTap = (setIdx: number) => {
+    const set = ex.sets[setIdx];
+    if (set.completed) return;
+    const prev = previousSets?.find(p => p.set_num === setIdx + 1) || previousSets?.[setIdx];
+    setNumpadState({
+      field: 'rir',
+      setIndex: setIdx,
+      value: set.rir,
+      previousValue: prev?.rir ?? null,
+    });
+  };
+
   const handleNumpadConfirm = (val: number) => {
     if (!numpadState) return;
     if (numpadState.field === 'weight_kg') {
       onUpdateSet(numpadState.setIndex, { weight_kg: toKg(val) });
+    } else if (numpadState.field === 'rir') {
+      onUpdateSet(numpadState.setIndex, { rir: Math.round(val) });
     } else {
       onUpdateSet(numpadState.setIndex, { reps: Math.round(val) });
     }
