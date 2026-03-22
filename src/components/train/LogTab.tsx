@@ -476,9 +476,9 @@ export const LogTab = () => {
   };
 
   /* ═══════════════════════════════════════════
-     STATE 1 — No active session
+     STATE 1 — No active session (and not editing)
      ═══════════════════════════════════════════ */
-  if (!isSessionActive && !finished) {
+  if (!isSessionActive && !finished && !isEditing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
         {/* Week strip */}
