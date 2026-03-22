@@ -99,7 +99,13 @@ const emptySessionState = {
   activeSessionId: null,
   sessionStartTime: null,
   isSessionActive: false,
-  exercises: [],
+  exercises: [] as SessionExercise[],
+};
+
+const emptyEditState = {
+  editingSessionId: null,
+  editingSessionDate: null,
+  removedExerciseIds: [] as string[],
 };
 
 export const useWorkoutStore = create<WorkoutState>()(
