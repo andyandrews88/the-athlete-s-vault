@@ -222,6 +222,9 @@ export const ExerciseCard = ({
               )}
             </div>
             <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', marginTop: 1 }}>{summaryLine}</p>
+            {ex.coachNotes && (
+              <p style={{ fontSize: 10, color: 'hsl(var(--warn))', fontStyle: 'italic', marginTop: 2 }}>→ {ex.coachNotes}</p>
+            )}
           </div>
         </button>
 
