@@ -615,38 +615,64 @@ export const LogTab = () => {
   }
 
   /* ═══════════════════════════════════════════
-     STATE 2 — Active session
+     STATE 2 — Active session OR Edit mode
      ═══════════════════════════════════════════ */
+  const editDateLabel = editingSessionDate
+    ? format(new Date(editingSessionDate + 'T00:00:00'), 'EEE dd MMM').toUpperCase()
+    : '';
+
   return (
     <div className="max-w-lg mx-auto space-y-4" style={{ padding: '8px 11px 64px', background: 'hsl(var(--bg))' }}>
-      {/* Week strip */}
-      <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} workoutDays={workouts.map(w => w.day_number)} />
+      {/* Week strip (hide in edit mode) */}
+      {!isEditing && (
+        <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} workoutDays={workouts.map(w => w.day_number)} />
+      )}
 
-      {/* Session header — compact */}
-      <div className="flex items-start justify-between">
-        <div className="min-w-0 flex-1">
-          {activeProgramme && (
-            <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1 }}>{activeProgramme.name.toUpperCase()}</h2>
-          )}
-          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
-            {selectedWorkout ? `Week 1 · Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5" style={{ background: 'transparent', border: '1px solid hsl(var(--warn))', borderRadius: 6, padding: '3px 8px' }}>
-            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--warn))' }} />
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, fontSize: 11, color: 'hsl(var(--warn))' }}>{timer}</span>
+      {/* Edit mode banner */}
+      {isEditing && (
+        <>
+          <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 20, color: 'hsl(var(--warn))', letterSpacing: 2, textAlign: 'center' }}>
+            EDITING — {editDateLabel}
+          </h2>
+          <div style={{
+            background: 'hsla(38,92%,50%,0.1)',
+            color: 'hsl(var(--warn))',
+            border: '1px solid hsla(38,92%,50%,0.2)',
+            borderRadius: 8, padding: '8px 12px', textAlign: 'center',
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 9,
+          }}>
+            You are editing a past workout
           </div>
-          <button
-            onClick={cancelSession}
-            className="w-9 h-9 flex items-center justify-center transition-colors"
-            style={{ borderRadius: 8, border: '1px solid hsl(var(--border))', color: 'hsl(var(--bad))' }}
-          >
-            <X size={14} />
-          </button>
-          <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold uppercase" style={{ fontSize: 10, padding: '7px 14px', borderRadius: 8, letterSpacing: 1 }}>FINISH</button>
+        </>
+      )}
+
+      {/* Session header — compact (active session only) */}
+      {!isEditing && (
+        <div className="flex items-start justify-between">
+          <div className="min-w-0 flex-1">
+            {activeProgramme && (
+              <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1 }}>{activeProgramme.name.toUpperCase()}</h2>
+            )}
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
+              {selectedWorkout ? `Week 1 · Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5" style={{ background: 'transparent', border: '1px solid hsl(var(--warn))', borderRadius: 6, padding: '3px 8px' }}>
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--warn))' }} />
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, fontSize: 11, color: 'hsl(var(--warn))' }}>{timer}</span>
+            </div>
+            <button
+              onClick={cancelSession}
+              className="w-9 h-9 flex items-center justify-center transition-colors"
+              style={{ borderRadius: 8, border: '1px solid hsl(var(--border))', color: 'hsl(var(--bad))' }}
+            >
+              <X size={14} />
+            </button>
+            <button onClick={finishSession} className="bg-primary text-primary-foreground font-bold uppercase" style={{ fontSize: 10, padding: '7px 14px', borderRadius: 8, letterSpacing: 1 }}>FINISH</button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ─── Sections ─── */}
       {renderSection('warmup', sectionExercises.warmup)}
