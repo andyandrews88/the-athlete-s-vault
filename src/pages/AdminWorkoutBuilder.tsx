@@ -148,7 +148,7 @@ const AdminWorkoutBuilder = () => {
   const pasteWorkout = async (day: number) => {
     if (!clipboard || !selectedTemplateId) return;
     const { error } = await supabase.from('programme_workouts').insert({
-      template_id: selectedTemplateId, week_number: currentWeek,
+      programme_id: selectedTemplateId!, template_id: selectedTemplateId, week_number: currentWeek,
       day_number: day, name: clipboard.name,
       prescribed_exercises: clipboard.prescribed_exercises as any,
     });
