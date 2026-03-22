@@ -202,6 +202,10 @@ export const LogTab = () => {
   };
 
   const removeExercise = (exIdx: number) => {
+    const ex = exercises[exIdx] as any;
+    if (isEditing && ex._dbId) {
+      trackRemovedExercise(ex._dbId);
+    }
     storeRemoveExercise(exIdx);
   };
 
