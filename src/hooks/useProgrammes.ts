@@ -10,7 +10,7 @@ export function useUserProgrammes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('training_programmes')
-        .select('id, name, description, is_active')
+        .select('id, name, description, is_active, template_id')
         .eq('user_id', user!.id)
         .order('is_active', { ascending: false });
       if (error) throw error;
@@ -21,20 +21,36 @@ export function useUserProgrammes() {
   });
 }
 
-export function useProgrammeWorkouts(programmeId: string | null) {
+export function useProgrammeWorkouts(programmeId: string | null, templateId?: string | null) {
   return useQuery({
-    queryKey: ['programmeWorkouts', programmeId],
+    queryKey: ['programmeWorkouts', programmeId, templateId],
     queryFn: async () => {
-      if (!programmeId) return [];
-      const { data, error } = await supabase
-        .from('programme_workouts')
-        .select('id, day_number, name, prescribed_exercises')
-        .eq('programme_id', programmeId)
-        .order('day_number');
-      if (error) throw error;
-      return data || [];
+      // Try programme-specific workouts first
+      if (programmeId) {
+        const { data } = await supabase
+          .from('programme_workouts')
+          .select('id, day_number, week_number, name, prescribed_exercises')
+          .eq('programme_id', programmeId)
+          .order('week_number')
+          .order('day_number');
+        if (data && data.length > 0) return data;
+      }
+
+      // Fall back to template workouts
+      if (templateId) {
+        const { data, error } = await supabase
+          .from('programme_workouts')
+          .select('id, day_number, week_number, name, prescribed_exercises')
+          .eq('template_id', templateId)
+          .order('week_number')
+          .order('day_number');
+        if (error) throw error;
+        return data || [];
+      }
+
+      return [];
     },
-    enabled: !!programmeId,
+    enabled: !!(programmeId || templateId),
     staleTime: 1000 * 60 * 10,
   });
 }

@@ -145,6 +145,33 @@ const ProgrammeLandingPage = () => {
         </div>
       </div>
 
+      {/* Video */}
+      {template.video_url && extractYouTubeId(template.video_url) ? (
+        <div style={{
+          width: '100%', aspectRatio: '16/9', borderRadius: 12,
+          overflow: 'hidden', marginBottom: 16, background: 'hsl(var(--bg3))',
+        }}>
+          <iframe
+            width="100%" height="100%"
+            src={`https://www.youtube.com/embed/${extractYouTubeId(template.video_url)}?rel=0&modestbranding=1`}
+            frameBorder={0}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{ border: 'none' }}
+          />
+        </div>
+      ) : (
+        <div style={{
+          width: '100%', aspectRatio: '16/9', borderRadius: 12,
+          overflow: 'hidden', marginBottom: 16, background: 'hsl(var(--bg3))',
+          border: '1px dashed hsl(var(--border2))',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ fontSize: 48, color: 'hsl(var(--dim))' }}>▶</span>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'hsl(var(--dim))', marginTop: 8 }}>Video coming soon</span>
+        </div>
+      )}
+
       {/* Hero stats */}
       <div style={{
         background: 'hsla(192,91%,54%,0.05)',
