@@ -9,6 +9,8 @@ interface WeightNumpadProps {
   onToggleUnit?: () => void;
   previousValue?: number | null;
   label?: string;
+  showBWOnly?: boolean;
+  maxValue?: number;
 }
 
 const LB_PER_KG = 2.20462;
