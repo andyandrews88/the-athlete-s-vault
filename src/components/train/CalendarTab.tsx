@@ -519,7 +519,7 @@ const DayDetailSheet = ({ day, onClose, sessionData, onViewWorkout, onStartWorko
 };
 
 /* ─── Completed session view ─── */
-const CompletedSessionView = ({ session, onViewWorkout }: { session: SessionData; onViewWorkout: (id: string) => void }) => {
+const CompletedSessionView = ({ session, onViewWorkout, onEditWorkout }: { session: SessionData; onViewWorkout: (id: string) => void; onEditWorkout: (id: string) => void }) => {
   const exercises = session.session_exercises || [];
   const totalSets = exercises.reduce((sum, ex) => sum + (ex.exercise_sets?.length || 0), 0);
 
@@ -569,16 +569,27 @@ const CompletedSessionView = ({ session, onViewWorkout }: { session: SessionData
         </p>
       )}
 
-      <button
-        onClick={() => onViewWorkout(session.id)}
-        style={{
-          width: '100%', background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)',
-          fontWeight: 700, fontSize: 11, padding: 10, borderRadius: 8, border: 'none',
-          marginTop: 8,
-        }}
-      >
-        View Full Workout
-      </button>
+      <div className="flex gap-2" style={{ marginTop: 8 }}>
+        <button
+          onClick={() => onViewWorkout(session.id)}
+          style={{
+            flex: 1, background: 'transparent', color: 'hsl(var(--dim))',
+            fontWeight: 600, fontSize: 11, padding: 10, borderRadius: 8,
+            border: '1px solid hsl(var(--border))',
+          }}
+        >
+          View
+        </button>
+        <button
+          onClick={() => onEditWorkout(session.id)}
+          style={{
+            flex: 1, background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)',
+            fontWeight: 700, fontSize: 11, padding: 10, borderRadius: 8, border: 'none',
+          }}
+        >
+          Edit
+        </button>
+      </div>
     </div>
   );
 };
