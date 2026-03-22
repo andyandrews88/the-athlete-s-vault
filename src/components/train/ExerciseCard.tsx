@@ -88,7 +88,7 @@ export const ExerciseCard = ({
   onToggleUnit,
 }: ExerciseCardProps) => {
   const [numpadState, setNumpadState] = useState<{
-    field: 'weight_kg' | 'reps';
+    field: 'weight_kg' | 'reps' | 'rir';
     setIndex: number;
     value: number | null;
     previousValue: number | null;
