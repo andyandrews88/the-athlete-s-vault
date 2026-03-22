@@ -23,6 +23,8 @@ export const WeightNumpad = ({
   onToggleUnit,
   previousValue,
   label = 'WEIGHT',
+  showBWOnly = true,
+  maxValue,
 }: WeightNumpadProps) => {
   const [display, setDisplay] = useState(value !== null ? String(value) : '');
 
