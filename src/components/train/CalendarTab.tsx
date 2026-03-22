@@ -457,7 +457,7 @@ interface DayDetailSheetProps {
   onStartWorkout: () => void;
 }
 
-const DayDetailSheet = ({ day, onClose, sessionData, onViewWorkout, onStartWorkout }: DayDetailSheetProps) => {
+const DayDetailSheet = ({ day, onClose, sessionData, onViewWorkout, onEditWorkout, onStartWorkout }: DayDetailSheetProps) => {
   const { completedSession, planned } = sessionData;
 
   return (
