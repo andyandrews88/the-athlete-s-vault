@@ -501,7 +501,7 @@ const DayDetailSheet = ({ day, onClose, sessionData, onViewWorkout, onEditWorkou
 
         {/* Content */}
         {completedSession ? (
-          <CompletedSessionView session={completedSession} onViewWorkout={onViewWorkout} />
+          <CompletedSessionView session={completedSession} onViewWorkout={onViewWorkout} onEditWorkout={onEditWorkout} />
         ) : planned ? (
           <PlannedWorkoutView workout={planned} onStart={onStartWorkout} />
         ) : (
