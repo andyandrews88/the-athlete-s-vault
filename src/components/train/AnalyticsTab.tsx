@@ -282,7 +282,7 @@ export const AnalyticsTab = () => {
   const strengthGain = strengthCurrent - strengthStart;
   const maxStrength = Math.max(...strengthData.map(d => d.weight), 1);
 
-  // Pattern totals
+  // Pattern totals with detailed breakdown
   const patternTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     weeklyData.forEach(w => {
@@ -291,6 +291,35 @@ export const AnalyticsTab = () => {
     return Object.entries(totals).sort(([, a], [, b]) => b - a);
   }, [weeklyData]);
   const maxPatternVol = useMemo(() => Math.max(...patternTotals.map(([, v]) => v), 1), [patternTotals]);
+
+  // Aggregated pattern details (kg, sets, exercises)
+  const patternAggregated = useMemo(() => {
+    const agg: Record<string, { totalKg: number; totalSets: number; exercises: Record<string, { name: string; totalKg: number; totalSets: number }> }> = {};
+    weeklyData.forEach(w => {
+      Object.entries(w.patternDetails).forEach(([pattern, detail]) => {
+        if (!agg[pattern]) agg[pattern] = { totalKg: 0, totalSets: 0, exercises: {} };
+        agg[pattern].totalKg += detail.totalKg;
+        agg[pattern].totalSets += detail.totalSets;
+        Object.entries(detail.exercises).forEach(([exName, exData]) => {
+          if (!agg[pattern].exercises[exName]) agg[pattern].exercises[exName] = { name: exName, totalKg: 0, totalSets: 0 };
+          agg[pattern].exercises[exName].totalKg += exData.totalKg;
+          agg[pattern].exercises[exName].totalSets += exData.totalSets;
+        });
+      });
+    });
+    return agg;
+  }, [weeklyData]);
+
+  // Weekly volume for a specific pattern
+  const getPatternWeeklyVolume = (pattern: string) => {
+    return weeklyData.map(w => ({
+      week: w.week,
+      volume: w.patternVolume[pattern] || 0,
+    }));
+  };
+
+  // Bottom sheet state for pattern drill-down
+  const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
 
   // Compliance
   const TARGET_SESSIONS_PER_WEEK = 4;
