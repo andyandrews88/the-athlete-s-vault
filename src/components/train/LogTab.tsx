@@ -10,7 +10,6 @@ import { ExerciseCard } from './ExerciseCard';
 import { ExerciseActionSheet } from './ExerciseActionSheet';
 import { PRCelebration } from './PRCelebration';
 import { ExerciseSearch } from './ExerciseSearch';
-import { ExerciseDrillDown } from './ExerciseDrillDown';
 import { useWorkoutStore, type SessionExercise, type SetData, type WorkoutSection, type ExerciseRow } from '@/stores/workoutStore';
 import { useUserProgrammes, useProgrammeWorkouts } from '@/hooks/useProgrammes';
 import { usePreviousSets } from '@/hooks/useWorkoutHistory';
@@ -36,20 +35,7 @@ interface ProgrammeWorkout {
   prescribed_exercises: Array<{ name: string; sets: number; reps: string; notes: string }>;
 }
 
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 const LB_PER_KG = 2.20462;
-
-const pipColor = (pattern: string) => {
-  const map: Record<string, string> = {
-    'Hinge': 'hsl(0,72%,51%)', 'Squat': 'hsl(262,60%,55%)',
-    'Push': 'hsl(var(--primary))', 'Pull': 'hsl(var(--ok))',
-    'Single Leg': 'hsl(38,92%,50%)', 'Carry': 'hsl(38,92%,50%)',
-    'Core': 'hsl(215,14%,50%)', 'Olympic': 'hsl(var(--gold))',
-    'Isolation': 'hsl(215,14%,50%)', 'Plyometric': 'hsl(var(--gold))',
-    'Rotational': 'hsl(var(--primary))', 'Conditioning': 'hsl(var(--warn))',
-  };
-  return map[pattern] || 'hsl(var(--primary))';
-};
 
 const emptySet = (num: number): SetData => ({
   set_num: num, reps: null, weight_kg: null, rir: null, rpe: null,
@@ -89,8 +75,6 @@ export const LogTab = () => {
   const [timer, setTimer] = useState('00:00');
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState({ warmup: true, exercises: true, cooldown: true });
-  const [drillDownIndex, setDrillDownIndex] = useState<number | null>(null);
-  const [restTimerDuration, setRestTimerDuration] = useState(restTimerDefault);
 
   // ─── Action sheet & PR celebration state ───
   const [actionSheetIndex, setActionSheetIndex] = useState<number | null>(null);
@@ -495,139 +479,106 @@ export const LogTab = () => {
     );
   };
 
-  // Drill-down data — must be called before any early returns
-  const drillDownExercise = drillDownIndex !== null ? exercises[drillDownIndex] : null;
-  const drillDownExerciseId = drillDownExercise?.exercise?.id || null;
-  const { data: drillDownPrevSets } = usePreviousSets(drillDownExerciseId);
-
   /* ═══════════════════════════════════════════
      STATE 1 — No active session (and not editing)
      ═══════════════════════════════════════════ */
   if (!isSessionActive && !finished && !isEditing) {
-    const prescribedExercises = (w: any): Array<{ name?: string; sets?: number; reps?: string | number; movement_pattern?: string }> => {
-      if (!w.prescribed_exercises) return [];
-      if (Array.isArray(w.prescribed_exercises)) return w.prescribed_exercises;
-      return [];
-    };
-
     return (
-      <div className="px-4 pb-24" style={{ minHeight: '60vh' }}>
-        {/* Week Strip */}
-        <div className="mb-4">
-          <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} workoutDays={workouts.map(w => w.day_number)} />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+        {/* Week strip */}
+        <div className="w-full mb-4">
+          <WeekStrip
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            workoutDays={workouts.map(w => w.day_number)}
+          />
         </div>
 
-        {/* Programme Header */}
-        {activeProgramme ? (
-          <div className="mb-5" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 14, padding: '16px 18px' }}>
-            <div className="flex items-center justify-between">
+        <div className="w-full" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsla(192,91%,54%,0.2)', boxShadow: '0 0 30px hsla(192,91%,54%,0.06)', borderRadius: 16, padding: 24 }}>
+          {/* Programme info row */}
+          {activeProgramme ? (
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1.1 }}>{activeProgramme.name}</h2>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))' }}>{activeProgramme.name}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '3px 10px', borderRadius: 6, border: '1px solid hsla(192,91%,54%,0.2)', whiteSpace: 'nowrap' }}>Week 1</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '2px 8px', borderRadius: 6, border: '1px solid hsla(192,91%,54%,0.2)' }}>
+                  Week 1
+                </span>
+                <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'hsl(var(--dim))', background: 'none', border: 'none', cursor: 'pointer' }}>
+                  Change →
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-3 mt-2">
-              <button onClick={() => navigate(`/programmes`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'hsl(var(--primary))', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>View Programme →</button>
-              <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'hsl(var(--dim))', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Switch →</button>
+          ) : (
+            <div className="mb-3">
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'hsl(var(--dim))' }}>No programme selected</p>
+              <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--primary))', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 2 }}>
+                Choose a programme →
+              </button>
             </div>
-          </div>
-        ) : (
-          <button onClick={() => navigate('/programmes')} className="w-full mb-5" style={{ background: 'hsl(var(--bg2))', border: '2px dashed hsla(192,91%,54%,0.3)', borderRadius: 14, padding: '28px 20px', cursor: 'pointer', textAlign: 'center' }}>
-            <Dumbbell size={32} style={{ color: 'hsl(var(--dim))', margin: '0 auto 8px' }} />
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 600, color: 'hsl(var(--text))', marginBottom: 4 }}>Choose a Programme</p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--dim))' }}>Browse training programmes to get started</p>
-          </button>
-        )}
+          )}
 
-        {/* Workout Cards */}
-        {workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && (
-          <div className="mb-5">
-            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10 }}>SELECT WORKOUT</p>
-            <div className="grid grid-cols-1 gap-3">
-              {workouts.map(w => {
-                const isSelected = selectedWorkout?.id === w.id;
-                const exList = prescribedExercises(w);
-                const previewCount = Math.min(exList.length, 5);
-                const remaining = exList.length - previewCount;
-
-                return (
+          {/* Workout day picker */}
+          {workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && (
+            <div className="mb-5">
+              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Select today's workout</p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {workouts.map(w => (
                   <button
                     key={w.id}
-                    onClick={() => setSelectedWorkout(isSelected ? null : w)}
-                    className="w-full text-left transition-all"
+                    onClick={() => setSelectedWorkout(selectedWorkout?.id === w.id ? null : w)}
+                    className="w-full text-left px-4 py-3 rounded-lg font-mono text-xs transition-colors"
                     style={{
-                      background: isSelected ? 'hsla(192,91%,54%,0.04)' : 'hsl(var(--bg2))',
-                      border: isSelected ? '1.5px solid hsla(192,91%,54%,0.5)' : '1px solid hsl(var(--border))',
-                      boxShadow: isSelected ? '0 0 20px hsla(192,91%,54%,0.08)' : 'none',
-                      borderRadius: 12,
-                      padding: 16,
-                      cursor: 'pointer',
+                      background: selectedWorkout?.id === w.id ? 'hsla(192,91%,54%,0.05)' : 'hsl(var(--bg3))',
+                      border: selectedWorkout?.id === w.id ? '1px solid hsla(192,91%,54%,0.4)' : '1px solid hsl(var(--border))',
+                      color: selectedWorkout?.id === w.id ? 'hsl(var(--primary))' : 'hsl(var(--text))',
                     }}
                   >
-                    {/* Card Header */}
-                    <div className="flex items-center gap-3 mb-2">
-                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, background: 'hsl(var(--bg3))', padding: '2px 8px', borderRadius: 4 }}>DAY {w.day_number}</span>
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'hsl(var(--text))' }}>{w.name}</span>
-                    </div>
-
-                    {/* Exercise Previews */}
-                    {exList.length > 0 && (
-                      <div className="space-y-1.5 mt-3">
-                        {exList.slice(0, previewCount).map((ex, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <div style={{ width: 4, height: 4, borderRadius: '50%', background: pipColor(ex.movement_pattern || ''), flexShrink: 0 }} />
-                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--mid))', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.name || 'Exercise'}</span>
-                            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))' }}>{ex.sets || 3}×{ex.reps || 8}</span>
-                          </div>
-                        ))}
-                        {remaining > 0 && (
-                          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', paddingLeft: 12, marginTop: 4 }}>+{remaining} more</p>
-                        )}
-                      </div>
-                    )}
+                    <span className="font-bold">Day {w.day_number}</span>
+                    <span style={{ color: 'hsl(var(--dim))', marginLeft: 8 }}>— {w.name}</span>
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Action Buttons */}
-        <div className="space-y-2">
+          {/* Build Workout button */}
           <button
             onClick={startSession}
-            disabled={workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && !selectedWorkout}
+            className="w-full mb-2"
             style={{
-              width: '100%',
-              background: (workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && !selectedWorkout) ? 'hsl(var(--bg3))' : 'hsl(var(--primary))',
-              color: (workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && !selectedWorkout) ? 'hsl(var(--dim))' : 'hsl(220,16%,6%)',
-              fontWeight: 700, fontSize: 12, padding: '14px 0', borderRadius: 10, border: 'none',
-              textTransform: 'uppercase', letterSpacing: 1.2, cursor: (workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && !selectedWorkout) ? 'not-allowed' : 'pointer',
-              opacity: (workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && !selectedWorkout) ? 0.5 : 1,
+              background: 'transparent', border: '1px solid hsl(var(--border))',
+              color: 'hsl(var(--text))', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
+              padding: '10px 0', borderRadius: 8, cursor: 'pointer',
             }}
           >
-            Begin Session →
+            🏋️ Build Workout
           </button>
+
           <button
             onClick={startSession}
-            style={{ width: '100%', background: 'transparent', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text))', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, padding: '11px 0', borderRadius: 8, cursor: 'pointer' }}
+            style={{ width: '100%', background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 11, padding: '12px 0', borderRadius: 8, border: 'none', textTransform: 'uppercase', letterSpacing: 1 }}
           >
-            🏋️ Build Workout
+            Begin Session →
           </button>
         </div>
       </div>
     );
   }
 
+  /* ═══════════════════════════════════════════
+     SUMMARY
+     ═══════════════════════════════════════════ */
   if (finished && summaryData) {
     return (
       <div className="max-w-lg mx-auto px-4 space-y-4">
         <div className="bg-card border border-primary/20 rounded-2xl p-5 space-y-4">
           <h3 className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">SESSION COMPLETE</h3>
           {summaryData.programmeName && (
-            <p className="font-mono text-[9px] text-primary bg-primary/10 px-2 py-1 rounded-lg border border-primary/20 inline-block">{summaryData.programmeName}</p>
+            <p className="font-mono text-[9px] text-primary bg-primary/10 px-2 py-1 rounded-lg border border-primary/20 inline-block">
+              {summaryData.programmeName}
+            </p>
           )}
           <div className="grid grid-cols-2 gap-4">
             {[
@@ -642,65 +593,22 @@ export const LogTab = () => {
               </div>
             ))}
           </div>
-          <button onClick={() => { storeResetSession(); setFinished(false); setSummaryData(null); setTimer('00:00'); setWorkoutNotes(''); }} className="w-full bg-secondary border border-border text-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs">New Session</button>
+          <button
+            onClick={() => { storeResetSession(); setFinished(false); setSummaryData(null); setTimer('00:00'); setWorkoutNotes(''); }}
+            className="w-full bg-secondary border border-border text-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs"
+          >New Session</button>
         </div>
       </div>
     );
   }
 
+  /* ═══════════════════════════════════════════
+     STATE 2 — Active session OR Edit mode
+     ═══════════════════════════════════════════ */
   const editDateLabel = editingSessionDate
     ? format(new Date(editingSessionDate + 'T00:00:00'), 'EEE dd MMM').toUpperCase()
     : '';
 
-  if (drillDownIndex !== null && drillDownExercise && !isEditing) {
-    return (
-      <>
-        <ExerciseDrillDown
-          exercise={drillDownExercise}
-          exerciseIndex={drillDownIndex}
-          totalExercises={exercises.length}
-          previousSets={drillDownPrevSets as any}
-          preferredUnit={weightUnit as 'kg' | 'lbs'}
-          restTimerDefault={restTimerDefault}
-          onUpdateSet={(setIdx, data) => storeUpdateSet(drillDownIndex, setIdx, data)}
-          onAddSet={() => storeAddSet(drillDownIndex)}
-          onRemoveSet={(setIdx) => {
-            const updated = drillDownExercise.sets.filter((_, j) => j !== setIdx);
-            storeUpdateExercise(drillDownIndex, { sets: updated });
-          }}
-          onMarkComplete={(setIdx) => {
-            storeMarkSetComplete(drillDownIndex, setIdx);
-          }}
-          onMarkIncomplete={(setIdx) => storeMarkSetIncomplete(drillDownIndex, setIdx)}
-          onUpdateNotes={(notes) => updateNotes(drillDownIndex, notes)}
-          onToggleUnit={() => store.setPreferredUnit(weightUnit === 'kg' ? 'lbs' : 'kg')}
-          onBack={() => setDrillDownIndex(null)}
-          onNext={() => {
-            if (drillDownIndex < exercises.length - 1) {
-              setDrillDownIndex(drillDownIndex + 1);
-            } else {
-              setDrillDownIndex(null);
-            }
-          }}
-          onPrev={() => {
-            if (drillDownIndex > 0) {
-              setDrillDownIndex(drillDownIndex - 1);
-            }
-          }}
-        />
-        {prCelebration && (
-          <PRCelebration
-            exerciseName={prCelebration.exerciseName}
-            weight={prCelebration.weight}
-            unit={weightUnit as 'kg' | 'lbs'}
-            onDismiss={() => setPrCelebration(null)}
-          />
-        )}
-      </>
-    );
-  }
-
-  // Session overview — card list
   return (
     <div className="max-w-lg mx-auto space-y-4" style={{ padding: '8px 11px 64px', background: 'hsl(var(--bg))' }}>
       {/* Week strip (hide in edit mode) */}
@@ -754,76 +662,10 @@ export const LogTab = () => {
         </div>
       )}
 
-      {/* ─── Exercise Overview Cards ─── */}
-      {!isEditing && exercises.length > 0 && (
-        <div className="space-y-2">
-          {exercises.map((ex, idx) => {
-            const completedSets = ex.sets.filter(s => s.completed).length;
-            const allDone = ex.sets.length > 0 && completedSets === ex.sets.length;
-            const targetLine = `${ex.sets.length} × ${ex.sets[0]?.reps ?? '–'}`;
-
-            return (
-              <button
-                key={idx}
-                onClick={() => setDrillDownIndex(idx)}
-                className="w-full text-left"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '12px 14px', borderRadius: 10,
-                  background: allDone ? 'hsla(142,71%,45%,0.05)' : 'hsl(var(--bg2))',
-                  border: allDone ? '1px solid hsla(142,71%,45%,0.2)' : '1px solid hsl(var(--border))',
-                  cursor: 'pointer', transition: 'all 0.15s',
-                }}
-              >
-                <div style={{ width: 3, minWidth: 3, height: 32, borderRadius: 2, background: pipColor(ex.exercise.movement_pattern || '') }} />
-                <div className="flex-1 min-w-0">
-                  <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))', fontFamily: 'Inter, sans-serif' }}>{ex.exercise.name}</p>
-                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
-                    {targetLine} · {ex.exercise.movement_pattern || ''}
-                  </p>
-                </div>
-                <div style={{
-                  width: 28, height: 28, borderRadius: 14,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: allDone ? 'hsla(142,71%,45%,0.15)' : 'hsl(var(--bg3))',
-                  border: allDone ? '1px solid hsla(142,71%,45%,0.3)' : '1px solid hsl(var(--border))',
-                  flexShrink: 0,
-                }}>
-                  {allDone ? (
-                    <Check size={14} style={{ color: 'hsl(var(--ok))' }} />
-                  ) : completedSets > 0 ? (
-                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>{completedSets}/{ex.sets.length}</span>
-                  ) : (
-                    <div style={{ width: 10, height: 10, borderRadius: 5, border: '1.5px solid hsl(var(--border2))' }} />
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Empty state when session active but no exercises */}
-      {!isEditing && exercises.length === 0 && (
-        <div style={{
-          padding: '32px 16px', textAlign: 'center',
-          background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))',
-          borderRadius: 12,
-        }}>
-          <Dumbbell size={32} style={{ color: 'hsl(var(--dim))', margin: '0 auto 8px' }} />
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'hsl(var(--dim))', marginBottom: 4 }}>No exercises yet</p>
-          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))' }}>Tap "+ Add Exercise" below to get started</p>
-        </div>
-      )}
-
-      {/* ─── Edit mode: keep full inline cards ─── */}
-      {isEditing && (
-        <>
-          {renderSection('warmup', sectionExercises.warmup)}
-          {renderSection('exercises', sectionExercises.exercises)}
-          {renderSection('cooldown', sectionExercises.cooldown)}
-        </>
-      )}
+      {/* ─── Sections ─── */}
+      {renderSection('warmup', sectionExercises.warmup)}
+      {renderSection('exercises', sectionExercises.exercises)}
+      {renderSection('cooldown', sectionExercises.cooldown)}
 
       {/* Add Exercise */}
       <button
@@ -887,7 +729,7 @@ export const LogTab = () => {
       {/* Rest timer overlay */}
       {showRestTimer && (
         <RestTimer
-          durationSecs={restTimerDuration}
+          durationSecs={restTimerDefault}
           onComplete={() => setShowRestTimer(false)}
           onSkip={() => setShowRestTimer(false)}
         />
