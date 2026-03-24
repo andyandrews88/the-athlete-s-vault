@@ -170,10 +170,10 @@ export const AnalyticsTab = () => {
     sessions.forEach(s => { sessionDateMap[s.id] = s.date; });
 
     // Week map
-    const weekMap: Record<string, { ntu: number; rirSum: number; rirCount: number; sessionIds: Set<string>; patternVolume: Record<string, number>; maxWeight: Record<string, number>; sessionRirMap: Record<string, { sum: number; count: number }> }> = {};
+    const weekMap: Record<string, { ntu: number; rirSum: number; rirCount: number; sessionIds: Set<string>; patternVolume: Record<string, number>; patternDetails: Record<string, { totalKg: number; totalSets: number; exercises: Record<string, { name: string; totalKg: number; totalSets: number }> }>; maxWeight: Record<string, number>; sessionRirMap: Record<string, { sum: number; count: number }> }> = {};
     for (let i = 11; i >= 0; i--) {
       const ws = format(startOfWeek(subWeeks(new Date(), i), { weekStartsOn: 1 }), 'yyyy-MM-dd');
-      weekMap[ws] = { ntu: 0, rirSum: 0, rirCount: 0, sessionIds: new Set(), patternVolume: {}, maxWeight: {}, sessionRirMap: {} };
+      weekMap[ws] = { ntu: 0, rirSum: 0, rirCount: 0, sessionIds: new Set(), patternVolume: {}, patternDetails: {}, maxWeight: {}, sessionRirMap: {} };
     }
 
     sessions.forEach(s => {
