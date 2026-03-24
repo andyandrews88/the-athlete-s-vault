@@ -285,6 +285,14 @@ export const LogTab = () => {
   }, [exercises]);
 
   const handleExerciseTap = (globalIdx: number) => {
+    // If we're in superset linking mode, complete the link
+    if (linkingSuperset !== null) {
+      if (linkingSuperset !== globalIdx) {
+        storeLinkSuperset(linkingSuperset, globalIdx);
+      }
+      setLinkingSuperset(null);
+      return;
+    }
     const group = exerciseGroups.find(g => g.includes(globalIdx));
     setDrillDownIndices(group || [globalIdx]);
   };
@@ -833,8 +841,17 @@ export const LogTab = () => {
           }}
           onMoveUp={() => store.reorderExercise(actionSheetIndex, 'up')}
           onMoveDown={() => store.reorderExercise(actionSheetIndex, 'down')}
-          onLinkSuperset={() => { handleSupersetLink(actionSheetIndex); setDrillDownIndices(null); }}
-          onUnlinkSuperset={() => store.unlinkSuperset(actionSheetIndex)}
+          onLinkSuperset={() => {
+            setLinkingSuperset(actionSheetIndex);
+            setActionSheetIndex(null);
+            setDrillDownIndices(null);
+          }}
+          onUnlinkSuperset={() => {
+            store.unlinkSuperset(actionSheetIndex);
+            setActionSheetIndex(null);
+            // Reopen drill-down with just this single exercise
+            setDrillDownIndices([actionSheetIndex]);
+          }}
           hasSuperset={!!exercises[actionSheetIndex].supersetGroup}
           canMoveUp={actionSheetIndex > 0}
           canMoveDown={actionSheetIndex < exercises.length - 1}
