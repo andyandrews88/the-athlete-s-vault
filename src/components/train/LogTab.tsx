@@ -7,6 +7,7 @@ import { calculateSetNtu } from '@/lib/movementPatterns';
 import { RestTimer } from './RestTimer';
 import { WeekStrip } from './WeekStrip';
 import { ExerciseCard } from './ExerciseCard';
+import { ExerciseDrillDown } from './ExerciseDrillDown';
 import { ExerciseActionSheet } from './ExerciseActionSheet';
 import { PRCelebration } from './PRCelebration';
 import { ExerciseSearch } from './ExerciseSearch';
@@ -18,7 +19,7 @@ import {
   Link2, StickyNote, MessageSquare, Trash2, X, Check,
 } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { format } from 'date-fns';
+import { format, differenceInWeeks } from 'date-fns';
 
 /* ─── Types ─── */
 interface Programme {
@@ -26,6 +27,7 @@ interface Programme {
   name: string;
   description: string | null;
   is_active: boolean;
+  start_date?: string | null;
 }
 
 interface ProgrammeWorkout {
@@ -76,6 +78,9 @@ export const LogTab = () => {
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState({ warmup: true, exercises: true, cooldown: true });
 
+  // ─── Drill-down state ───
+  const [drillDownIndices, setDrillDownIndices] = useState<number[] | null>(null);
+
   // ─── Action sheet & PR celebration state ───
   const [actionSheetIndex, setActionSheetIndex] = useState<number | null>(null);
   const [prCelebration, setPrCelebration] = useState<{ exerciseName: string; weight: number } | null>(null);
@@ -87,6 +92,15 @@ export const LogTab = () => {
   const [showProgrammeSelector, setShowProgrammeSelector] = useState(false);
 
   const activeProgramme = useMemo(() => programmes.find(p => p.is_active) || null, [programmes]);
+
+  // Calculate actual week number
+  const currentWeek = useMemo(() => {
+    if (!activeProgramme) return 1;
+    const startDate = (activeProgramme as any).start_date || (activeProgramme as any).created_at;
+    if (!startDate) return 1;
+    const weeks = differenceInWeeks(new Date(), new Date(startDate));
+    return Math.max(1, weeks + 1);
+  }, [activeProgramme]);
 
   // Set selected programme when data loads
   useEffect(() => {
@@ -178,6 +192,7 @@ export const LogTab = () => {
                 section: 'exercises' as WorkoutSection,
                 supersetGroup: null,
                 showNotes: !!(p.notes),
+                coachNotes: p.coach_notes || null,
               }));
           }
         }
@@ -201,7 +216,6 @@ export const LogTab = () => {
       notes: '', section, supersetGroup: null, showNotes: false,
     });
     setShowSearch(false);
-    // Haptic on exercise added
     if ('vibrate' in navigator) try { navigator.vibrate(30); } catch {}
   };
 
@@ -224,16 +238,11 @@ export const LogTab = () => {
   const completeSet = (exIdx: number, setIdx: number) => {
     storeMarkSetComplete(exIdx, setIdx);
     setShowRestTimer(true);
-    // Haptic on set completion
     if ('vibrate' in navigator) try { navigator.vibrate(50); } catch {}
   };
 
   const uncompleteSet = (exIdx: number, setIdx: number) => {
     storeMarkSetIncomplete(exIdx, setIdx);
-  };
-
-  const toggleExpand = (exIdx: number) => {
-    storeUpdateExercise(exIdx, { expanded: !exercises[exIdx].expanded });
   };
 
   const moveExercise = (exIdx: number, to: WorkoutSection) => {
@@ -244,10 +253,6 @@ export const LogTab = () => {
     storeUpdateExercise(exIdx, { notes });
   };
 
-  const toggleNotesVisibility = (exIdx: number) => {
-    storeUpdateExercise(exIdx, { showNotes: !exercises[exIdx].showNotes });
-  };
-
   /* ─── Superset linking ─── */
   const handleSupersetLink = (exIdx: number) => {
     if (linkingSuperset === null) {
@@ -255,6 +260,43 @@ export const LogTab = () => {
     } else {
       storeLinkSuperset(linkingSuperset, exIdx);
       setLinkingSuperset(null);
+    }
+  };
+
+  /* ─── Drill-down navigation ─── */
+  const exerciseGroups = useMemo(() => {
+    const groups: number[][] = [];
+    const visited = new Set<number>();
+    exercises.forEach((ex, i) => {
+      if (visited.has(i)) return;
+      if (ex.supersetGroup) {
+        const group = exercises
+          .map((e, j) => ({ e, j }))
+          .filter(({ e }) => e.supersetGroup === ex.supersetGroup)
+          .map(({ j }) => j);
+        group.forEach(j => visited.add(j));
+        groups.push(group);
+      } else {
+        visited.add(i);
+        groups.push([i]);
+      }
+    });
+    return groups;
+  }, [exercises]);
+
+  const handleExerciseTap = (globalIdx: number) => {
+    const group = exerciseGroups.find(g => g.includes(globalIdx));
+    setDrillDownIndices(group || [globalIdx]);
+  };
+
+  const currentGroupIndex = drillDownIndices
+    ? exerciseGroups.findIndex(g => g.some(i => drillDownIndices.includes(i)))
+    : -1;
+
+  const navigateDrillDown = (direction: 'next' | 'prev') => {
+    const newIdx = direction === 'next' ? currentGroupIndex + 1 : currentGroupIndex - 1;
+    if (newIdx >= 0 && newIdx < exerciseGroups.length) {
+      setDrillDownIndices(exerciseGroups[newIdx]);
     }
   };
 
@@ -314,7 +356,6 @@ export const LogTab = () => {
     });
     storeEndSession();
     setFinished(true);
-    // Haptic on session finish
     if ('vibrate' in navigator) try { navigator.vibrate([100, 100, 200]); } catch {}
   };
 
@@ -322,24 +363,20 @@ export const LogTab = () => {
   const saveEdits = async () => {
     if (!editingSessionId || !user) return;
 
-    // Delete removed exercises
     for (const id of removedExerciseIds) {
       await supabase.from('exercise_sets').delete().eq('session_exercise_id', id);
       await supabase.from('session_exercises').delete().eq('id', id);
     }
 
-    // Upsert exercises and sets
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i] as any;
       let seId = ex._dbId;
 
       if (seId) {
-        // Update existing session_exercise
         await supabase.from('session_exercises').update({
           display_order: i, notes: ex.notes || null, superset_group: ex.supersetGroup,
         }).eq('id', seId);
       } else {
-        // Insert new session_exercise
         const { data: seData } = await supabase
           .from('session_exercises')
           .insert({
@@ -370,7 +407,6 @@ export const LogTab = () => {
       }
     }
 
-    // Recalculate NTU
     await supabase.from('training_sessions')
       .update({ total_ntu: Math.round(totalNtu) }).eq('id', editingSessionId);
 
@@ -418,7 +454,6 @@ export const LogTab = () => {
     }
     const prevSets = (userSessions[0] as any)?.exercise_sets;
     if (!prevSets?.length) return;
-    // Overwrite current sets with previous data
     const newSets: SetData[] = prevSets.map((ps: any, i: number) => ({
       set_num: ps.set_num || i + 1,
       reps: ps.reps,
@@ -447,9 +482,9 @@ export const LogTab = () => {
       <div>
         <div className="flex items-center gap-2 mb-2" style={cfg.bannerStyle}>
           <span style={{ fontSize: 10 }}>{cfg.emoji}</span>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, letterSpacing: 1, color: cfg.color, textTransform: 'uppercase', fontWeight: 600 }}>{cfg.label}</span>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, letterSpacing: 1, color: cfg.color, textTransform: 'uppercase', fontWeight: 600 }}>{cfg.label}</span>
           {items.length > 0 && (
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: cfg.color, opacity: 0.6 }}>{items.length}</span>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: cfg.color, opacity: 0.6 }}>{items.length}</span>
           )}
         </div>
         <div className="mb-4">
@@ -458,20 +493,8 @@ export const LogTab = () => {
               key={globalIdx}
               exercise={ex}
               exerciseIndex={globalIdx}
-              onUpdateSet={(setIdx, data) => storeUpdateSet(globalIdx, setIdx, data)}
-              onAddSet={() => storeAddSet(globalIdx)}
-              onRemoveSet={(setIdx) => {
-                const updated = ex.sets.filter((_, j) => j !== setIdx);
-                storeUpdateExercise(globalIdx, { sets: updated });
-              }}
-              onMarkComplete={(setIdx) => { storeMarkSetComplete(globalIdx, setIdx); setShowRestTimer(true); }}
-              onMarkIncomplete={(setIdx) => storeMarkSetIncomplete(globalIdx, setIdx)}
-              onToggleExpand={() => toggleExpand(globalIdx)}
-              onOpenActionSheet={() => setActionSheetIndex(globalIdx)}
-              onUpdateNotes={(notes) => updateNotes(globalIdx, notes)}
-              onToggleNotesVisibility={() => toggleNotesVisibility(globalIdx)}
+              onClick={() => handleExerciseTap(globalIdx)}
               preferredUnit={weightUnit as 'kg' | 'lbs'}
-              onToggleUnit={() => store.setPreferredUnit(weightUnit === 'kg' ? 'lbs' : 'kg')}
             />
           ))}
         </div>
@@ -500,7 +523,7 @@ export const LogTab = () => {
             <div className="mb-4">
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: 'hsl(var(--text))', marginBottom: 6 }}>{activeProgramme.name}</p>
               <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '3px 10px', borderRadius: 6, border: '1px solid hsla(192,91%,54%,0.2)', display: 'inline-block', marginBottom: 10 }}>
-                Week 1
+                Week {currentWeek}
               </span>
               <button
                 onClick={() => navigate('/programmes')}
@@ -653,7 +676,7 @@ export const LogTab = () => {
               <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1 }}>{activeProgramme.name.toUpperCase()}</h2>
             )}
             <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
-              {selectedWorkout ? `Week 1 · Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
+              {selectedWorkout ? `Week ${currentWeek} · Day ${selectedWorkout.day_number} · ${selectedWorkout.name}` : 'Free Session'} · {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -673,6 +696,24 @@ export const LogTab = () => {
         </div>
       )}
 
+      {/* Linking superset banner */}
+      {linkingSuperset !== null && (
+        <div style={{
+          background: 'hsla(38,92%,50%,0.1)', border: '1px solid hsla(38,92%,50%,0.3)',
+          borderRadius: 8, padding: '10px 14px', textAlign: 'center',
+        }}>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'hsl(var(--warn))' }}>
+            Tap another exercise to link as superset
+          </p>
+          <button
+            onClick={() => setLinkingSuperset(null)}
+            style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', background: 'none', border: 'none', marginTop: 4, cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       {/* ─── Sections ─── */}
       {renderSection('warmup', sectionExercises.warmup)}
       {renderSection('exercises', sectionExercises.exercises)}
@@ -682,9 +723,9 @@ export const LogTab = () => {
       <button
         onClick={() => setShowSearch(true)}
         className="w-full flex items-center justify-center gap-2"
-        style={{ border: '1px solid hsl(var(--border2))', color: 'hsl(var(--dim))', fontFamily: 'Inter, sans-serif', fontSize: 9, padding: 7, borderRadius: 8, background: 'transparent', marginTop: 7 }}
+        style={{ border: '1px solid hsl(var(--border2))', color: 'hsl(var(--dim))', fontFamily: 'Inter, sans-serif', fontSize: 11, padding: 10, borderRadius: 8, background: 'transparent', marginTop: 7 }}
       >
-        <Plus size={12} /> + Add Exercise
+        <Plus size={14} /> Add Exercise
       </button>
 
       {/* Exercise search overlay */}
@@ -737,6 +778,34 @@ export const LogTab = () => {
         </div>
       )}
 
+      {/* ─── Exercise Drill-Down overlay ─── */}
+      {drillDownIndices && (
+        <ExerciseDrillDown
+          exerciseIndices={drillDownIndices}
+          exercises={exercises}
+          onUpdateSet={(exIdx, setIdx, data) => storeUpdateSet(exIdx, setIdx, data)}
+          onAddSet={(exIdx) => storeAddSet(exIdx)}
+          onRemoveSet={(exIdx, setIdx) => {
+            const updated = exercises[exIdx].sets.filter((_, j) => j !== setIdx);
+            storeUpdateExercise(exIdx, { sets: updated });
+          }}
+          onMarkComplete={(exIdx, setIdx) => { storeMarkSetComplete(exIdx, setIdx); setShowRestTimer(true); }}
+          onMarkIncomplete={(exIdx, setIdx) => storeMarkSetIncomplete(exIdx, setIdx)}
+          onUpdateNotes={(exIdx, notes) => storeUpdateExercise(exIdx, { notes })}
+          onOpenActionSheet={(exIdx) => setActionSheetIndex(exIdx)}
+          onClose={() => setDrillDownIndices(null)}
+          onNavigateNext={() => navigateDrillDown('next')}
+          onNavigatePrev={() => navigateDrillDown('prev')}
+          hasNext={currentGroupIndex < exerciseGroups.length - 1}
+          hasPrev={currentGroupIndex > 0}
+          onShowRestTimer={() => setShowRestTimer(true)}
+          preferredUnit={weightUnit as 'kg' | 'lbs'}
+          onToggleUnit={() => store.setPreferredUnit(weightUnit === 'kg' ? 'lbs' : 'kg')}
+          totalExercises={exerciseGroups.length}
+          currentPosition={currentGroupIndex}
+        />
+      )}
+
       {/* Rest timer overlay */}
       {showRestTimer && (
         <RestTimer
@@ -760,10 +829,11 @@ export const LogTab = () => {
           onRemoveExercise={() => {
             removeExercise(actionSheetIndex);
             setActionSheetIndex(null);
+            setDrillDownIndices(null);
           }}
           onMoveUp={() => store.reorderExercise(actionSheetIndex, 'up')}
           onMoveDown={() => store.reorderExercise(actionSheetIndex, 'down')}
-          onLinkSuperset={() => handleSupersetLink(actionSheetIndex)}
+          onLinkSuperset={() => { handleSupersetLink(actionSheetIndex); setDrillDownIndices(null); }}
           onUnlinkSuperset={() => store.unlinkSuperset(actionSheetIndex)}
           hasSuperset={!!exercises[actionSheetIndex].supersetGroup}
           canMoveUp={actionSheetIndex > 0}
