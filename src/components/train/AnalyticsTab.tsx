@@ -202,7 +202,21 @@ export const AnalyticsTab = () => {
       }
 
       const vol = (Number(set.reps) || 0) * (Number(set.weight_kg) || 0);
+      const setWeight = Number(set.weight_kg) || 0;
       weekMap[ws].patternVolume[se.pattern] = (weekMap[ws].patternVolume[se.pattern] || 0) + vol;
+
+      // Track pattern details
+      if (!weekMap[ws].patternDetails[se.pattern]) {
+        weekMap[ws].patternDetails[se.pattern] = { totalKg: 0, totalSets: 0, exercises: {} };
+      }
+      const pd = weekMap[ws].patternDetails[se.pattern];
+      pd.totalKg += setWeight;
+      pd.totalSets += 1;
+      if (!pd.exercises[se.exerciseName]) {
+        pd.exercises[se.exerciseName] = { name: se.exerciseName, totalKg: 0, totalSets: 0 };
+      }
+      pd.exercises[se.exerciseName].totalKg += setWeight;
+      pd.exercises[se.exerciseName].totalSets += 1;
 
       const w = Number(set.weight_kg) || 0;
       if (w > 0) {
