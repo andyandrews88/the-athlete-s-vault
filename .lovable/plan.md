@@ -1,82 +1,89 @@
 
 
-# Phase 1: Training Architecture — Zustand Store + React Query Hooks
+# Fix Programme Display + Exercise Drill-Down Page
 
-## Summary
-Extract LogTab's local state into a Zustand store and create React Query hooks for data fetching. Add missing columns to `exercises` and `exercise_sets` tables. Zero UI changes.
+## Problem 1: "CrossFit" Showing Incorrectly
+The pre-session view always shows the active programme name from `training_programmes` where `is_active = true`. The user never intentionally selected CrossFit — it was likely auto-assigned by the audit flow (now removed). The fix: if the user has an active programme, show its actual name. The display is correct code-wise — the data in the database is wrong. We should also add a "no programme" fallback so if the programme name seems stale, the user can easily change it. However, the "Week 1" badge is hardcoded — it should show the actual current week.
 
-## Database Migration
+**Fix**: The "Week 1" badge on line 503 is hardcoded text. Calculate the actual week number based on programme start date. Also, the user may need to deactivate CrossFit from their `training_programmes` — but that's a data issue, not a code issue. The code correctly shows whatever is active.
 
-Add missing columns to two tables:
+## Problem 2: Exercise Drill-Down (Full-Screen Page)
+Currently, clicking an exercise expands it inline (accordion style). The user wants clicking an exercise to open a **full-screen drill-down page** — dedicated to that exercise (and its superset partner if linked).
 
-```sql
--- exercises table
-ALTER TABLE exercises
-  ADD COLUMN IF NOT EXISTS muscle_group text,
-  ADD COLUMN IF NOT EXISTS equipment_type text,
-  ADD COLUMN IF NOT EXISTS is_timed boolean DEFAULT false,
-  ADD COLUMN IF NOT EXISTS is_unilateral boolean DEFAULT false,
-  ADD COLUMN IF NOT EXISTS is_plyometric boolean DEFAULT false,
-  ADD COLUMN IF NOT EXISTS plyo_metric text,
-  ADD COLUMN IF NOT EXISTS status text DEFAULT 'approved',
-  ADD COLUMN IF NOT EXISTS submitted_by uuid;
+### New Component: `ExerciseDrillDown.tsx`
+A full-screen overlay/page that shows when an exercise is tapped in the workout overview.
 
--- exercise_sets table
-ALTER TABLE exercise_sets
-  ADD COLUMN IF NOT EXISTS side text,
-  ADD COLUMN IF NOT EXISTS height_cm numeric,
-  ADD COLUMN IF NOT EXISTS speed_mps numeric;
+**Layout (inspired by TrainHeroic screenshot):**
+- **Header**: Back arrow + exercise name (large, Inter 18px bold) + ⋮ menu (action sheet)
+- **Previous session info**: "LAST: 3×8 @ 80kg" and "WORKING MAX: 90kg" — card style
+- **Set table**: Much larger inputs than current — SET | REPS | WEIGHT | completion circle
+  - Each row ~56px tall (vs current ~28px)
+  - Inputs: JetBrains Mono 16px (vs current 9px)
+  - Completion circle: 36px diameter, cyan border, checkmark when done
+- **Add/Remove set**: +/- buttons centered below sets
+- **Notes**: "Add exercise note" input at bottom
+- **Footer**: Back | Timer | Next navigation
+
+**Superset handling**: If the exercise has a `supersetGroup`, find all exercises in that group. Show them stacked on the same drill-down page with a divider and "SUPERSET" label.
+
+### Files to Create/Edit
+
+1. **Create `src/components/train/ExerciseDrillDown.tsx`**
+   - Full-screen overlay (z-index 50, bg hsl(var(--bg)))
+   - Props: exerciseIndices (number[]), exercises from store, all callbacks
+   - Large touch-friendly inputs
+   - Previous session data display
+   - Action sheet trigger (⋮ → existing ExerciseActionSheet)
+   - WeightNumpad integration (same as ExerciseCard)
+   - Back/Next navigation between exercises
+
+2. **Edit `src/components/train/LogTab.tsx`**
+   - Change exercise cards to be collapsed summary-only (non-expandable)
+   - Each card shows: name, set count, completion status
+   - On tap → open ExerciseDrillDown with that exercise's index
+   - If exercise is in a superset group, pass all indices in that group
+   - New state: `drillDownIndices: number[] | null`
+   - Remove inline expansion logic (exercises always show collapsed in overview)
+
+3. **Edit `src/components/train/ExerciseCard.tsx`**
+   - Add an `onClick` prop for the card tap action
+   - Remove the inline expanded content (moved to drill-down)
+   - Card becomes a compact summary row only
+
+### Drill-Down UI Detail
+
+```text
+┌─────────────────────────────┐
+│ ← Back    Overhead Press  ⋮ │
+│                              │
+│ ┌──────────────────────────┐ │
+│ │ LAST         WORKING MAX │ │
+│ │ 3×8 @ 60kg      70kg    │ │
+│ └──────────────────────────┘ │
+│                              │
+│  Sets   Reps    Kg      ✓   │
+│ ┌──┐  ┌─────┐ ┌─────┐ (○)  │
+│ │ 1│  │  8  │ │ 60  │      │
+│ └──┘  └─────┘ └─────┘      │
+│ ┌──┐  ┌─────┐ ┌─────┐ (○)  │
+│ │ 2│  │  8  │ │ 60  │      │
+│ └──┘  └─────┘ └─────┘      │
+│                              │
+│     (−)    Set    (+)        │
+│                              │
+│ ┌──────────────────────────┐ │
+│ │ Add exercise note...     │ │
+│ └──────────────────────────┘ │
+│                              │
+│ ← Back   ⏱ Timer    Next → │
+└─────────────────────────────┘
 ```
 
-These are additive-only (no breaking changes). Existing queries continue to work.
+- Inputs are large (height 48px, font 16px)
+- Completion circles are 36px cyan rings
+- RIR shown as optional row or inline
+- "+ Set" / "- Set" as prominent round buttons
 
-## New Files
-
-### 1. `src/stores/workoutStore.ts`
-Zustand store with `persist` middleware. Persists `preferredUnit` and active session state (crash recovery). Contains all session actions: `startSession`, `endSession`, `addExercise`, `removeExercise`, `reorderExercise`, `updateSet`, `addSet`, `removeSet`, `markSetComplete`, `linkSuperset`, `unlinkSuperset`, `setViewingWorkout`, `setPreferredUnit`, `resetSession`. Exactly as specified in the user's prompt.
-
-### 2. `src/hooks/useExerciseSearch.ts`
-React Query hook wrapping the exercise search query. 5-minute stale time. Queries only `approved` exercises (but since some existing exercises may not have `status` set yet, will query `approved = true` OR `status = 'approved'` to handle both old and new rows). Adjusts the select to only include columns that exist in the current schema plus the new ones after migration.
-
-### 3. `src/hooks/useWorkoutHistory.ts`
-Two exports: `useWorkoutHistory(limit)` for fetching past completed sessions with nested exercises/sets, and `usePreviousSets(exerciseId)` for fetching the last session's sets for a given exercise (used for "Prev" column later).
-
-### 4. `src/hooks/useProgrammes.ts`
-Two exports: `useActiveProgramme()` and `useTodayWorkout(programmeId, dayNumber)`. Note: the existing `programme_workouts` table does NOT have a `week_number` column, so `useTodayWorkout` will query by `programme_id` + `day_number` only.
-
-### 5. `src/hooks/usePersonalRecords.ts`
-Single `usePersonalRecords()` hook returning all PRs for the current user with joined exercise data.
-
-## LogTab Refactor
-
-Replace these local `useState` calls with store selectors:
-- `sessionId` → `store.activeSessionId`
-- `sessionStartTime` → `store.sessionStartTime`
-- `exercises` → `store.exercises` (mapped to/from the existing `SessionExercise` shape)
-- Session actions (`addExercise`, `removeExercise`, `addSet`, `updateSet`, etc.) → store actions
-
-**Keep as local state** (UI-only, no need for persistence):
-- `searchQuery`, `searchResults`, `showSearch` — search UI state
-- `finished`, `summaryData` — post-session display
-- `workoutNotes` — textarea value
-- `timer` — display timer string
-- `showRestTimer` — rest timer overlay toggle
-- `sectionsOpen` — collapsible sections
-- `showProgrammeSelector`, `showWorkoutPicker` — dropdown toggles
-- `linkingSuperset` — superset linking UI flow
-
-**Key mapping challenge**: LogTab uses `SessionExercise` (with `exercise: ExerciseRow`, `expanded`, `isPr`, `showNotes`) while the store uses a flatter `ExerciseEntry`. The LogTab will maintain a thin adapter layer that maps between the store's exercise array and the UI-specific properties (`expanded`, `showNotes`, `isPr`) which remain as local state in a parallel array or derived map.
-
-All Supabase write logic (session creation, set insertion, PR detection, finish) stays in LogTab — the store is purely for in-memory state management and crash recovery.
-
-## Files touched
-- `src/stores/workoutStore.ts` (create)
-- `src/hooks/useExerciseSearch.ts` (create)
-- `src/hooks/useWorkoutHistory.ts` (create)
-- `src/hooks/useProgrammes.ts` (create)
-- `src/hooks/usePersonalRecords.ts` (create)
-- `src/components/train/LogTab.tsx` (refactor state layer only)
-- 1 migration file for schema additions
-
-No other files are modified. No visual changes.
+### Week Number Fix
+Calculate actual week from programme start date or default to week 1. Replace hardcoded "Week 1" on line 503.
 
