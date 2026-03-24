@@ -285,6 +285,14 @@ export const LogTab = () => {
   }, [exercises]);
 
   const handleExerciseTap = (globalIdx: number) => {
+    // If we're in superset linking mode, complete the link
+    if (linkingSuperset !== null) {
+      if (linkingSuperset !== globalIdx) {
+        storeLinkSuperset(linkingSuperset, globalIdx);
+      }
+      setLinkingSuperset(null);
+      return;
+    }
     const group = exerciseGroups.find(g => g.includes(globalIdx));
     setDrillDownIndices(group || [globalIdx]);
   };
