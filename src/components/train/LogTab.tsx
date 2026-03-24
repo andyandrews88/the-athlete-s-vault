@@ -857,7 +857,7 @@ export const LogTab = () => {
       {/* Rest timer overlay */}
       {showRestTimer && (
         <RestTimer
-          durationSecs={restTimerDefault}
+          durationSecs={restTimerDuration}
           onComplete={() => setShowRestTimer(false)}
           onSkip={() => setShowRestTimer(false)}
         />
