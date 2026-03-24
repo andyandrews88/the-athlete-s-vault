@@ -261,7 +261,7 @@ export const AnalyticsTab = () => {
 
   const buildEmptyWeeks = (): WeekData[] => Array.from({ length: 12 }, (_, i) => ({
     week: `W${i + 1}`, weekStart: format(startOfWeek(subWeeks(new Date(), 11 - i), { weekStartsOn: 1 }), 'yyyy-MM-dd'),
-    ntu: 0, avgRir: 0, sessionCount: 0, patternVolume: {}, maxWeight: {}, sessionRirs: [],
+    ntu: 0, avgRir: 0, sessionCount: 0, patternVolume: {}, patternDetails: {}, maxWeight: {}, sessionRirs: [],
   }));
 
   const buildEmptyHeatmap = (): HeatmapDay[][] => Array.from({ length: 12 }, () => Array.from({ length: 7 }, () => ({ hasSession: false, ntu: 0 })));
