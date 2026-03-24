@@ -35,6 +35,18 @@ const PATTERN_ABBREV: Record<string, string> = {
   Isolation: 'ISO', Plyometric: 'PLY', Rotational: 'ROT',
 };
 
+interface PatternExerciseData {
+  name: string;
+  totalKg: number;
+  totalSets: number;
+}
+
+interface PatternDetail {
+  totalKg: number;
+  totalSets: number;
+  exercises: Record<string, PatternExerciseData>;
+}
+
 interface WeekData {
   week: string;
   weekStart: string;
@@ -42,6 +54,7 @@ interface WeekData {
   avgRir: number;
   sessionCount: number;
   patternVolume: Record<string, number>;
+  patternDetails: Record<string, PatternDetail>;
   maxWeight: Record<string, number>;
   // Per-session RIR data for proximity chart
   sessionRirs: { avgRir: number }[];
