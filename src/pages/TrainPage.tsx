@@ -3,8 +3,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { LogTab } from '@/components/train/LogTab';
 import { AnalyticsTab } from '@/components/train/AnalyticsTab';
 import { CalendarTab } from '@/components/train/CalendarTab';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const TrainPage = () => {
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('log');
 
   const tabs = [
