@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, StickyNote, Timer, Plus, Minus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, StickyNote, Timer, Plus, Minus, Clock } from 'lucide-react';
 import type { SessionExercise, SetData } from '@/stores/workoutStore';
 import { WeightNumpad } from './WeightNumpad';
 import { RestTimer } from './RestTimer';
@@ -17,6 +17,8 @@ const pipColor = (pattern: string) => {
   };
   return map[pattern] || 'hsl(var(--primary))';
 };
+
+const REST_PRESETS = [30, 60, 90, 120, 150, 180];
 
 interface ExerciseDrillDownProps {
   exercise: SessionExercise;
@@ -61,7 +63,10 @@ export const ExerciseDrillDown = ({
     value: number | null;
     previousValue: number | null;
   } | null>(null);
+  const [restTimerDuration, setRestTimerDuration] = useState(restTimerDefault);
   const [showRestTimer, setShowRestTimer] = useState(false);
+  const [showRestPicker, setShowRestPicker] = useState(false);
+  const [customRestInput, setCustomRestInput] = useState('');
   const [showNotes, setShowNotes] = useState(!!ex.notes);
 
   const weightUnit = preferredUnit;
@@ -77,14 +82,12 @@ export const ExerciseDrillDown = ({
   const completedSets = ex.sets.filter(s => s.completed).length;
   const allComplete = ex.sets.length > 0 && completedSets === ex.sets.length;
 
-  // Working max from previous sets
   const workingMax = useMemo(() => {
     if (!previousSets?.length) return null;
     const maxWeight = Math.max(...previousSets.filter(s => s.weight_kg !== null).map(s => s.weight_kg!));
     return maxWeight > 0 ? maxWeight : null;
   }, [previousSets]);
 
-  // Last performance summary
   const lastPerformance = useMemo(() => {
     if (!previousSets?.length) return null;
     const sets = previousSets.filter(s => s.weight_kg !== null && s.reps !== null);
@@ -133,6 +136,27 @@ export const ExerciseDrillDown = ({
     if ('vibrate' in navigator) try { navigator.vibrate(50); } catch {}
   };
 
+  const formatRestTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleCustomRestConfirm = () => {
+    const parts = customRestInput.split(':');
+    let totalSecs = 0;
+    if (parts.length === 2) {
+      totalSecs = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    } else {
+      totalSecs = parseInt(customRestInput);
+    }
+    if (totalSecs > 0 && totalSecs <= 600) {
+      setRestTimerDuration(totalSecs);
+      setShowRestPicker(false);
+      setCustomRestInput('');
+    }
+  };
+
   const cellBase: React.CSSProperties = {
     background: 'hsl(var(--bg3))',
     border: '1px solid hsl(var(--border))',
@@ -150,7 +174,6 @@ export const ExerciseDrillDown = ({
     <div className="fixed inset-0 z-40 flex flex-col" style={{ background: 'hsl(var(--bg))' }}>
       {/* Header */}
       <div style={{ padding: '12px 16px 0', flexShrink: 0 }}>
-        {/* Back button */}
         <button
           onClick={onBack}
           className="flex items-center gap-1 mb-3"
@@ -159,7 +182,6 @@ export const ExerciseDrillDown = ({
           <ChevronLeft size={16} /> Back to overview
         </button>
 
-        {/* Exercise counter */}
         <div className="flex items-center justify-between mb-2">
           <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1 }}>
             Exercise {exerciseIndex + 1} of {totalExercises}
@@ -176,15 +198,13 @@ export const ExerciseDrillDown = ({
           )}
         </div>
 
-        {/* Exercise name */}
         <div className="flex items-center gap-2 mb-2">
           <div style={{ width: 4, height: 32, borderRadius: 2, background: pipColor(ex.exercise.movement_pattern || '') }} />
-          <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 26, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1 }}>
-            {ex.exercise.name}
+          <h2 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 26, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1, margin: 0 }}>
+            {ex.exercise.name || 'Unnamed Exercise'}
           </h2>
         </div>
 
-        {/* Last performance & working max */}
         <div className="flex gap-4 mb-4" style={{ padding: '8px 12px', background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}>
           <div>
             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 0.5 }}>Last Performance</span>
@@ -201,7 +221,6 @@ export const ExerciseDrillDown = ({
           </div>
         </div>
 
-        {/* Coach notes */}
         {ex.coachNotes && (
           <p style={{ fontSize: 11, color: 'hsl(var(--warn))', fontStyle: 'italic', marginBottom: 8, padding: '6px 10px', background: 'hsla(38,92%,50%,0.06)', borderRadius: 6, border: '1px solid hsla(38,92%,50%,0.15)' }}>
             → {ex.coachNotes}
@@ -211,12 +230,7 @@ export const ExerciseDrillDown = ({
 
       {/* Set rows — scrollable middle */}
       <div className="flex-1 overflow-y-auto" style={{ padding: '0 16px' }}>
-        {/* Column headers */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '36px 52px 1fr 1fr 50px 36px',
-          gap: 6, padding: '8px 0 4px',
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '36px 52px 1fr 1fr 50px 36px', gap: 6, padding: '8px 0 4px' }}>
           {['SET', 'PREV', 'WEIGHT', 'REPS', 'RIR', ''].map((h, i) => (
             <span key={i} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', textTransform: 'uppercase', textAlign: 'center', letterSpacing: 0.5 }}>{h}</span>
           ))}
@@ -230,13 +244,11 @@ export const ExerciseDrillDown = ({
             <div
               key={setIdx}
               style={{
-                display: 'grid',
-                gridTemplateColumns: '36px 52px 1fr 1fr 50px 36px',
+                display: 'grid', gridTemplateColumns: '36px 52px 1fr 1fr 50px 36px',
                 gap: 6, marginBottom: 6,
                 opacity: set.set_type === 'warmup' ? 0.6 : 1,
               }}
             >
-              {/* Set number */}
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
@@ -246,7 +258,6 @@ export const ExerciseDrillDown = ({
                 {set.completed ? '✓' : set.set_type === 'warmup' ? 'W' : `S${set.set_num}`}
               </div>
 
-              {/* Previous */}
               <div style={{
                 fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
                 color: 'hsl(var(--dim))', textAlign: 'center',
@@ -255,7 +266,6 @@ export const ExerciseDrillDown = ({
                 {prevStr || '—'}
               </div>
 
-              {/* Weight */}
               <button
                 onClick={() => openNumpad('weight_kg', setIdx)}
                 disabled={set.completed}
@@ -269,7 +279,6 @@ export const ExerciseDrillDown = ({
                 {set.weight_kg !== null ? toDisplay(set.weight_kg) : weightUnit}
               </button>
 
-              {/* Reps */}
               <button
                 onClick={() => openNumpad('reps', setIdx)}
                 disabled={set.completed}
@@ -283,13 +292,11 @@ export const ExerciseDrillDown = ({
                 {set.reps ?? 'reps'}
               </button>
 
-              {/* RIR */}
               <button
                 onClick={() => openNumpad('rir', setIdx)}
                 disabled={set.completed}
                 style={{
-                  ...cellBase,
-                  fontSize: 11,
+                  ...cellBase, fontSize: 11,
                   color: set.completed ? 'hsl(var(--ok))' : set.rir !== null ? 'hsl(var(--text))' : 'hsl(var(--dim))',
                   cursor: set.completed ? 'default' : 'pointer',
                   background: set.completed ? 'hsla(142,71%,45%,0.05)' : 'hsl(var(--bg3))',
@@ -298,7 +305,6 @@ export const ExerciseDrillDown = ({
                 {set.rir ?? '–'}
               </button>
 
-              {/* Complete button */}
               <button
                 onClick={() => set.completed ? onMarkIncomplete(setIdx) : (canComplete ? handleComplete(setIdx) : null)}
                 style={{
@@ -348,19 +354,70 @@ export const ExerciseDrillDown = ({
           )}
         </div>
 
-        {/* Rest timer selector */}
-        <button
-          onClick={() => setShowRestTimer(true)}
-          className="w-full flex items-center justify-center gap-2"
-          style={{
-            padding: '10px 0', borderRadius: 8,
-            background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))',
-            color: 'hsl(var(--dim))', fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
-            cursor: 'pointer', marginBottom: 12,
-          }}
-        >
-          <Timer size={14} /> Rest Timer · {Math.floor(restTimerDefault / 60)}:{(restTimerDefault % 60).toString().padStart(2, '0')}
-        </button>
+        {/* Rest timer selector — configurable */}
+        <div style={{ marginBottom: 12 }}>
+          <button
+            onClick={() => setShowRestPicker(!showRestPicker)}
+            className="w-full flex items-center justify-center gap-2"
+            style={{
+              padding: '10px 0', borderRadius: 8,
+              background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))',
+              color: 'hsl(var(--dim))', fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+              cursor: 'pointer',
+            }}
+          >
+            <Clock size={14} /> Rest Timer · {formatRestTime(restTimerDuration)}
+          </button>
+
+          {showRestPicker && (
+            <div style={{
+              marginTop: 6, padding: 10, borderRadius: 8,
+              background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))',
+            }}>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {REST_PRESETS.map(secs => (
+                  <button
+                    key={secs}
+                    onClick={() => { setRestTimerDuration(secs); setShowRestPicker(false); }}
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 600,
+                      padding: '6px 12px', borderRadius: 6, cursor: 'pointer',
+                      background: restTimerDuration === secs ? 'hsl(var(--primary))' : 'hsl(var(--bg3))',
+                      color: restTimerDuration === secs ? 'hsl(220,16%,6%)' : 'hsl(var(--text))',
+                      border: restTimerDuration === secs ? 'none' : '1px solid hsl(var(--border))',
+                    }}
+                  >
+                    {formatRestTime(secs)}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customRestInput}
+                  onChange={e => setCustomRestInput(e.target.value)}
+                  placeholder="m:ss or seconds"
+                  style={{
+                    flex: 1, fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
+                    padding: '6px 10px', borderRadius: 6,
+                    background: 'hsl(var(--bg3))', border: '1px solid hsl(var(--border))',
+                    color: 'hsl(var(--text))', outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={handleCustomRestConfirm}
+                  style={{
+                    fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontWeight: 700,
+                    padding: '6px 14px', borderRadius: 6, cursor: 'pointer',
+                    background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', border: 'none',
+                  }}
+                >
+                  Set
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Exercise notes */}
         <div style={{ marginBottom: 16 }}>
@@ -388,7 +445,7 @@ export const ExerciseDrillDown = ({
         </div>
       </div>
 
-      {/* Bottom nav — Back / Next */}
+      {/* Bottom nav */}
       <div style={{
         padding: '12px 16px', flexShrink: 0,
         background: 'hsla(220,16%,6%,0.95)', backdropFilter: 'blur(12px)',
@@ -428,7 +485,7 @@ export const ExerciseDrillDown = ({
       {/* Rest timer overlay */}
       {showRestTimer && (
         <RestTimer
-          durationSecs={restTimerDefault}
+          durationSecs={restTimerDuration}
           onComplete={() => setShowRestTimer(false)}
           onSkip={() => setShowRestTimer(false)}
         />
