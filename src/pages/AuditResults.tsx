@@ -187,28 +187,6 @@ const AuditResults = () => {
             </p>
           </div>
 
-          {/* Recommended Programme */}
-          {recProgramme && (
-            <div className="bg-vault-bg2 border border-primary/30 rounded-xl p-5 mb-8">
-              <h3 className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase mb-3">RECOMMENDED PROGRAMME</h3>
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-display text-lg text-vault-text">{recProgramme.name}</span>
-                <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-vault-ok/20 text-vault-ok">FREE</span>
-              </div>
-              <p className="text-xs text-vault-dim mb-1">{recProgramme.days} DAYS/WEEK · HYBRID CF + FBB</p>
-              <p className="text-xs text-vault-mid leading-relaxed mb-4">
-                {recProgramme.description}
-              </p>
-              <button
-                onClick={handleEnrol}
-                disabled={enrolling}
-                className="w-full bg-primary text-primary-foreground font-bold text-[11px] tracking-wider py-3.5 rounded-lg hover:scale-[1.02] active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {enrolling && <Loader2 size={14} className="animate-spin" />}
-                ENROL NOW — FREE →
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
