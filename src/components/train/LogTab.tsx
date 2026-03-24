@@ -76,6 +76,7 @@ export const LogTab = () => {
   const [timer, setTimer] = useState('00:00');
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState({ warmup: true, exercises: true, cooldown: true });
+  const [drillDownIndex, setDrillDownIndex] = useState<number | null>(null);
 
   // ─── Action sheet & PR celebration state ───
   const [actionSheetIndex, setActionSheetIndex] = useState<number | null>(null);
