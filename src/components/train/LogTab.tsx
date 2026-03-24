@@ -495,62 +495,43 @@ export const LogTab = () => {
     );
   };
 
+  // Drill-down data — must be called before any early returns
+  const drillDownExercise = drillDownIndex !== null ? exercises[drillDownIndex] : null;
+  const drillDownExerciseId = drillDownExercise?.exercise?.id || null;
+  const { data: drillDownPrevSets } = usePreviousSets(drillDownExerciseId);
+
   /* ═══════════════════════════════════════════
      STATE 1 — No active session (and not editing)
      ═══════════════════════════════════════════ */
   if (!isSessionActive && !finished && !isEditing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        {/* Week strip */}
         <div className="w-full mb-4">
-          <WeekStrip
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-            workoutDays={workouts.map(w => w.day_number)}
-          />
+          <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} workoutDays={workouts.map(w => w.day_number)} />
         </div>
-
         <div className="w-full" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsla(192,91%,54%,0.2)', boxShadow: '0 0 30px hsla(192,91%,54%,0.06)', borderRadius: 16, padding: 24 }}>
-          {/* Programme info row */}
           {activeProgramme ? (
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))' }}>{activeProgramme.name}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '2px 8px', borderRadius: 6, border: '1px solid hsla(192,91%,54%,0.2)' }}>
-                  Week 1
-                </span>
-                <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'hsl(var(--dim))', background: 'none', border: 'none', cursor: 'pointer' }}>
-                  Change →
-                </button>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '2px 8px', borderRadius: 6, border: '1px solid hsla(192,91%,54%,0.2)' }}>Week 1</span>
+                <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'hsl(var(--dim))', background: 'none', border: 'none', cursor: 'pointer' }}>Change →</button>
               </div>
             </div>
           ) : (
             <div className="mb-3">
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'hsl(var(--dim))' }}>No programme selected</p>
-              <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--primary))', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 2 }}>
-                Choose a programme →
-              </button>
+              <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--primary))', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 2 }}>Choose a programme →</button>
             </div>
           )}
-
-          {/* Workout day picker */}
           {workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && (
             <div className="mb-5">
               <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Select today's workout</p>
               <div className="grid grid-cols-1 gap-1.5">
                 {workouts.map(w => (
-                  <button
-                    key={w.id}
-                    onClick={() => setSelectedWorkout(selectedWorkout?.id === w.id ? null : w)}
-                    className="w-full text-left px-4 py-3 rounded-lg font-mono text-xs transition-colors"
-                    style={{
-                      background: selectedWorkout?.id === w.id ? 'hsla(192,91%,54%,0.05)' : 'hsl(var(--bg3))',
-                      border: selectedWorkout?.id === w.id ? '1px solid hsla(192,91%,54%,0.4)' : '1px solid hsl(var(--border))',
-                      color: selectedWorkout?.id === w.id ? 'hsl(var(--primary))' : 'hsl(var(--text))',
-                    }}
-                  >
+                  <button key={w.id} onClick={() => setSelectedWorkout(selectedWorkout?.id === w.id ? null : w)} className="w-full text-left px-4 py-3 rounded-lg font-mono text-xs transition-colors" style={{ background: selectedWorkout?.id === w.id ? 'hsla(192,91%,54%,0.05)' : 'hsl(var(--bg3))', border: selectedWorkout?.id === w.id ? '1px solid hsla(192,91%,54%,0.4)' : '1px solid hsl(var(--border))', color: selectedWorkout?.id === w.id ? 'hsl(var(--primary))' : 'hsl(var(--text))' }}>
                     <span className="font-bold">Day {w.day_number}</span>
                     <span style={{ color: 'hsl(var(--dim))', marginLeft: 8 }}>— {w.name}</span>
                   </button>
@@ -558,43 +539,20 @@ export const LogTab = () => {
               </div>
             </div>
           )}
-
-          {/* Build Workout button */}
-          <button
-            onClick={startSession}
-            className="w-full mb-2"
-            style={{
-              background: 'transparent', border: '1px solid hsl(var(--border))',
-              color: 'hsl(var(--text))', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
-              padding: '10px 0', borderRadius: 8, cursor: 'pointer',
-            }}
-          >
-            🏋️ Build Workout
-          </button>
-
-          <button
-            onClick={startSession}
-            style={{ width: '100%', background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 11, padding: '12px 0', borderRadius: 8, border: 'none', textTransform: 'uppercase', letterSpacing: 1 }}
-          >
-            Begin Session →
-          </button>
+          <button onClick={startSession} className="w-full mb-2" style={{ background: 'transparent', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text))', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, padding: '10px 0', borderRadius: 8, cursor: 'pointer' }}>🏋️ Build Workout</button>
+          <button onClick={startSession} style={{ width: '100%', background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 11, padding: '12px 0', borderRadius: 8, border: 'none', textTransform: 'uppercase', letterSpacing: 1 }}>Begin Session →</button>
         </div>
       </div>
     );
   }
 
-  /* ═══════════════════════════════════════════
-     SUMMARY
-     ═══════════════════════════════════════════ */
   if (finished && summaryData) {
     return (
       <div className="max-w-lg mx-auto px-4 space-y-4">
         <div className="bg-card border border-primary/20 rounded-2xl p-5 space-y-4">
           <h3 className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">SESSION COMPLETE</h3>
           {summaryData.programmeName && (
-            <p className="font-mono text-[9px] text-primary bg-primary/10 px-2 py-1 rounded-lg border border-primary/20 inline-block">
-              {summaryData.programmeName}
-            </p>
+            <p className="font-mono text-[9px] text-primary bg-primary/10 px-2 py-1 rounded-lg border border-primary/20 inline-block">{summaryData.programmeName}</p>
           )}
           <div className="grid grid-cols-2 gap-4">
             {[
@@ -609,26 +567,15 @@ export const LogTab = () => {
               </div>
             ))}
           </div>
-          <button
-            onClick={() => { storeResetSession(); setFinished(false); setSummaryData(null); setTimer('00:00'); setWorkoutNotes(''); }}
-            className="w-full bg-secondary border border-border text-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs"
-          >New Session</button>
+          <button onClick={() => { storeResetSession(); setFinished(false); setSummaryData(null); setTimer('00:00'); setWorkoutNotes(''); }} className="w-full bg-secondary border border-border text-foreground font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs">New Session</button>
         </div>
       </div>
     );
   }
 
-  /* ═══════════════════════════════════════════
-     STATE 2 — Active session OR Edit mode
-     ═══════════════════════════════════════════ */
   const editDateLabel = editingSessionDate
     ? format(new Date(editingSessionDate + 'T00:00:00'), 'EEE dd MMM').toUpperCase()
     : '';
-
-  // Drill-down into a single exercise
-  const drillDownExercise = drillDownIndex !== null ? exercises[drillDownIndex] : null;
-  const drillDownExerciseId = drillDownExercise?.exercise?.id || null;
-  const { data: drillDownPrevSets } = usePreviousSets(drillDownExerciseId);
 
   if (drillDownIndex !== null && drillDownExercise && !isEditing) {
     return (
