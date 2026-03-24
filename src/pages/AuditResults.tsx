@@ -82,8 +82,6 @@ const AuditResults = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, refetchProfile } = useAuth();
-  const [enrolling, setEnrolling] = useState(false);
-  const [recProgramme, setRecProgramme] = useState<{ id: string; name: string; description: string | null; days: number } | null>(null);
   const [aiRecs, setAiRecs] = useState<any>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
