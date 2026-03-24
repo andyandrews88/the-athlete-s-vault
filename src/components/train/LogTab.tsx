@@ -10,6 +10,7 @@ import { ExerciseCard } from './ExerciseCard';
 import { ExerciseActionSheet } from './ExerciseActionSheet';
 import { PRCelebration } from './PRCelebration';
 import { ExerciseSearch } from './ExerciseSearch';
+import { ExerciseDrillDown } from './ExerciseDrillDown';
 import { useWorkoutStore, type SessionExercise, type SetData, type WorkoutSection, type ExerciseRow } from '@/stores/workoutStore';
 import { useUserProgrammes, useProgrammeWorkouts } from '@/hooks/useProgrammes';
 import { usePreviousSets } from '@/hooks/useWorkoutHistory';
