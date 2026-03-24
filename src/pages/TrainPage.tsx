@@ -34,10 +34,10 @@ const TrainPage = () => {
                 className="flex-1 transition-all"
                 style={{
                   fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: 7,
+                  fontSize: window.innerWidth < 768 ? 11 : 12,
                   letterSpacing: '0.3px',
                   textTransform: 'uppercase',
-                  padding: '7px 0',
+                  padding: '10px 0',
                   borderRadius: 5,
                   fontWeight: activeTab === tab.value ? 700 : 400,
                   background: activeTab === tab.value ? 'hsl(var(--primary))' : 'transparent',
