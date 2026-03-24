@@ -114,48 +114,6 @@ const AuditResults = () => {
     });
   }, [user, score, tier, strengthScore, engineScore, movementScore, lifestyleScore, nutritionScore]);
 
-  const handleEnrol = async () => {
-    if (!user || !recProgramme) return;
-    setEnrolling(true);
-
-    // 1. Save audit score
-    await supabase.from('profiles').update({ audit_score: score, audit_tier: tier }).eq('id', user.id);
-
-    // 2. Deactivate existing programmes
-    await supabase.from('training_programmes').update({ is_active: false }).eq('user_id', user.id).eq('is_active', true);
-
-    // 3. Clone template programme for user
-    const { data: newProg } = await supabase.from('training_programmes').insert({
-      user_id: user.id,
-      name: recProgramme.name,
-      description: recProgramme.description,
-      is_active: true,
-      is_template: false,
-    } as any).select('id').single();
-
-    // 4. Clone workouts
-    if (newProg) {
-      const { data: workouts } = await supabase
-        .from('programme_workouts')
-        .select('day_number, name, prescribed_exercises')
-        .eq('programme_id', recProgramme.id)
-        .order('day_number');
-
-      if (workouts && workouts.length > 0) {
-        await supabase.from('programme_workouts').insert(
-          workouts.map((w: any) => ({
-            programme_id: newProg.id,
-            day_number: w.day_number,
-            name: w.name,
-            prescribed_exercises: w.prescribed_exercises,
-          }))
-        );
-      }
-    }
-
-    refetchProfile?.();
-    navigate('/home', { replace: true });
-  };
 
   return (
     <div className="min-h-screen bg-vault-bg flex flex-col">
