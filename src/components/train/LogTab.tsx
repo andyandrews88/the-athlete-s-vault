@@ -841,8 +841,17 @@ export const LogTab = () => {
           }}
           onMoveUp={() => store.reorderExercise(actionSheetIndex, 'up')}
           onMoveDown={() => store.reorderExercise(actionSheetIndex, 'down')}
-          onLinkSuperset={() => { handleSupersetLink(actionSheetIndex); setDrillDownIndices(null); }}
-          onUnlinkSuperset={() => store.unlinkSuperset(actionSheetIndex)}
+          onLinkSuperset={() => {
+            setLinkingSuperset(actionSheetIndex);
+            setActionSheetIndex(null);
+            setDrillDownIndices(null);
+          }}
+          onUnlinkSuperset={() => {
+            store.unlinkSuperset(actionSheetIndex);
+            setActionSheetIndex(null);
+            // Reopen drill-down with just this single exercise
+            setDrillDownIndices([actionSheetIndex]);
+          }}
           hasSuperset={!!exercises[actionSheetIndex].supersetGroup}
           canMoveUp={actionSheetIndex > 0}
           canMoveDown={actionSheetIndex < exercises.length - 1}
