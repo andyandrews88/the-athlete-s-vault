@@ -171,9 +171,9 @@ export const ExerciseDrillDown = ({
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col" style={{ background: 'hsl(var(--bg))' }}>
+    <div className="fixed inset-0 z-40 flex flex-col" style={{ background: 'hsl(var(--bg))', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* Header */}
-      <div style={{ padding: '12px 16px 0', flexShrink: 0 }}>
+      <div style={{ padding: '56px 16px 0', flexShrink: 0 }}>
         <button
           onClick={onBack}
           className="flex items-center gap-1 mb-3"
