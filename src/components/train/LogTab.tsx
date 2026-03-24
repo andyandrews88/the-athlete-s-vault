@@ -10,6 +10,7 @@ import { ExerciseCard } from './ExerciseCard';
 import { ExerciseActionSheet } from './ExerciseActionSheet';
 import { PRCelebration } from './PRCelebration';
 import { ExerciseSearch } from './ExerciseSearch';
+import { ExerciseDrillDown } from './ExerciseDrillDown';
 import { useWorkoutStore, type SessionExercise, type SetData, type WorkoutSection, type ExerciseRow } from '@/stores/workoutStore';
 import { useUserProgrammes, useProgrammeWorkouts } from '@/hooks/useProgrammes';
 import { usePreviousSets } from '@/hooks/useWorkoutHistory';
@@ -36,6 +37,18 @@ interface ProgrammeWorkout {
 }
 
 const LB_PER_KG = 2.20462;
+
+const pipColor = (pattern: string) => {
+  const map: Record<string, string> = {
+    'Hinge': 'hsl(0,72%,51%)', 'Squat': 'hsl(262,60%,55%)',
+    'Push': 'hsl(var(--primary))', 'Pull': 'hsl(var(--ok))',
+    'Single Leg': 'hsl(38,92%,50%)', 'Carry': 'hsl(38,92%,50%)',
+    'Core': 'hsl(215,14%,50%)', 'Olympic': 'hsl(var(--gold))',
+    'Isolation': 'hsl(215,14%,50%)', 'Plyometric': 'hsl(var(--gold))',
+    'Rotational': 'hsl(var(--primary))', 'Conditioning': 'hsl(var(--warn))',
+  };
+  return map[pattern] || 'hsl(var(--primary))';
+};
 
 const emptySet = (num: number): SetData => ({
   set_num: num, reps: null, weight_kg: null, rir: null, rpe: null,
@@ -75,6 +88,7 @@ export const LogTab = () => {
   const [timer, setTimer] = useState('00:00');
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState({ warmup: true, exercises: true, cooldown: true });
+  const [drillDownIndex, setDrillDownIndex] = useState<number | null>(null);
 
   // ─── Action sheet & PR celebration state ───
   const [actionSheetIndex, setActionSheetIndex] = useState<number | null>(null);
@@ -609,6 +623,60 @@ export const LogTab = () => {
     ? format(new Date(editingSessionDate + 'T00:00:00'), 'EEE dd MMM').toUpperCase()
     : '';
 
+  // Drill-down into a single exercise
+  const drillDownExercise = drillDownIndex !== null ? exercises[drillDownIndex] : null;
+  const drillDownExerciseId = drillDownExercise?.exercise?.id || null;
+  const { data: drillDownPrevSets } = usePreviousSets(drillDownExerciseId);
+
+  if (drillDownIndex !== null && drillDownExercise && !isEditing) {
+    return (
+      <>
+        <ExerciseDrillDown
+          exercise={drillDownExercise}
+          exerciseIndex={drillDownIndex}
+          totalExercises={exercises.length}
+          previousSets={drillDownPrevSets as any}
+          preferredUnit={weightUnit as 'kg' | 'lbs'}
+          restTimerDefault={restTimerDefault}
+          onUpdateSet={(setIdx, data) => storeUpdateSet(drillDownIndex, setIdx, data)}
+          onAddSet={() => storeAddSet(drillDownIndex)}
+          onRemoveSet={(setIdx) => {
+            const updated = drillDownExercise.sets.filter((_, j) => j !== setIdx);
+            storeUpdateExercise(drillDownIndex, { sets: updated });
+          }}
+          onMarkComplete={(setIdx) => {
+            storeMarkSetComplete(drillDownIndex, setIdx);
+          }}
+          onMarkIncomplete={(setIdx) => storeMarkSetIncomplete(drillDownIndex, setIdx)}
+          onUpdateNotes={(notes) => updateNotes(drillDownIndex, notes)}
+          onToggleUnit={() => store.setPreferredUnit(weightUnit === 'kg' ? 'lbs' : 'kg')}
+          onBack={() => setDrillDownIndex(null)}
+          onNext={() => {
+            if (drillDownIndex < exercises.length - 1) {
+              setDrillDownIndex(drillDownIndex + 1);
+            } else {
+              setDrillDownIndex(null);
+            }
+          }}
+          onPrev={() => {
+            if (drillDownIndex > 0) {
+              setDrillDownIndex(drillDownIndex - 1);
+            }
+          }}
+        />
+        {prCelebration && (
+          <PRCelebration
+            exerciseName={prCelebration.exerciseName}
+            weight={prCelebration.weight}
+            unit={weightUnit as 'kg' | 'lbs'}
+            onDismiss={() => setPrCelebration(null)}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Session overview — card list
   return (
     <div className="max-w-lg mx-auto space-y-4" style={{ padding: '8px 11px 64px', background: 'hsl(var(--bg))' }}>
       {/* Week strip (hide in edit mode) */}
@@ -662,10 +730,68 @@ export const LogTab = () => {
         </div>
       )}
 
-      {/* ─── Sections ─── */}
-      {renderSection('warmup', sectionExercises.warmup)}
-      {renderSection('exercises', sectionExercises.exercises)}
-      {renderSection('cooldown', sectionExercises.cooldown)}
+      {/* ─── Exercise Overview Cards ─── */}
+      {!isEditing && exercises.length > 0 && (
+        <div className="space-y-2">
+          {exercises.map((ex, idx) => {
+            const completedSets = ex.sets.filter(s => s.completed).length;
+            const allDone = ex.sets.length > 0 && completedSets === ex.sets.length;
+            const targetLine = `${ex.sets.length} × ${ex.sets[0]?.reps ?? '–'}`;
+
+            return (
+              <button
+                key={idx}
+                onClick={() => setDrillDownIndex(idx)}
+                className="w-full text-left"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '12px 14px', borderRadius: 10,
+                  background: allDone ? 'hsla(142,71%,45%,0.05)' : 'hsl(var(--bg2))',
+                  border: allDone ? '1px solid hsla(142,71%,45%,0.2)' : '1px solid hsl(var(--border))',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+              >
+                {/* Movement pip */}
+                <div style={{ width: 3, minWidth: 3, height: 32, borderRadius: 2, background: pipColor(ex.exercise.movement_pattern || '') }} />
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))', fontFamily: 'Inter, sans-serif' }}>{ex.exercise.name}</p>
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
+                    {targetLine} · {ex.exercise.movement_pattern || ''}
+                  </p>
+                </div>
+
+                {/* Completion indicator */}
+                <div style={{
+                  width: 28, height: 28, borderRadius: 14,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: allDone ? 'hsla(142,71%,45%,0.15)' : 'hsl(var(--bg3))',
+                  border: allDone ? '1px solid hsla(142,71%,45%,0.3)' : '1px solid hsl(var(--border))',
+                  flexShrink: 0,
+                }}>
+                  {allDone ? (
+                    <Check size={14} style={{ color: 'hsl(var(--ok))' }} />
+                  ) : completedSets > 0 ? (
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))' }}>{completedSets}/{ex.sets.length}</span>
+                  ) : (
+                    <div style={{ width: 10, height: 10, borderRadius: 5, border: '1.5px solid hsl(var(--border2))' }} />
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ─── Edit mode: keep full inline cards ─── */}
+      {isEditing && (
+        <>
+          {renderSection('warmup', sectionExercises.warmup)}
+          {renderSection('exercises', sectionExercises.exercises)}
+          {renderSection('cooldown', sectionExercises.cooldown)}
+        </>
+      )}
 
       {/* Add Exercise */}
       <button
