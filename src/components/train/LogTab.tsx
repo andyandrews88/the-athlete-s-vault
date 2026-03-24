@@ -564,7 +564,7 @@ export const LogTab = () => {
               padding: '10px 0', borderRadius: 8, cursor: 'pointer',
             }}
           >
-            🏋️ Build Workout
+            🏋️ Build Your Own Workout
           </button>
 
           <button
