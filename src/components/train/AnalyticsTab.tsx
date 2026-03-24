@@ -35,6 +35,18 @@ const PATTERN_ABBREV: Record<string, string> = {
   Isolation: 'ISO', Plyometric: 'PLY', Rotational: 'ROT',
 };
 
+interface PatternExerciseData {
+  name: string;
+  totalKg: number;
+  totalSets: number;
+}
+
+interface PatternDetail {
+  totalKg: number;
+  totalSets: number;
+  exercises: Record<string, PatternExerciseData>;
+}
+
 interface WeekData {
   week: string;
   weekStart: string;
@@ -42,6 +54,7 @@ interface WeekData {
   avgRir: number;
   sessionCount: number;
   patternVolume: Record<string, number>;
+  patternDetails: Record<string, PatternDetail>;
   maxWeight: Record<string, number>;
   // Per-session RIR data for proximity chart
   sessionRirs: { avgRir: number }[];
@@ -157,10 +170,10 @@ export const AnalyticsTab = () => {
     sessions.forEach(s => { sessionDateMap[s.id] = s.date; });
 
     // Week map
-    const weekMap: Record<string, { ntu: number; rirSum: number; rirCount: number; sessionIds: Set<string>; patternVolume: Record<string, number>; maxWeight: Record<string, number>; sessionRirMap: Record<string, { sum: number; count: number }> }> = {};
+    const weekMap: Record<string, { ntu: number; rirSum: number; rirCount: number; sessionIds: Set<string>; patternVolume: Record<string, number>; patternDetails: Record<string, { totalKg: number; totalSets: number; exercises: Record<string, { name: string; totalKg: number; totalSets: number }> }>; maxWeight: Record<string, number>; sessionRirMap: Record<string, { sum: number; count: number }> }> = {};
     for (let i = 11; i >= 0; i--) {
       const ws = format(startOfWeek(subWeeks(new Date(), i), { weekStartsOn: 1 }), 'yyyy-MM-dd');
-      weekMap[ws] = { ntu: 0, rirSum: 0, rirCount: 0, sessionIds: new Set(), patternVolume: {}, maxWeight: {}, sessionRirMap: {} };
+      weekMap[ws] = { ntu: 0, rirSum: 0, rirCount: 0, sessionIds: new Set(), patternVolume: {}, patternDetails: {}, maxWeight: {}, sessionRirMap: {} };
     }
 
     sessions.forEach(s => {
@@ -189,7 +202,21 @@ export const AnalyticsTab = () => {
       }
 
       const vol = (Number(set.reps) || 0) * (Number(set.weight_kg) || 0);
+      const setWeight = Number(set.weight_kg) || 0;
       weekMap[ws].patternVolume[se.pattern] = (weekMap[ws].patternVolume[se.pattern] || 0) + vol;
+
+      // Track pattern details
+      if (!weekMap[ws].patternDetails[se.pattern]) {
+        weekMap[ws].patternDetails[se.pattern] = { totalKg: 0, totalSets: 0, exercises: {} };
+      }
+      const pd = weekMap[ws].patternDetails[se.pattern];
+      pd.totalKg += setWeight;
+      pd.totalSets += 1;
+      if (!pd.exercises[se.exerciseName]) {
+        pd.exercises[se.exerciseName] = { name: se.exerciseName, totalKg: 0, totalSets: 0 };
+      }
+      pd.exercises[se.exerciseName].totalKg += setWeight;
+      pd.exercises[se.exerciseName].totalSets += 1;
 
       const w = Number(set.weight_kg) || 0;
       if (w > 0) {
@@ -207,6 +234,7 @@ export const AnalyticsTab = () => {
         avgRir: data.rirCount > 0 ? Math.round((data.rirSum / data.rirCount) * 10) / 10 : 0,
         sessionCount: data.sessionIds.size,
         patternVolume: data.patternVolume,
+        patternDetails: data.patternDetails,
         maxWeight: data.maxWeight,
         sessionRirs: Object.values(data.sessionRirMap).map(sr => ({ avgRir: sr.count > 0 ? Math.round((sr.sum / sr.count) * 10) / 10 : 0 })),
       }));
@@ -233,7 +261,7 @@ export const AnalyticsTab = () => {
 
   const buildEmptyWeeks = (): WeekData[] => Array.from({ length: 12 }, (_, i) => ({
     week: `W${i + 1}`, weekStart: format(startOfWeek(subWeeks(new Date(), 11 - i), { weekStartsOn: 1 }), 'yyyy-MM-dd'),
-    ntu: 0, avgRir: 0, sessionCount: 0, patternVolume: {}, maxWeight: {}, sessionRirs: [],
+    ntu: 0, avgRir: 0, sessionCount: 0, patternVolume: {}, patternDetails: {}, maxWeight: {}, sessionRirs: [],
   }));
 
   const buildEmptyHeatmap = (): HeatmapDay[][] => Array.from({ length: 12 }, () => Array.from({ length: 7 }, () => ({ hasSession: false, ntu: 0 })));
@@ -254,7 +282,7 @@ export const AnalyticsTab = () => {
   const strengthGain = strengthCurrent - strengthStart;
   const maxStrength = Math.max(...strengthData.map(d => d.weight), 1);
 
-  // Pattern totals
+  // Pattern totals with detailed breakdown
   const patternTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     weeklyData.forEach(w => {
@@ -263,6 +291,35 @@ export const AnalyticsTab = () => {
     return Object.entries(totals).sort(([, a], [, b]) => b - a);
   }, [weeklyData]);
   const maxPatternVol = useMemo(() => Math.max(...patternTotals.map(([, v]) => v), 1), [patternTotals]);
+
+  // Aggregated pattern details (kg, sets, exercises)
+  const patternAggregated = useMemo(() => {
+    const agg: Record<string, { totalKg: number; totalSets: number; exercises: Record<string, { name: string; totalKg: number; totalSets: number }> }> = {};
+    weeklyData.forEach(w => {
+      Object.entries(w.patternDetails).forEach(([pattern, detail]) => {
+        if (!agg[pattern]) agg[pattern] = { totalKg: 0, totalSets: 0, exercises: {} };
+        agg[pattern].totalKg += detail.totalKg;
+        agg[pattern].totalSets += detail.totalSets;
+        Object.entries(detail.exercises).forEach(([exName, exData]) => {
+          if (!agg[pattern].exercises[exName]) agg[pattern].exercises[exName] = { name: exName, totalKg: 0, totalSets: 0 };
+          agg[pattern].exercises[exName].totalKg += exData.totalKg;
+          agg[pattern].exercises[exName].totalSets += exData.totalSets;
+        });
+      });
+    });
+    return agg;
+  }, [weeklyData]);
+
+  // Weekly volume for a specific pattern
+  const getPatternWeeklyVolume = (pattern: string) => {
+    return weeklyData.map(w => ({
+      week: w.week,
+      volume: w.patternVolume[pattern] || 0,
+    }));
+  };
+
+  // Bottom sheet state for pattern drill-down
+  const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
 
   // Compliance
   const TARGET_SESSIONS_PER_WEEK = 4;
@@ -435,19 +492,34 @@ export const AnalyticsTab = () => {
       {/* 4. MOVEMENT BALANCE */}
       <ChartCard label="Movement Balance (12 wks)">
         {patternTotals.length > 0 ? (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {patternTotals.map(([pattern, vol]) => {
               const pct = (vol / maxPatternVol) * 100;
               const color = MOVEMENT_COLORS[pattern] || 'hsl(var(--dim))';
               const abbrev = PATTERN_ABBREV[pattern] || pattern.slice(0, 3).toUpperCase();
+              const agg = patternAggregated[pattern];
+              const exCount = agg ? Object.keys(agg.exercises).length : 0;
               return (
-                <div key={pattern} className="flex items-center gap-2">
+                <button
+                  key={pattern}
+                  onClick={() => setSelectedPattern(pattern)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'left' }}
+                >
                   <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', width: 28, textAlign: 'right', flexShrink: 0 }}>{abbrev}</span>
-                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'hsl(var(--bg4))' }}>
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'hsl(var(--bg4))' }}>
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                    </div>
+                    {agg && (
+                      <div className="flex items-center gap-3 mt-1">
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>{Math.round(agg.totalKg).toLocaleString()}kg</span>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>{agg.totalSets} sets</span>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>{exCount} ex</span>
+                      </div>
+                    )}
                   </div>
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--text))', width: 40, textAlign: 'right' }}>{Math.round(vol).toLocaleString()}</span>
-                </div>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--text))', width: 40, textAlign: 'right', flexShrink: 0 }}>{Math.round(vol).toLocaleString()}</span>
+                </button>
               );
             })}
             {patternWarning && (
@@ -505,6 +577,137 @@ export const AnalyticsTab = () => {
           <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>More</span>
         </div>
       </ChartCard>
+
+      {/* ─── Pattern Drill-Down Bottom Sheet ─── */}
+      {selectedPattern && (() => {
+        const color = MOVEMENT_COLORS[selectedPattern] || 'hsl(var(--dim))';
+        const agg = patternAggregated[selectedPattern];
+        const exerciseList = agg
+          ? Object.values(agg.exercises).sort((a, b) => b.totalKg - a.totalKg)
+          : [];
+        const maxExKg = exerciseList.length > 0 ? Math.max(...exerciseList.map(e => e.totalKg), 1) : 1;
+        const weeklyVol = getPatternWeeklyVolume(selectedPattern);
+        const maxWeeklyVol = Math.max(...weeklyVol.map(w => w.volume), 1);
+
+        return (
+          <>
+            {/* Backdrop */}
+            <div
+              onClick={() => setSelectedPattern(null)}
+              style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'hsla(220,16%,6%,0.6)' }}
+            />
+            {/* Sheet */}
+            <div style={{
+              position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 91,
+              background: 'hsl(var(--bg2))', borderTop: '1px solid hsl(var(--border2))',
+              borderRadius: '20px 20px 0 0', padding: '12px 16px 32px',
+              maxWidth: 480, margin: '0 auto', maxHeight: '80vh', overflowY: 'auto',
+            }}>
+              {/* Handle */}
+              <div className="flex justify-center" style={{ marginBottom: 12 }}>
+                <div style={{ width: 32, height: 4, borderRadius: 2, background: 'hsl(var(--border2))' }} />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center gap-3" style={{ marginBottom: 12 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 5, background: color, flexShrink: 0 }} />
+                <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 700, color: 'hsl(var(--text))' }}>
+                  {selectedPattern}
+                </h3>
+              </div>
+
+              {/* Summary */}
+              {agg && (
+                <div className="flex items-center gap-4" style={{ marginBottom: 16, padding: '8px 12px', background: 'hsl(var(--bg3))', borderRadius: 8, border: '1px solid hsl(var(--border))' }}>
+                  <div>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase' }}>Total KG</p>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: 'hsl(var(--primary))', fontWeight: 700 }}>{Math.round(agg.totalKg).toLocaleString()}</p>
+                  </div>
+                  <div style={{ width: 1, height: 24, background: 'hsl(var(--border))' }} />
+                  <div>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase' }}>Total Sets</p>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: 'hsl(var(--text))', fontWeight: 700 }}>{agg.totalSets}</p>
+                  </div>
+                  <div style={{ width: 1, height: 24, background: 'hsl(var(--border))' }} />
+                  <div>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase' }}>Exercises</p>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: 'hsl(var(--text))', fontWeight: 700 }}>{exerciseList.length}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Exercise Breakdown */}
+              {exerciseList.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Exercise Breakdown</p>
+                  <div className="space-y-2">
+                    {exerciseList.map((ex) => {
+                      const pct = (ex.totalKg / maxExKg) * 100;
+                      return (
+                        <div key={ex.name}>
+                          <div className="flex items-center justify-between" style={{ marginBottom: 3 }}>
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--text))', fontWeight: 500 }}>{ex.name}</span>
+                            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))' }}>
+                              {Math.round(ex.totalKg).toLocaleString()}kg · {ex.totalSets}s
+                            </span>
+                          </div>
+                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(var(--bg4))' }}>
+                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color, opacity: 0.8 }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Weekly Volume for this pattern */}
+              {weeklyVol.some(w => w.volume > 0) && (
+                <div>
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Weekly Volume</p>
+                  <div className="flex items-end gap-1" style={{ height: 60 }}>
+                    {weeklyVol.map((w, i, arr) => {
+                      const h = maxWeeklyVol > 0 ? (w.volume / maxWeeklyVol) * 100 : 0;
+                      const isLast = i === arr.length - 1;
+                      const opacity = isLast ? 1 : 0.25 + (i / (arr.length - 1)) * 0.75;
+                      return (
+                        <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                          <div style={{
+                            width: '100%', height: `${Math.max(h, 2)}%`,
+                            background: color, opacity,
+                            borderRadius: '3px 3px 0 0',
+                            ...(isLast ? { filter: `drop-shadow(0 0 4px ${color})` } : {}),
+                          }} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    {weeklyVol.map((w, i, arr) => (
+                      <span key={i} className="flex-1 text-center" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>
+                        {i === 0 || i === arr.length - 1 || i === Math.floor(arr.length / 2) ? w.week : ''}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Close */}
+              <button
+                onClick={() => setSelectedPattern(null)}
+                style={{
+                  width: '100%', marginTop: 16, padding: '12px 0', borderRadius: 10,
+                  background: 'transparent', border: '1px solid hsl(var(--border))',
+                  color: 'hsl(var(--dim))', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 };
