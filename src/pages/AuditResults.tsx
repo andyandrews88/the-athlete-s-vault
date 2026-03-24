@@ -18,12 +18,6 @@ const tierBadgeBg: Record<string, string> = {
   foundation:   'bg-vault-bad/20 text-vault-bad',
 };
 
-const tierToProgramme: Record<string, string> = {
-  foundation: 'Foundation',
-  intermediate: 'Foundation',
-  performance: 'Performance',
-  elite: 'Elite',
-};
 
 /* ── Animated Score Circle ── */
 const ScoreCircle = ({ score, tier }: { score: number; tier: string }) => {
