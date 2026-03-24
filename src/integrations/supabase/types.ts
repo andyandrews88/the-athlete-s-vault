@@ -1488,6 +1488,7 @@ export type Database = {
           audit_tier: string | null
           avatar_url: string | null
           created_at: string | null
+          created_by: string | null
           currency: string | null
           email: string | null
           equipment: string[] | null
@@ -1495,10 +1496,12 @@ export type Database = {
           full_name: string | null
           goal: string | null
           id: string
+          internal_notes: string | null
           onboarding_complete: boolean | null
           referral_code: string | null
           rest_timer_secs: number
           role: string | null
+          status: string | null
           tier: string | null
           weight_unit: string
         }
@@ -1507,6 +1510,7 @@ export type Database = {
           audit_tier?: string | null
           avatar_url?: string | null
           created_at?: string | null
+          created_by?: string | null
           currency?: string | null
           email?: string | null
           equipment?: string[] | null
@@ -1514,10 +1518,12 @@ export type Database = {
           full_name?: string | null
           goal?: string | null
           id: string
+          internal_notes?: string | null
           onboarding_complete?: boolean | null
           referral_code?: string | null
           rest_timer_secs?: number
           role?: string | null
+          status?: string | null
           tier?: string | null
           weight_unit?: string
         }
@@ -1526,6 +1532,7 @@ export type Database = {
           audit_tier?: string | null
           avatar_url?: string | null
           created_at?: string | null
+          created_by?: string | null
           currency?: string | null
           email?: string | null
           equipment?: string[] | null
@@ -1533,10 +1540,12 @@ export type Database = {
           full_name?: string | null
           goal?: string | null
           id?: string
+          internal_notes?: string | null
           onboarding_complete?: boolean | null
           referral_code?: string | null
           rest_timer_secs?: number
           role?: string | null
+          status?: string | null
           tier?: string | null
           weight_unit?: string
         }
