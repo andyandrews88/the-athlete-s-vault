@@ -753,18 +753,13 @@ export const LogTab = () => {
                   cursor: 'pointer', transition: 'all 0.15s',
                 }}
               >
-                {/* Movement pip */}
                 <div style={{ width: 3, minWidth: 3, height: 32, borderRadius: 2, background: pipColor(ex.exercise.movement_pattern || '') }} />
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))', fontFamily: 'Inter, sans-serif' }}>{ex.exercise.name}</p>
                   <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', marginTop: 2 }}>
                     {targetLine} · {ex.exercise.movement_pattern || ''}
                   </p>
                 </div>
-
-                {/* Completion indicator */}
                 <div style={{
                   width: 28, height: 28, borderRadius: 14,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -783,6 +778,19 @@ export const LogTab = () => {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Empty state when session active but no exercises */}
+      {!isEditing && exercises.length === 0 && (
+        <div style={{
+          padding: '32px 16px', textAlign: 'center',
+          background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))',
+          borderRadius: 12,
+        }}>
+          <Dumbbell size={32} style={{ color: 'hsl(var(--dim))', margin: '0 auto 8px' }} />
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'hsl(var(--dim))', marginBottom: 4 }}>No exercises yet</p>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))' }}>Tap "+ Add Exercise" below to get started</p>
         </div>
       )}
 
