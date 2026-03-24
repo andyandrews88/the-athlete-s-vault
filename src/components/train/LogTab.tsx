@@ -36,6 +36,7 @@ interface ProgrammeWorkout {
   prescribed_exercises: Array<{ name: string; sets: number; reps: string; notes: string }>;
 }
 
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 const LB_PER_KG = 2.20462;
 
 const pipColor = (pattern: string) => {
