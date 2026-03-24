@@ -234,6 +234,7 @@ export const AnalyticsTab = () => {
         avgRir: data.rirCount > 0 ? Math.round((data.rirSum / data.rirCount) * 10) / 10 : 0,
         sessionCount: data.sessionIds.size,
         patternVolume: data.patternVolume,
+        patternDetails: data.patternDetails,
         maxWeight: data.maxWeight,
         sessionRirs: Object.values(data.sessionRirMap).map(sr => ({ avgRir: sr.count > 0 ? Math.round((sr.sum / sr.count) * 10) / 10 : 0 })),
       }));
