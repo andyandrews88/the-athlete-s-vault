@@ -97,24 +97,6 @@ const AuditResults = () => {
   const cfg = tierConfig[tier] ?? tierConfig.foundation;
   const badgeCls = tierBadgeBg[tier] ?? tierBadgeBg.foundation;
 
-  // Load recommended programme template
-  useEffect(() => {
-    const progName = tierToProgramme[tier] ?? 'Foundation';
-    supabase
-      .from('training_programmes')
-      .select('id, name, description')
-      .eq('is_template', true)
-      .eq('name', progName)
-      .limit(1)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          const daysMatch = data.description?.match(/(\d+)\s*days?\/week/i);
-          setRecProgramme({ ...data, days: daysMatch ? parseInt(daysMatch[1]) : 3 });
-        }
-      });
-  }, [tier]);
-
   // Fetch AI recommendations
   useEffect(() => {
     if (!user) return;
