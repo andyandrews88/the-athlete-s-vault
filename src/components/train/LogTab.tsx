@@ -497,24 +497,35 @@ export const LogTab = () => {
         <div className="w-full" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsla(192,91%,54%,0.2)', boxShadow: '0 0 30px hsla(192,91%,54%,0.06)', borderRadius: 16, padding: 24 }}>
           {/* Programme info row */}
           {activeProgramme ? (
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))' }}>{activeProgramme.name}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '2px 8px', borderRadius: 6, border: '1px solid hsla(192,91%,54%,0.2)' }}>
-                  Week 1
-                </span>
-                <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'hsl(var(--dim))', background: 'none', border: 'none', cursor: 'pointer' }}>
-                  Change →
-                </button>
-              </div>
+            <div className="mb-4">
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: 'hsl(var(--text))', marginBottom: 6 }}>{activeProgramme.name}</p>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '3px 10px', borderRadius: 6, border: '1px solid hsla(192,91%,54%,0.2)', display: 'inline-block', marginBottom: 10 }}>
+                Week 1
+              </span>
+              <button
+                onClick={() => navigate('/programmes')}
+                style={{
+                  display: 'block', width: '100%', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600,
+                  color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.08)',
+                  border: '1px solid hsla(192,91%,54%,0.3)', borderRadius: 8, padding: '10px 0',
+                  cursor: 'pointer', textAlign: 'center',
+                }}
+              >
+                Select Programme →
+              </button>
             </div>
           ) : (
-            <div className="mb-3">
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'hsl(var(--dim))' }}>No programme selected</p>
-              <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--primary))', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 2 }}>
-                Choose a programme →
+            <div className="mb-4">
+              <button
+                onClick={() => navigate('/programmes')}
+                style={{
+                  display: 'block', width: '100%', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
+                  color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.08)',
+                  border: '1px solid hsla(192,91%,54%,0.3)', borderRadius: 8, padding: '12px 0',
+                  cursor: 'pointer', textAlign: 'center',
+                }}
+              >
+                Select Your Programme →
               </button>
             </div>
           )}
@@ -553,7 +564,7 @@ export const LogTab = () => {
               padding: '10px 0', borderRadius: 8, cursor: 'pointer',
             }}
           >
-            🏋️ Build Workout
+            🏋️ Build Your Own Workout
           </button>
 
           <button
