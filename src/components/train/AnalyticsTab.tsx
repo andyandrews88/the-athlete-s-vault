@@ -577,6 +577,137 @@ export const AnalyticsTab = () => {
           <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>More</span>
         </div>
       </ChartCard>
+
+      {/* ─── Pattern Drill-Down Bottom Sheet ─── */}
+      {selectedPattern && (() => {
+        const color = MOVEMENT_COLORS[selectedPattern] || 'hsl(var(--dim))';
+        const agg = patternAggregated[selectedPattern];
+        const exerciseList = agg
+          ? Object.values(agg.exercises).sort((a, b) => b.totalKg - a.totalKg)
+          : [];
+        const maxExKg = exerciseList.length > 0 ? Math.max(...exerciseList.map(e => e.totalKg), 1) : 1;
+        const weeklyVol = getPatternWeeklyVolume(selectedPattern);
+        const maxWeeklyVol = Math.max(...weeklyVol.map(w => w.volume), 1);
+
+        return (
+          <>
+            {/* Backdrop */}
+            <div
+              onClick={() => setSelectedPattern(null)}
+              style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'hsla(220,16%,6%,0.6)' }}
+            />
+            {/* Sheet */}
+            <div style={{
+              position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 91,
+              background: 'hsl(var(--bg2))', borderTop: '1px solid hsl(var(--border2))',
+              borderRadius: '20px 20px 0 0', padding: '12px 16px 32px',
+              maxWidth: 480, margin: '0 auto', maxHeight: '80vh', overflowY: 'auto',
+            }}>
+              {/* Handle */}
+              <div className="flex justify-center" style={{ marginBottom: 12 }}>
+                <div style={{ width: 32, height: 4, borderRadius: 2, background: 'hsl(var(--border2))' }} />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center gap-3" style={{ marginBottom: 12 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 5, background: color, flexShrink: 0 }} />
+                <h3 style={{ fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 700, color: 'hsl(var(--text))' }}>
+                  {selectedPattern}
+                </h3>
+              </div>
+
+              {/* Summary */}
+              {agg && (
+                <div className="flex items-center gap-4" style={{ marginBottom: 16, padding: '8px 12px', background: 'hsl(var(--bg3))', borderRadius: 8, border: '1px solid hsl(var(--border))' }}>
+                  <div>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase' }}>Total KG</p>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: 'hsl(var(--primary))', fontWeight: 700 }}>{Math.round(agg.totalKg).toLocaleString()}</p>
+                  </div>
+                  <div style={{ width: 1, height: 24, background: 'hsl(var(--border))' }} />
+                  <div>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase' }}>Total Sets</p>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: 'hsl(var(--text))', fontWeight: 700 }}>{agg.totalSets}</p>
+                  </div>
+                  <div style={{ width: 1, height: 24, background: 'hsl(var(--border))' }} />
+                  <div>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))', textTransform: 'uppercase' }}>Exercises</p>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 14, color: 'hsl(var(--text))', fontWeight: 700 }}>{exerciseList.length}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Exercise Breakdown */}
+              {exerciseList.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Exercise Breakdown</p>
+                  <div className="space-y-2">
+                    {exerciseList.map((ex) => {
+                      const pct = (ex.totalKg / maxExKg) * 100;
+                      return (
+                        <div key={ex.name}>
+                          <div className="flex items-center justify-between" style={{ marginBottom: 3 }}>
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--text))', fontWeight: 500 }}>{ex.name}</span>
+                            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))' }}>
+                              {Math.round(ex.totalKg).toLocaleString()}kg · {ex.totalSets}s
+                            </span>
+                          </div>
+                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(var(--bg4))' }}>
+                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color, opacity: 0.8 }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Weekly Volume for this pattern */}
+              {weeklyVol.some(w => w.volume > 0) && (
+                <div>
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Weekly Volume</p>
+                  <div className="flex items-end gap-1" style={{ height: 60 }}>
+                    {weeklyVol.map((w, i, arr) => {
+                      const h = maxWeeklyVol > 0 ? (w.volume / maxWeeklyVol) * 100 : 0;
+                      const isLast = i === arr.length - 1;
+                      const opacity = isLast ? 1 : 0.25 + (i / (arr.length - 1)) * 0.75;
+                      return (
+                        <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                          <div style={{
+                            width: '100%', height: `${Math.max(h, 2)}%`,
+                            background: color, opacity,
+                            borderRadius: '3px 3px 0 0',
+                            ...(isLast ? { filter: `drop-shadow(0 0 4px ${color})` } : {}),
+                          }} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    {weeklyVol.map((w, i, arr) => (
+                      <span key={i} className="flex-1 text-center" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>
+                        {i === 0 || i === arr.length - 1 || i === Math.floor(arr.length / 2) ? w.week : ''}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Close */}
+              <button
+                onClick={() => setSelectedPattern(null)}
+                style={{
+                  width: '100%', marginTop: 16, padding: '12px 0', borderRadius: 10,
+                  background: 'transparent', border: '1px solid hsl(var(--border))',
+                  color: 'hsl(var(--dim))', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 };
