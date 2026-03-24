@@ -3,8 +3,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { LogTab } from '@/components/train/LogTab';
 import { AnalyticsTab } from '@/components/train/AnalyticsTab';
 import { CalendarTab } from '@/components/train/CalendarTab';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const TrainPage = () => {
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('log');
 
   const tabs = [
@@ -34,10 +36,10 @@ const TrainPage = () => {
                 className="flex-1 transition-all"
                 style={{
                   fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: 7,
+                  fontSize: isMobile ? 11 : 12,
                   letterSpacing: '0.3px',
                   textTransform: 'uppercase',
-                  padding: '7px 0',
+                  padding: '10px 0',
                   borderRadius: 5,
                   fontWeight: activeTab === tab.value ? 700 : 400,
                   background: activeTab === tab.value ? 'hsl(var(--primary))' : 'transparent',
