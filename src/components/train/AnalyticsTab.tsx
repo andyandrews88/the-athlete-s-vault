@@ -492,19 +492,34 @@ export const AnalyticsTab = () => {
       {/* 4. MOVEMENT BALANCE */}
       <ChartCard label="Movement Balance (12 wks)">
         {patternTotals.length > 0 ? (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {patternTotals.map(([pattern, vol]) => {
               const pct = (vol / maxPatternVol) * 100;
               const color = MOVEMENT_COLORS[pattern] || 'hsl(var(--dim))';
               const abbrev = PATTERN_ABBREV[pattern] || pattern.slice(0, 3).toUpperCase();
+              const agg = patternAggregated[pattern];
+              const exCount = agg ? Object.keys(agg.exercises).length : 0;
               return (
-                <div key={pattern} className="flex items-center gap-2">
+                <button
+                  key={pattern}
+                  onClick={() => setSelectedPattern(pattern)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'left' }}
+                >
                   <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', width: 28, textAlign: 'right', flexShrink: 0 }}>{abbrev}</span>
-                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'hsl(var(--bg4))' }}>
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'hsl(var(--bg4))' }}>
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                    </div>
+                    {agg && (
+                      <div className="flex items-center gap-3 mt-1">
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>{Math.round(agg.totalKg).toLocaleString()}kg</span>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>{agg.totalSets} sets</span>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: 'hsl(var(--dim))' }}>{exCount} ex</span>
+                      </div>
+                    )}
                   </div>
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--text))', width: 40, textAlign: 'right' }}>{Math.round(vol).toLocaleString()}</span>
-                </div>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--text))', width: 40, textAlign: 'right', flexShrink: 0 }}>{Math.round(vol).toLocaleString()}</span>
+                </button>
               );
             })}
             {patternWarning && (
