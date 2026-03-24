@@ -504,43 +504,118 @@ export const LogTab = () => {
      STATE 1 — No active session (and not editing)
      ═══════════════════════════════════════════ */
   if (!isSessionActive && !finished && !isEditing) {
+    const prescribedExercises = (w: any): Array<{ name?: string; sets?: number; reps?: string | number; movement_pattern?: string }> => {
+      if (!w.prescribed_exercises) return [];
+      if (Array.isArray(w.prescribed_exercises)) return w.prescribed_exercises;
+      return [];
+    };
+
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        <div className="w-full mb-4">
+      <div className="px-4 pb-24" style={{ minHeight: '60vh' }}>
+        {/* Week Strip */}
+        <div className="mb-4">
           <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} workoutDays={workouts.map(w => w.day_number)} />
         </div>
-        <div className="w-full" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsla(192,91%,54%,0.2)', boxShadow: '0 0 30px hsla(192,91%,54%,0.06)', borderRadius: 16, padding: 24 }}>
-          {activeProgramme ? (
-            <div className="flex items-center justify-between mb-3">
+
+        {/* Programme Header */}
+        {activeProgramme ? (
+          <div className="mb-5" style={{ background: 'hsl(var(--bg2))', border: '1px solid hsl(var(--border))', borderRadius: 14, padding: '16px 18px' }}>
+            <div className="flex items-center justify-between">
               <div>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'hsl(var(--text))' }}>{activeProgramme.name}</p>
+                <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: 'hsl(var(--text))', letterSpacing: 1, lineHeight: 1.1 }}>{activeProgramme.name}</h2>
               </div>
               <div className="flex items-center gap-2">
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '2px 8px', borderRadius: 6, border: '1px solid hsla(192,91%,54%,0.2)' }}>Week 1</span>
-                <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'hsl(var(--dim))', background: 'none', border: 'none', cursor: 'pointer' }}>Change →</button>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--primary))', background: 'hsla(192,91%,54%,0.1)', padding: '3px 10px', borderRadius: 6, border: '1px solid hsla(192,91%,54%,0.2)', whiteSpace: 'nowrap' }}>Week 1</span>
               </div>
             </div>
-          ) : (
-            <div className="mb-3">
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'hsl(var(--dim))' }}>No programme selected</p>
-              <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--primary))', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 2 }}>Choose a programme →</button>
+            <div className="flex items-center gap-3 mt-2">
+              <button onClick={() => navigate(`/programmes`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'hsl(var(--primary))', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>View Programme →</button>
+              <button onClick={() => navigate('/programmes')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'hsl(var(--dim))', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Switch →</button>
             </div>
-          )}
-          {workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && (
-            <div className="mb-5">
-              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Select today's workout</p>
-              <div className="grid grid-cols-1 gap-1.5">
-                {workouts.map(w => (
-                  <button key={w.id} onClick={() => setSelectedWorkout(selectedWorkout?.id === w.id ? null : w)} className="w-full text-left px-4 py-3 rounded-lg font-mono text-xs transition-colors" style={{ background: selectedWorkout?.id === w.id ? 'hsla(192,91%,54%,0.05)' : 'hsl(var(--bg3))', border: selectedWorkout?.id === w.id ? '1px solid hsla(192,91%,54%,0.4)' : '1px solid hsl(var(--border))', color: selectedWorkout?.id === w.id ? 'hsl(var(--primary))' : 'hsl(var(--text))' }}>
-                    <span className="font-bold">Day {w.day_number}</span>
-                    <span style={{ color: 'hsl(var(--dim))', marginLeft: 8 }}>— {w.name}</span>
+          </div>
+        ) : (
+          <button onClick={() => navigate('/programmes')} className="w-full mb-5" style={{ background: 'hsl(var(--bg2))', border: '2px dashed hsla(192,91%,54%,0.3)', borderRadius: 14, padding: '28px 20px', cursor: 'pointer', textAlign: 'center' }}>
+            <Dumbbell size={32} style={{ color: 'hsl(var(--dim))', margin: '0 auto 8px' }} />
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 600, color: 'hsl(var(--text))', marginBottom: 4 }}>Choose a Programme</p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--dim))' }}>Browse training programmes to get started</p>
+          </button>
+        )}
+
+        {/* Workout Cards */}
+        {workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && (
+          <div className="mb-5">
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10 }}>SELECT WORKOUT</p>
+            <div className="grid grid-cols-1 gap-3">
+              {workouts.map(w => {
+                const isSelected = selectedWorkout?.id === w.id;
+                const exList = prescribedExercises(w);
+                const previewCount = Math.min(exList.length, 5);
+                const remaining = exList.length - previewCount;
+
+                return (
+                  <button
+                    key={w.id}
+                    onClick={() => setSelectedWorkout(isSelected ? null : w)}
+                    className="w-full text-left transition-all"
+                    style={{
+                      background: isSelected ? 'hsla(192,91%,54%,0.04)' : 'hsl(var(--bg2))',
+                      border: isSelected ? '1.5px solid hsla(192,91%,54%,0.5)' : '1px solid hsl(var(--border))',
+                      boxShadow: isSelected ? '0 0 20px hsla(192,91%,54%,0.08)' : 'none',
+                      borderRadius: 12,
+                      padding: 16,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {/* Card Header */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: 'hsl(var(--dim))', textTransform: 'uppercase', letterSpacing: 1, background: 'hsl(var(--bg3))', padding: '2px 8px', borderRadius: 4 }}>DAY {w.day_number}</span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'hsl(var(--text))' }}>{w.name}</span>
+                    </div>
+
+                    {/* Exercise Previews */}
+                    {exList.length > 0 && (
+                      <div className="space-y-1.5 mt-3">
+                        {exList.slice(0, previewCount).map((ex, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <div style={{ width: 4, height: 4, borderRadius: '50%', background: pipColor(ex.movement_pattern || ''), flexShrink: 0 }} />
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'hsl(var(--mid))', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.name || 'Exercise'}</span>
+                            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))' }}>{ex.sets || 3}×{ex.reps || 8}</span>
+                          </div>
+                        ))}
+                        {remaining > 0 && (
+                          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'hsl(var(--dim))', paddingLeft: 12, marginTop: 4 }}>+{remaining} more</p>
+                        )}
+                      </div>
+                    )}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )}
-          <button onClick={startSession} className="w-full mb-2" style={{ background: 'transparent', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text))', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, padding: '10px 0', borderRadius: 8, cursor: 'pointer' }}>🏋️ Build Workout</button>
-          <button onClick={startSession} style={{ width: '100%', background: 'hsl(var(--primary))', color: 'hsl(220,16%,6%)', fontWeight: 700, fontSize: 11, padding: '12px 0', borderRadius: 8, border: 'none', textTransform: 'uppercase', letterSpacing: 1 }}>Begin Session →</button>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          <button
+            onClick={startSession}
+            disabled={workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && !selectedWorkout}
+            style={{
+              width: '100%',
+              background: (workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && !selectedWorkout) ? 'hsl(var(--bg3))' : 'hsl(var(--primary))',
+              color: (workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && !selectedWorkout) ? 'hsl(var(--dim))' : 'hsl(220,16%,6%)',
+              fontWeight: 700, fontSize: 12, padding: '14px 0', borderRadius: 10, border: 'none',
+              textTransform: 'uppercase', letterSpacing: 1.2, cursor: (workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && !selectedWorkout) ? 'not-allowed' : 'pointer',
+              opacity: (workouts.length > 0 && selectedProgrammeId === activeProgramme?.id && !selectedWorkout) ? 0.5 : 1,
+            }}
+          >
+            Begin Session →
+          </button>
+          <button
+            onClick={startSession}
+            style={{ width: '100%', background: 'transparent', border: '1px solid hsl(var(--border))', color: 'hsl(var(--text))', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500, padding: '11px 0', borderRadius: 8, cursor: 'pointer' }}
+          >
+            🏋️ Build Workout
+          </button>
         </div>
       </div>
     );
