@@ -38,6 +38,18 @@ interface ProgrammeWorkout {
 
 const LB_PER_KG = 2.20462;
 
+const pipColor = (pattern: string) => {
+  const map: Record<string, string> = {
+    'Hinge': 'hsl(0,72%,51%)', 'Squat': 'hsl(262,60%,55%)',
+    'Push': 'hsl(var(--primary))', 'Pull': 'hsl(var(--ok))',
+    'Single Leg': 'hsl(38,92%,50%)', 'Carry': 'hsl(38,92%,50%)',
+    'Core': 'hsl(215,14%,50%)', 'Olympic': 'hsl(var(--gold))',
+    'Isolation': 'hsl(215,14%,50%)', 'Plyometric': 'hsl(var(--gold))',
+    'Rotational': 'hsl(var(--primary))', 'Conditioning': 'hsl(var(--warn))',
+  };
+  return map[pattern] || 'hsl(var(--primary))';
+};
+
 const emptySet = (num: number): SetData => ({
   set_num: num, reps: null, weight_kg: null, rir: null, rpe: null,
   completed: false, set_type: 'working', duration_secs: null, distance_m: null, calories: null,
