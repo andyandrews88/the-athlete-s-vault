@@ -36,7 +36,7 @@ const TrainPage = () => {
                 className="flex-1 transition-all"
                 style={{
                   fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: window.innerWidth < 768 ? 11 : 12,
+                  fontSize: isMobile ? 11 : 12,
                   letterSpacing: '0.3px',
                   textTransform: 'uppercase',
                   padding: '10px 0',
